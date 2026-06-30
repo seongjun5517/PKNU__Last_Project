@@ -49,11 +49,24 @@
   line-height: 1.2;
 }
 
-.login_intro_panel p:last-child {
+.login_intro_panel > p:not(.login_eyebrow) {
   margin: 0;
   color: #506967;
   font-size: 16px;
   line-height: 1.7;
+}
+
+.login_start_link {
+  width: fit-content;
+  margin-top: 24px;
+  color: #26756f;
+  font-size: 14px;
+  font-weight: 800;
+  text-decoration: none;
+}
+
+.login_start_link:hover {
+  text-decoration: underline;
 }
 
 .login_form_panel {

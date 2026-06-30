@@ -95,9 +95,11 @@ function SignUp() {
           <p className="signup_eyebrow">Create Account</p>
           <h1>나만의 피부 관리 기록을 만들어보세요.</h1>
           <p>
-            사용자 ERD에 맞춰 아이디, 이메일, 비밀번호, 닉네임, 생년월일,
-            프로필 이미지를 입력받습니다.
+            테에스트ㄴ
           </p>
+          <Link className="signup_start_link" to="/start">
+            처음 화면으로
+          </Link>
         </section>
 
         <section className="signup_panel signup_form_panel">
