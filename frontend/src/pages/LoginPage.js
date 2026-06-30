@@ -3,12 +3,14 @@ import { useState } from "react";
 import "./LoginPage.css";
 
 function LoginPage() {
+  // 로그인 폼 입력값 관리
   const [form, setForm] = useState({
     user_id: "",
     user_pwd: "",
   });
   const [message, setMessage] = useState("");
 
+  // input의 form 값 업뎃
   const handleChange = (event) => {
     const { name, value } = event.target;
 
@@ -21,11 +23,14 @@ function LoginPage() {
   const handleSubmit = (event) => {
     event.preventDefault();
 
+    // 아이디,비밀번호 모두 확인
+    // required 쓰면 프로그램 분위기에 맞게 안됨.
     if (!form.user_id.trim() || !form.user_pwd.trim()) {
       setMessage("아이디와 비밀번호를 모두 입력해주세요.");
       return;
     }
 
+    // 로그인 요청에 사용할 데이터를 준비
     const loginPayload = {
       user_id: form.user_id.trim(),
       user_pwd: form.user_pwd,
@@ -45,6 +50,9 @@ function LoginPage() {
             계정으로 로그인하면 피부 이미지 분석 결과와 케어 기록을 이어서
             확인할 수 있습니다.
           </p>
+          <Link className="login_start_link" to="/start">
+            처음 화면으로
+          </Link>
         </section>
 
         <section className="login_panel login_form_panel">
