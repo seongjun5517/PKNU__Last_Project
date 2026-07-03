@@ -1,8 +1,10 @@
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { useState } from "react";
 import "./LoginPage.css";
 
 function LoginPage() {
+
+    const navigate = useNavigate();
   // 로그인 폼 입력값 관리
   const [form, setForm] = useState({
     user_id: "",
@@ -38,6 +40,12 @@ function LoginPage() {
 
     console.log("login payload", loginPayload);
     setMessage("로그인 요청 데이터가 준비되었습니다.");
+
+    if(form.user_id === "123" & form.user_pwd === "123"){
+        alert("성공")
+
+        navigate("/homepage")
+    }
   };
 
   return (
