@@ -26,7 +26,7 @@ git push
 그 다음 그 브랜치에서 작업을 한 후 Merge할 브랜치에 add, commit, push한 후 pr을 하고 최종 Merge할 브랜치에 Merge 후 그 브랜치는 삭제한다.
 
 4. 사용한 브랜치 삭제
-git checkout 합친파일이있는 브랜치
+git checkout 합친파일이있는 브랜치 (dev)
 git pull
 git branch -d 홈페이지에서 생성한 브랜치
 
