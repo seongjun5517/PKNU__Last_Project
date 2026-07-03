@@ -4,8 +4,9 @@ import "./LoginPage.css";
 
 function LoginPage() {
 
-    const navigate = useNavigate();
   // 로그인 폼 입력값 관리
+  const navigate = useNavigate()
+
   const [form, setForm] = useState({
     user_id: "",
     user_pwd: "",
@@ -13,9 +14,37 @@ function LoginPage() {
   const [message, setMessage] = useState("");
 
   // input의 form 값 업뎃
+  // const handleChange = (event) => {
+  //   const { name, value } = event.target;
+
+  //   setForm((prevForm) => ({
+  //     ...prevForm,
+  //     [name]: value,
+  //   }));
+  // };
+
+  // const handleSubmit = (event) => {
+  //   event.preventDefault();
+
+  //   // 아이디,비밀번호 모두 확인
+  //   // required 쓰면 프로그램 분위기에 맞게 안됨.
+  //   if (!form.user_id.trim() || !form.user_pwd.trim()) {
+  //     setMessage("아이디와 비밀번호를 모두 입력해주세요.");
+  //     return;
+  //   }
+
+  //   // 로그인 요청에 사용할 데이터를 준비
+  //   const loginPayload = {
+  //     user_id: form.user_id.trim(),
+  //     user_pwd: form.user_pwd,
+  //   };
+
+  //   console.log("login payload", loginPayload);
+  //   setMessage("로그인 요청 데이터가 준비되었습니다.");
+  // };
+
   const handleChange = (event) => {
     const { name, value } = event.target;
-
     setForm((prevForm) => ({
       ...prevForm,
       [name]: value,
@@ -46,7 +75,11 @@ function LoginPage() {
 
         navigate("/homepage")
     }
+    // TODO: 실제 로그인 API 연동 전까지는 입력값과 상관없이 통과
+    console.log("login payload(temp)", form);
+    navigate("/main");
   };
+
 
   return (
     <div className="login_page">
