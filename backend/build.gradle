@@ -22,16 +22,21 @@ dependencies {
 	testImplementation 'org.springframework.boot:spring-boot-starter-test'
 	testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
 
+	// Web
 	implementation 'org.springframework.boot:spring-boot-starter-web'
 
+	// JPA
 	implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
-	implementation 'com.oracle.database.jdbc:ojdbc11:21.1.0.0'
 
-	// implementation 'com.oracle.database.nls:orail8n:21.1.0.0'
+	// MySQL Driver
+	runtimeOnly 'com.mysql:mysql-connector-j'
 
+	// Lombok
 	compileOnly 'org.projectlombok:lombok'
 	annotationProcessor 'org.projectlombok:lombok'
-	implementation 'org.springframework.boot:spring-boot-devtools'
+
+	// DevTools
+	developmentOnly 'org.springframework.boot:spring-boot-devtools'
 }
 
 tasks.named('test') {
