@@ -33,6 +33,13 @@ function sortByTime(list) {
     return [...list].sort((a, b) => (a.time || "").localeCompare(b.time || ""));
 }
 
+// 로그인 시 localStorage에 저장해둔 사용자 아이디를 가져옵니다.
+// 실제로 로그인 코드에서 localStorage.setItem("여기 키 이름", ...) 으로
+// 저장하신 키 이름과 다르면 아래 "userId" 부분만 그 키 이름으로 바꿔주세요.
+function getLoginUserId() {
+    return localStorage.getItem("userId");
+}
+
 function MainPage() {
     const navigate = useNavigate();
     const today = useMemo(() => new Date(), []);
@@ -49,8 +56,13 @@ function MainPage() {
     // 데이터 불러오기 함수
     useEffect(() => {
     const fetchEntries = async () => {
+        const userId = getLoginUserId();
+        if (!userId) {
+            console.warn("로그인 정보가 없습니다. 캘린더를 불러올 수 없습니다.");
+            return;
+        }
         try {
-            const response = await getCalList("sooping");
+            const response = await getCalList(userId);
 
             const fetchedData = response.data.reduce((acc, item) => {
                 // 서버 응답이 "2026-07-06 14:30:00"(공백) 이든
@@ -178,12 +190,18 @@ function MainPage() {
     const handleAddEntry = async () => {
     if (!titleInput.trim()) return;
 
+    const userId = getLoginUserId();
+    if (!userId) {
+        alert("로그인이 필요합니다.");
+        return;
+    }
+
     const combinedDateTime = timeInput 
         ? `${selectedKey}T${timeInput}:00` 
         : `${selectedKey}T09:00:00`;
 
         const newEntry = {
-            calUserId: "sooping",              // 현재 로그인된 유저 ID 필요
+            calUserId: userId,                 // 로그인한 사용자 아이디
             calTaskDate: combinedDateTime,          // "2026-07-03" 형식
             calTitle: titleInput.trim(),       // 제목
             calDescription: "",                // 필요 시 추가
