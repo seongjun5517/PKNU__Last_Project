@@ -1,8 +1,11 @@
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { useEffect, useState } from "react";
+import { insertMember } from "../springApi/memberSpringBootApi";
 import "./SignUp.css";
 
 function SignUp() {
+  const navigate = useNavigate();
+
   const [form, setForm] = useState({
     user_id: "",
     user_email: "",
@@ -15,7 +18,6 @@ function SignUp() {
   const [previewUrl, setPreviewUrl] = useState("");
   const [message, setMessage] = useState("");
 
-  // 프로필 이미지 미리보기 URL 만들기
   useEffect(() => {
     if (!form.user_profile_image) {
       setPreviewUrl("");
@@ -24,19 +26,13 @@ function SignUp() {
 
     const nextPreviewUrl = URL.createObjectURL(form.user_profile_image);
     setPreviewUrl(nextPreviewUrl);
-    
-    // revokeObjectURL : 브라우저가 임시로 만들어 둔 파일/이미지 URL 해제 함수
+
     return () => URL.revokeObjectURL(nextPreviewUrl);
   }, [form.user_profile_image]);
 
-  // 입력값을 form 상태에 저장
   const handleChange = (event) => {
     const { name, value, files } = event.target;
-    let nextValue = value;
-
-    if (files) {
-      nextValue = files[0] || null;
-    }
+    const nextValue = files ? files[0] || null : value;
 
     setForm((prevForm) => ({
       ...prevForm,
@@ -44,8 +40,7 @@ function SignUp() {
     }));
   };
 
-  // 회원가입 버튼 클릭 시 입력값 확인
-  const handleSubmit = (event) => {
+  const handleSubmit = async (event) => {
     event.preventDefault();
 
     if (
@@ -63,23 +58,24 @@ function SignUp() {
       return;
     }
 
-    // 서버로 보낼 회원가입 데이터 만드릭
-    const signupFormData = new FormData();
-    signupFormData.append("user_id", form.user_id.trim());
-    signupFormData.append("user_email", form.user_email.trim());
-    signupFormData.append("user_pwd", form.user_pwd);
-    signupFormData.append("user_nickname", form.user_nickname.trim());
-    signupFormData.append("user_birthday", form.user_birthday);
+    const signupPayload = {
+      user_id: form.user_id.trim(),
+      user_email: form.user_email.trim(),
+      user_pwd: form.user_pwd,
+      user_nickname: form.user_nickname.trim(),
+      user_birthday: form.user_birthday || null,
+      user_profile_image: form.user_profile_image ? form.user_profile_image.name : null,
+    };
 
-    if (form.user_profile_image) {
-      signupFormData.append("user_profile_image", form.user_profile_image);
+    try {
+      await insertMember(signupPayload);
+      setMessage("회원가입이 완료되었습니다.");
+      navigate("/login");
+    } catch (error) {
+      setMessage(error.response?.data || "서버와 연결할 수 없습니다.");
     }
-
-    console.log("signup form", Object.fromEntries(signupFormData.entries()));
-    setMessage("회원가입 클릭!!!!.");
   };
 
-  // 이미지 미리보기
   const renderProfilePreview = () => {
     if (previewUrl) {
       return <img src={previewUrl} alt="프로필 미리보기" />;
@@ -95,7 +91,7 @@ function SignUp() {
           <p className="signup_eyebrow">Create Account</p>
           <h1>나만의 피부 관리 기록을 만들어보세요.</h1>
           <p>
-            테에스트ㄴ
+            계정을 만들면 피부 분석 결과와 케어 기록을 계속 관리할 수 있습니다.
           </p>
           <Link className="signup_start_link" to="/start">
             처음 화면으로
@@ -117,7 +113,7 @@ function SignUp() {
                   name="user_id"
                   value={form.user_id}
                   onChange={handleChange}
-                  placeholder="사용자 아이디"
+                  placeholder="사용할 아이디"
                   autoComplete="username"
                 />
               </label>
@@ -129,7 +125,7 @@ function SignUp() {
                   name="user_nickname"
                   value={form.user_nickname}
                   onChange={handleChange}
-                  placeholder="사용자 닉네임"
+                  placeholder="사용할 닉네임"
                   autoComplete="nickname"
                 />
               </label>
@@ -189,7 +185,7 @@ function SignUp() {
               </span>
               <span className="signup_profile_upload_text">
                 <strong>프로필 사진</strong>
-                <small>JPG, PNG 이미지를 선택하세요.</small>
+                <small>JPG, PNG 이미지를 선택하세요</small>
               </span>
               <input
                 type="file"
