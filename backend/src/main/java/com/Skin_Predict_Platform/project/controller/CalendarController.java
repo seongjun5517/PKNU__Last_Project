@@ -32,7 +32,7 @@ public class CalendarController {
 
     // 2. 한 건 조회 (GET /calendar/{calCode})
     @GetMapping("/{calCode}")
-    public Calendar getCalendar(@PathVariable String calCode) {
+    public Calendar getCalendar(@PathVariable Long calCode) {
         return calService.getcalendarView(calCode);
     }
 
@@ -46,13 +46,13 @@ public class CalendarController {
     // 요청 예: JSON으로 {"calDescription": "수정할 내용"} 등을 보내거나 
     // 파라미터로 받아서 처리
     @PutMapping("/{calCode}")
-    public String updateCalendar(@PathVariable String calCode, @RequestParam String calDescription) {
+    public String updateCalendar(@PathVariable Long calCode, @RequestParam String calDescription) {
         return calService.setCalUpdate(calCode, calDescription);
     }
 
     // 5. 삭제 (DELETE /calendar/{calCode})
     @DeleteMapping("/{calCode}")
-    public String deleteCalendar(@PathVariable String calCode) {
+    public String deleteCalendar(@PathVariable Long calCode) {
         return calService.setCalDelete(calCode);
     }
 }

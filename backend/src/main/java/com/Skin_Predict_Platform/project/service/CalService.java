@@ -27,7 +27,7 @@ public class CalService {
 
 
     // 캘린더 한건 조회
-    public Calendar getcalendarView(String calCode) {
+    public Calendar getcalendarView(Long calCode) {
         Optional<Calendar> cal = this.calRepository.findById(calCode);
 
         if (cal.isPresent()) {
@@ -40,7 +40,7 @@ public class CalService {
     }
 
     // 캘린더 수정
-    public String setCalUpdate(String calCode, String calDescription) {
+    public String setCalUpdate(Long calCode, String calDescription) {
         log.info("calCode = [%s], 수정할 내용 = [%s]".formatted(calCode, calDescription));
 
         Optional<Calendar> cal = this.calRepository.findById(calCode);
@@ -58,7 +58,7 @@ public class CalService {
 
     
     // 캘린더 정보 삭제
-    public String setCalDelete(String calCode) {
+    public String setCalDelete(Long calCode) {
         if (this.calRepository.existsById(calCode)) {
 
             this.calRepository.deleteById(calCode);

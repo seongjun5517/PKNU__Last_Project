@@ -6,6 +6,6 @@ import com.Skin_Predict_Platform.project.model.Calendar;
 
 
 
-public interface CalRepository extends JpaRepository<Calendar, String> {
+public interface CalRepository extends JpaRepository<Calendar, Long> {
     
 }
