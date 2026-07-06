@@ -48,29 +48,38 @@ function MainPage() {
 
     // 데이터 불러오기 함수
     useEffect(() => {
-        const fetchEntries = async () => {
-            try {
-            const response = await getCalList("sooping"); // 유저 ID 전달
-            // 서버 데이터 구조에 맞게 변환 (예: [{calDate, calTitle, ...}, ...])
+    const fetchEntries = async () => {
+        try {
+            const response = await getCalList("sooping");
+
             const fetchedData = response.data.reduce((acc, item) => {
-                const dateKey = item.calTaskDate; // 'YYYY-MM-DD' 형식
+                // 서버 응답이 "2026-07-06 14:30:00"(공백) 이든
+                // "2026-07-06T14:30:00"(ISO, T) 이든 상관없이
+                // 앞 10자리는 항상 "yyyy-MM-dd" 이고,
+                // 10번째 인덱스(구분자) 다음 5자리가 "HH:mm" 이므로
+                // split이 아니라 고정 위치(substring)로 잘라야 안전합니다.
+                const raw = String(item.calTaskDate);
+                const dateKey = raw.substring(0, 10);   // "2026-07-06"
+                const timeOnly = raw.substring(11, 16); // "14:30"
+
                 if (!acc[dateKey]) acc[dateKey] = [];
                 acc[dateKey].push({
-                id: item.calCode,
-                title: item.calTitle,
-                time: item.calTime, // 시간 데이터
-                categoryId: item.calCategory,
-                done: item.calIsCompleted === 1
+                    id: item.calCode,
+                    title: item.calTitle,
+                    time: timeOnly || item.calTime,
+                    categoryId: item.calCategory,
+                    done: item.calIsCompleted === 1
                 });
                 return acc;
             }, {});
+
             setEntries(fetchedData);
-            } catch (error) {
+        } catch (error) {
             console.error("데이터 로딩 실패:", error);
-            }
-        };
-        fetchEntries();
-        }, []);
+        }
+    };
+    fetchEntries();
+}, []);
 
     const [categories, setCategories] = useState([
         { id: "pack", name: "팩", color: "#BD6F63" },
@@ -169,9 +178,13 @@ function MainPage() {
     const handleAddEntry = async () => {
     if (!titleInput.trim()) return;
 
+    const combinedDateTime = timeInput 
+        ? `${selectedKey}T${timeInput}:00` 
+        : `${selectedKey}T09:00:00`;
+
         const newEntry = {
             calUserId: "sooping",              // 현재 로그인된 유저 ID 필요
-            calTaskDate: selectedKey,          // "2026-07-03" 형식
+            calTaskDate: combinedDateTime,          // "2026-07-03" 형식
             calTitle: titleInput.trim(),       // 제목
             calDescription: "",                // 필요 시 추가
             calIsCompleted: 0,                 // 0: 미완료, 1: 완료
@@ -515,7 +528,7 @@ function MainPage() {
               </ul>
             )}
           </section>
-
+        <div className="button-container">
           <button
             type="button"
             className="analysis_button"
@@ -523,10 +536,22 @@ function MainPage() {
           >
             <span className="analysis_ring" aria-hidden="true" />
             <span className="analysis_label">
+              피부 타입 분석하러 가기
+            </span>
+          </button>
+          <button
+            type="button"
+            className="analysis_button"
+            onClick={() => navigate("/analysis1")}
+          >
+            <span className="analysis_ring" aria-hidden="true" />
+            <span className="analysis_label">
               피부 분석하러 가기
               <span className="analysis_sub">사진 한 장으로 지금 상태 확인하기</span>
             </span>
           </button>
+
+        </div>
         </div>
       </div>
     </div>
