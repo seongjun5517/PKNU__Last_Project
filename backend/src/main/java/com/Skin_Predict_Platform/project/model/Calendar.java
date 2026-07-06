@@ -2,8 +2,14 @@ package com.Skin_Predict_Platform.project.model;
 
 import java.util.Date;
 
+import org.springframework.format.annotation.DateTimeFormat;
+
+import com.fasterxml.jackson.annotation.JsonFormat;
+
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
 import lombok.AllArgsConstructor;
@@ -13,7 +19,7 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 @Entity
-@Table(name = "calendar")
+@Table(name = "calendar_tasks")
 @Getter
 @Setter
 @NoArgsConstructor
@@ -23,13 +29,15 @@ import lombok.Setter;
 public class Calendar {
     
     @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "cal_code", nullable = false)
-    private String calCode;
+    private Long calCode;
 
     @Column(name = "cal_user_id", nullable = false)
     private String calUserId;
 
     @Column(name = "cal_task_date")
+    @DateTimeFormat(pattern = "yyyy-MM-dd")
     private Date calTaskDate;
     
     @Column(name = "cal_title")
@@ -39,9 +47,12 @@ public class Calendar {
     private String calDescription;
 
     @Column(name = "cal_is_completed")
-    private Number calIsCompleted;
+    private Integer calIsCompleted;
     
     @Column(name = "cal_img_path")
     private String calImgPath;
+
+    @Column(name = "cal_category")
+    private String calCategory;
 
 }

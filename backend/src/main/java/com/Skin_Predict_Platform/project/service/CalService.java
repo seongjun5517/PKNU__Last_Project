@@ -70,5 +70,13 @@ public class CalService {
 
     
     // 캘린더 정보 삽입
-    
+    public String setCalInsert(Calendar calendar) {
+        log.info("캘린더 정보 삽입 시작: [%s]".formatted(calendar.getCalTitle()));
+        
+        // save 메서드는 해당 객체가 새로운 것이면 INSERT를, 
+        // 이미 존재하는 ID라면 UPDATE를 수행합니다.
+        this.calRepository.save(calendar);
+        
+        return "캘린더 정보가 성공적으로 등록되었습니다.";
+    }
 }
