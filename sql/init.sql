@@ -1,30 +1,11 @@
-CREATE DATABASE IF NOT EXISTS skin_predict_platform
+CREATE DATABASE IF NOT EXISTS skin_db
 DEFAULT CHARACTER SET utf8mb4
 DEFAULT COLLATE utf8mb4_unicode_ci;
 
-USE skin_predict_platform;
+USE skin_db;
 
-------------------------------------------------------------
--- 기존 테이블 삭제
--- FK 관계 때문에 자식 테이블부터 삭제
-------------------------------------------------------------
-DROP TABLE IF EXISTS cosmetics;
-DROP TABLE IF EXISTS ratio;
-DROP TABLE IF EXISTS ingredient;
-DROP TABLE IF EXISTS Notice;
-DROP TABLE IF EXISTS Scrap;
-DROP TABLE IF EXISTS comments;
-DROP TABLE IF EXISTS manager;
-DROP TABLE IF EXISTS diagnose;
-DROP TABLE IF EXISTS calendar_tasks;
-DROP TABLE IF EXISTS posts_detail;
-DROP TABLE IF EXISTS predict_model;
-DROP TABLE IF EXISTS Community_Category;
-DROP TABLE IF EXISTS users;
 
-------------------------------------------------------------
 -- 1. 사용자 테이블
-------------------------------------------------------------
 CREATE TABLE users (
     user_id VARCHAR(255) PRIMARY KEY COMMENT '사용자 아이디',
     user_email VARCHAR(255) NOT NULL UNIQUE COMMENT '사용자 이메일',
@@ -36,25 +17,19 @@ CREATE TABLE users (
     user_man TINYINT(1) DEFAULT 0 COMMENT '관리자 여부'
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
-------------------------------------------------------------
 -- 2. 게시글 카테고리 테이블
-------------------------------------------------------------
 CREATE TABLE Community_Category (
     category_code BIGINT AUTO_INCREMENT PRIMARY KEY COMMENT '카테고리 고유번호',
     category_name VARCHAR(255) NOT NULL COMMENT '카테고리 이름'
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
-------------------------------------------------------------
 -- 3. 예측 모델 테이블
-------------------------------------------------------------
 CREATE TABLE predict_model (
     model_code BIGINT AUTO_INCREMENT PRIMARY KEY COMMENT '모델 고유번호',
     model_name VARCHAR(255) NOT NULL COMMENT '모델 이름'
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
-------------------------------------------------------------
 -- 4. 게시글 테이블
-------------------------------------------------------------
 CREATE TABLE posts_detail (
     post_code BIGINT AUTO_INCREMENT PRIMARY KEY COMMENT '게시글 고유번호',
     post_user_id VARCHAR(255) NOT NULL COMMENT '사용자 아이디',
@@ -79,9 +54,7 @@ CREATE TABLE posts_detail (
         ON UPDATE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
-------------------------------------------------------------
 -- 5. 댓글 테이블
-------------------------------------------------------------
 CREATE TABLE comments (
     cmt_code BIGINT AUTO_INCREMENT PRIMARY KEY COMMENT '댓글 고유번호',
     cmt_post_code BIGINT NOT NULL COMMENT '게시글 고유번호',
@@ -102,9 +75,7 @@ CREATE TABLE comments (
         ON UPDATE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
-------------------------------------------------------------
 -- 6. 스크랩 테이블
-------------------------------------------------------------
 CREATE TABLE Scrap (
     scrap_code BIGINT AUTO_INCREMENT PRIMARY KEY COMMENT '스크랩 고유번호',
     scrap_user_id VARCHAR(255) NOT NULL COMMENT '사용자 아이디',
@@ -127,9 +98,7 @@ CREATE TABLE Scrap (
         UNIQUE (scrap_user_id, scrap_post_code)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
-------------------------------------------------------------
 -- 7. 캘린더 테이블
-------------------------------------------------------------
 CREATE TABLE calendar_tasks (
     cal_code BIGINT AUTO_INCREMENT PRIMARY KEY COMMENT '캘린더 고유번호',
     cal_user_id VARCHAR(255) NOT NULL COMMENT '사용자 아이디',
@@ -147,9 +116,7 @@ CREATE TABLE calendar_tasks (
         ON UPDATE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
-------------------------------------------------------------
 -- 8. 진단 테이블
-------------------------------------------------------------
 CREATE TABLE diagnose (
     diag_code BIGINT AUTO_INCREMENT PRIMARY KEY COMMENT '진단 고유번호',
     diag_model_code BIGINT NOT NULL COMMENT '모델 고유번호',
@@ -172,9 +139,7 @@ CREATE TABLE diagnose (
         ON UPDATE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
-------------------------------------------------------------
 -- 9. 결과 비율 테이블
-------------------------------------------------------------
 CREATE TABLE ratio (
     ratio_code BIGINT AUTO_INCREMENT PRIMARY KEY COMMENT '비율 코드',
     diag_code BIGINT NOT NULL COMMENT '진단 고유번호',
@@ -188,9 +153,7 @@ CREATE TABLE ratio (
         ON UPDATE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
-------------------------------------------------------------
 -- 10. 성분 테이블
-------------------------------------------------------------
 CREATE TABLE ingredient (
     ing_code BIGINT AUTO_INCREMENT PRIMARY KEY COMMENT '성분 고유번호',
     diag_code BIGINT NOT NULL COMMENT '진단 고유번호',
@@ -203,9 +166,7 @@ CREATE TABLE ingredient (
         ON UPDATE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
-------------------------------------------------------------
 -- 11. 화장품 테이블
-------------------------------------------------------------
 CREATE TABLE cosmetics (
     cos_code BIGINT AUTO_INCREMENT PRIMARY KEY COMMENT '화장품 고유번호',
     ing_code BIGINT NOT NULL COMMENT '성분 고유번호',
@@ -220,9 +181,7 @@ CREATE TABLE cosmetics (
         ON UPDATE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
-------------------------------------------------------------
 -- 12. 알림 테이블
-------------------------------------------------------------
 CREATE TABLE Notice (
     noti_code BIGINT AUTO_INCREMENT PRIMARY KEY COMMENT '알림 고유번호',
     noti_sender_user_id VARCHAR(255) NOT NULL COMMENT '댓글 쓴 사용자 아이디',
@@ -258,9 +217,7 @@ CREATE TABLE Notice (
         ON UPDATE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
-------------------------------------------------------------
 -- 13. 관리자 테이블
-------------------------------------------------------------
 CREATE TABLE manager (
     man_code BIGINT AUTO_INCREMENT PRIMARY KEY COMMENT '관리자 고유번호',
     user_id VARCHAR(255) NOT NULL COMMENT '사용자 아이디',

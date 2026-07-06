@@ -1,12 +1,13 @@
 package com.Skin_Predict_Platform.project.model;
 
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.Id;
 import jakarta.persistence.PrePersist;
 import jakarta.persistence.Table;
-import java.time.LocalDate;
-import java.time.LocalDateTime;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
@@ -47,6 +48,7 @@ public class User {
     @Column(name = "user_man")
     private Boolean userMan;
 
+    // 비어있는 데이터 값 기본 값 지정.
     @PrePersist
     void prePersist() {
         if (userCreatedAt == null) {
