@@ -3,6 +3,7 @@ import { Link, useNavigate } from "react-router-dom";
 import "./MainPage.css";
 import { setCalInsert } from "../springApi/CalendarSpringBootApi";
 import { getCalList } from "../springApi/CalendarSpringBootApi"; // 2. get 함수 임포트 가정
+import Header from "../components/Header";
 
 import { useEffect } from "react";
 
@@ -260,8 +261,9 @@ function MainPage() {
 
   return (
     <div className="main_app">
-      {/* <header className="main_header">
-        <div>
+      <header className="main_header">
+        <Header/>
+        {/* <div>
           <p className="main_eyebrow">SKIN DIARY</p>
           <p className="main_logo">Triple Skin</p>
         </div>
@@ -271,8 +273,9 @@ function MainPage() {
           onClick={() => navigate("/mypage")}
         >
           마이페이지
-        </button>
-      </header> */}
+        </button> */}
+      </header>
+      
 
       <div className="main_grid">
         {/* 좌측: 달력 + 오늘의 할일 */}
