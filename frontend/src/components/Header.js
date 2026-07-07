@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import "./Header.css";
 
 function getLoginUserId() {
-  return localStorage.getItem("userId");
+  return localStorage.getItem("loginUserId");
 }
 
 function Header() {
@@ -11,7 +11,7 @@ function Header() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
 
   const handleLogout = () => {
-    localStorage.removeItem("userId");
+    localStorage.removeItem("loginUserId");
     navigate("/login");
   };
 

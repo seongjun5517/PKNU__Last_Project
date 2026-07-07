@@ -1,0 +1,177 @@
+@import url('https://fonts.googleapis.com/css2?family=Gowun+Batang:wght@400;700&display=swap');
+@import url('https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.css');
+
+.community_write_page {
+  --bg-cream: #fbf6f1;
+  --card-white: #ffffff;
+  --ink: #2e2438;
+  --ink-soft: #6e6478;
+  --rose: #bd6f63;
+  --rose-dark: #a65a50;
+  --rose-tint: #f3e4df;
+  --line: rgba(46, 36, 56, 0.1);
+
+  min-height: 100vh;
+  padding: 34px 40px 64px;
+  background: var(--bg-cream);
+  color: var(--ink);
+  font-family: 'Pretendard', -apple-system, BlinkMacSystemFont, sans-serif;
+}
+
+.community_write_page * {
+  box-sizing: border-box;
+}
+
+.community_write_shell {
+  width: min(100%, 920px);
+  margin: 0 auto;
+}
+
+.community_write_topbar {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 18px;
+  margin-bottom: 22px;
+}
+
+.community_write_eyebrow {
+  margin: 0 0 8px;
+  color: var(--rose-dark);
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.18em;
+}
+
+.community_write_topbar h1 {
+  margin: 0;
+  font-family: 'Gowun Batang', serif;
+  font-size: 34px;
+  line-height: 1.2;
+}
+
+.community_write_topbar button,
+.community_write_actions button {
+  min-height: 42px;
+  border-radius: 8px;
+  padding: 0 18px;
+  font-size: 14px;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.community_write_topbar button,
+.community_write_actions button[type="button"] {
+  border: 1px solid var(--line);
+  background: var(--card-white);
+  color: var(--ink-soft);
+}
+
+.community_write_form {
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  padding: 24px;
+  background: var(--card-white);
+  box-shadow: 0 18px 40px rgba(46, 36, 56, 0.06);
+}
+
+.community_write_form label {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-bottom: 18px;
+  color: var(--ink-soft);
+  font-size: 13px;
+  font-weight: 800;
+}
+
+.community_write_form select,
+.community_write_form input,
+.community_write_form textarea {
+  width: 100%;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--bg-cream);
+  color: var(--ink);
+  font-family: 'Pretendard', sans-serif;
+  font-size: 14px;
+}
+
+.community_write_form select,
+.community_write_form input {
+  min-height: 46px;
+  padding: 0 13px;
+}
+
+.community_write_form textarea {
+  resize: vertical;
+  padding: 14px;
+  line-height: 1.6;
+}
+
+.community_write_form select:focus,
+.community_write_form input:focus,
+.community_write_form textarea:focus {
+  outline: none;
+  border-color: var(--rose);
+  box-shadow: 0 0 0 3px rgba(189, 111, 99, 0.14);
+}
+
+.community_write_message {
+  margin: 0 0 16px;
+  border-radius: 8px;
+  padding: 12px 14px;
+  background: var(--rose-tint);
+  color: var(--rose-dark);
+  font-size: 13px;
+  font-weight: 800;
+}
+
+.community_write_actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
+.community_write_actions button[type="submit"] {
+  border: 0;
+  background: var(--ink);
+  color: #ffffff;
+}
+
+.community_write_actions button[type="submit"]:hover {
+  background: var(--rose-dark);
+}
+
+.community_write_actions button:disabled {
+  cursor: not-allowed;
+  opacity: 0.62;
+}
+
+@media (max-width: 720px) {
+  .community_write_page {
+    padding: 24px 16px 42px;
+  }
+
+  .community_write_topbar {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .community_write_topbar h1 {
+    font-size: 28px;
+  }
+
+  .community_write_topbar button,
+  .community_write_actions button {
+    width: 100%;
+  }
+
+  .community_write_form {
+    padding: 18px;
+  }
+
+  .community_write_actions {
+    flex-direction: column-reverse;
+  }
+}
