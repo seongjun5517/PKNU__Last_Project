@@ -4,18 +4,51 @@ import numpy as np
 import base64
 from collections import Counter
 from ultralytics import YOLO
+import os
+import uuid
+from flask import send_from_directory
+
 
 app = Flask(__name__)
+UPLOAD_FOLDER = "uploads"
+
+os.makedirs(UPLOAD_FOLDER, exist_ok=True)
+
 
 # 서버 시작 시 모델 한 번만 로드 (요청마다 로드하면 매우 느려짐)
 MODEL_PATH = './models/skin_bi_ato_acne_normal_v3/weights/best.pt'
 model = YOLO(MODEL_PATH)
 
 
+# ---------- 클래스별 색상 (BGR) ----------
+# 필요하면 실제 클래스 이름/원하는 색으로 자유롭게 수정하세요.
+CLASS_COLORS = {
+    "acne": (66, 88, 245),     # 코랄 레드
+    "bi": (66, 194, 245),      # 골드/앰버
+    "ato": (135, 178, 95),     # 세이지 그린
+    "normal": (200, 170, 130), # 뮤트 블루그레이
+}
+DEFAULT_COLOR = (180, 130, 200)  # 매핑에 없는 클래스용 기본색
+
+
+def get_color(cls_name):
+    return CLASS_COLORS.get(cls_name, DEFAULT_COLOR)
+
+
+def draw_box(img, x1, y1, x2, y2, color, thickness=2):
+    """일반적인 사각형 박스"""
+    cv2.rectangle(img, (x1, y1), (x2, y2), color, thickness, cv2.LINE_AA)
+
+
 @app.route('/health', methods=['GET'])
 def health():
     """서버가 살아있는지 확인용"""
     return jsonify({"status": "ok"})
+
+
+@app.route("/images/<filename>")
+def get_image(filename):
+    return send_from_directory(UPLOAD_FOLDER, filename)
 
 
 @app.route('/predict', methods=['POST'])
@@ -45,27 +78,30 @@ def predict():
         for cls_id, count in counts.items()
     ]
 
-    # 결과 이미지 그리기
+    # ---------- 결과 이미지 그리기 (박스만) ----------
     img_result = img.copy()
-    cv2.rectangle(img_result, (10, 10), (250, 40 + len(counts) * 30), (0, 0, 0), -1)
-    cv2.putText(img_result, "Detection Summary", (20, 35),
-                cv2.FONT_HERSHEY_SIMPLEX, 0.7, (255, 255, 255), 2)
-
-    for i, (cls_id, count) in enumerate(counts.items()):
-        label_text = f"{names[cls_id]}: {count}"
-        cv2.putText(img_result, label_text, (20, 70 + (i * 30)),
-                    cv2.FONT_HERSHEY_SIMPLEX, 0.6, (0, 255, 255), 1)
 
     for box in result.boxes:
         x1, y1, x2, y2 = map(int, box.xyxy[0])
-        cv2.rectangle(img_result, (x1, y1), (x2, y2), (0, 255, 0), 2)
+        cls_id = int(box.cls[0])
+        cls_name = names[cls_id]
+        color = get_color(cls_name)
 
-    _, buffer = cv2.imencode('.jpg', img_result)
-    img_base64 = base64.b64encode(buffer).decode('utf-8')
+        draw_box(img_result, x1, y1, x2, y2, color)
+
+    _, buffer = cv2.imencode(".jpg", img_result)
+    img_base64 = base64.b64encode(buffer).decode("utf-8")
+
+    filename = f"{uuid.uuid4()}.jpg"
+    save_path = os.path.join(UPLOAD_FOLDER, filename)
+    cv2.imwrite(save_path, img_result)
+
+    img_path = f"/images/{filename}"
 
     return jsonify({
         "detections": detections,
-        "image": f"data:image/jpeg;base64,{img_base64}"
+        "image": f"data:image/jpeg;base64,{img_base64}",
+        "imgPath": img_path
     })
 
 
