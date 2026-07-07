@@ -63,7 +63,7 @@ function MainPage() {
             return;
         }
         try {
-            const response = await getCalList(userId);
+            const response = await getCalList(loginUserId);
 
             const fetchedData = response.data.reduce((acc, item) => {
                 // 서버 응답이 "2026-07-06 14:30:00"(공백) 이든
@@ -202,7 +202,7 @@ function MainPage() {
         : `${selectedKey}T09:00:00`;
 
         const newEntry = {
-            calUserId: userId,                 // 로그인한 사용자 아이디
+            calUserId: loginUserId,                 // 로그인한 사용자 아이디
             calTaskDate: combinedDateTime,          // "2026-07-03" 형식
             calTitle: titleInput.trim(),       // 제목
             calDescription: "",                // 필요 시 추가
