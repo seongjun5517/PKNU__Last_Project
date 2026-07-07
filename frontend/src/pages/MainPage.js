@@ -37,7 +37,7 @@ function sortByTime(list) {
 // 실제로 로그인 코드에서 localStorage.setItem("여기 키 이름", ...) 으로
 // 저장하신 키 이름과 다르면 아래 "userId" 부분만 그 키 이름으로 바꿔주세요.
 function getLoginUserId() {
-    return localStorage.getItem("userId");
+    return localStorage.getItem("loginUserId");
 }
 
 function MainPage() {
@@ -56,13 +56,13 @@ function MainPage() {
     // 데이터 불러오기 함수
     useEffect(() => {
     const fetchEntries = async () => {
-        const userId = getLoginUserId();
-        if (!userId) {
+        const loginUserId = getLoginUserId();
+        if (!loginUserId) {
             console.warn("로그인 정보가 없습니다. 캘린더를 불러올 수 없습니다.");
             return;
         }
         try {
-            const response = await getCalList(userId);
+            const response = await getCalList(loginUserId);
 
             const fetchedData = response.data.reduce((acc, item) => {
                 // 서버 응답이 "2026-07-06 14:30:00"(공백) 이든

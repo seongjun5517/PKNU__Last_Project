@@ -1,9 +1,11 @@
 package com.Skin_Predict_Platform.project.repository;
 
-import com.Skin_Predict_Platform.project.model.User;
 import java.util.Optional;
+
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
+
+import com.Skin_Predict_Platform.project.model.User;
 
 @Repository
 public interface UserRepository extends JpaRepository<User, String> {

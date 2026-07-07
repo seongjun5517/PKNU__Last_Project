@@ -140,6 +140,71 @@
   line-height: 1.6;
 }
 
+.section_step_list {
+  list-style: none;
+  margin: 18px 0 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.section_step_list button {
+  width: 100%;
+  min-height: 42px;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: var(--bg-cream);
+  color: var(--ink-soft);
+  font-family: 'Pretendard', sans-serif;
+  font-size: 13px;
+  font-weight: 800;
+  text-align: left;
+  padding: 8px 10px;
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  cursor: pointer;
+  transition: background 160ms ease, border-color 160ms ease, color 160ms ease;
+}
+
+.section_step_list button:hover,
+.section_step_list button.active {
+  border-color: var(--rose);
+  background: var(--rose-tint);
+  color: var(--ink);
+}
+
+.section_step_list button.done {
+  border-color: rgba(124, 155, 130, 0.4);
+}
+
+.section_step_list span {
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: var(--card-white);
+  color: var(--rose-dark);
+  font-size: 11px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.section_step_list button.done span {
+  background: var(--sage);
+  color: #ffffff;
+}
+
+.section_step_list em {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-style: normal;
+}
+
 .survey_submit_button {
   width: 100%;
   margin-top: 18px;
@@ -182,6 +247,13 @@
   margin: 0;
   font-family: 'Gowun Batang', serif;
   font-size: 21px;
+}
+
+.section_page_label {
+  margin: 0 0 5px;
+  color: var(--rose-dark);
+  font-size: 12px;
+  font-weight: 800;
 }
 
 .section_title_row span {
@@ -283,6 +355,58 @@
   border: 4px solid var(--rose);
 }
 
+.survey_pagination {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-top: 18px;
+  padding-top: 18px;
+  border-top: 1px dashed var(--line);
+}
+
+.page_button {
+  min-width: 116px;
+  min-height: 46px;
+  border-radius: 12px;
+  font-family: 'Pretendard', sans-serif;
+  font-size: 14px;
+  font-weight: 800;
+  cursor: pointer;
+  transition: background 160ms ease, border-color 160ms ease, color 160ms ease,
+    transform 160ms ease;
+}
+
+.page_button:not(:disabled):hover {
+  transform: translateY(-1px);
+}
+
+.page_button.primary {
+  border: none;
+  background: var(--ink);
+  color: #ffffff;
+}
+
+.page_button.primary:hover {
+  background: var(--rose-dark);
+}
+
+.page_button.secondary {
+  border: 1px solid var(--line);
+  background: var(--card-white);
+  color: var(--ink-soft);
+}
+
+.page_button.secondary:not(:disabled):hover {
+  border-color: var(--rose);
+  color: var(--rose-dark);
+}
+
+.page_button:disabled {
+  cursor: not-allowed;
+  opacity: 0.45;
+}
+
 @media (max-width: 900px) {
   .survey_app {
     padding: 22px 20px 40px;
@@ -309,5 +433,13 @@
 
   .option_grid {
     grid-template-columns: 1fr;
+  }
+
+  .survey_pagination {
+    flex-direction: column-reverse;
+  }
+
+  .page_button {
+    width: 100%;
   }
 }
