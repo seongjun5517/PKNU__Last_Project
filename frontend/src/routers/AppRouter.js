@@ -5,6 +5,7 @@ import StartPage from "../pages/StartPage";
 import MainPage from "../pages/MainPage";
 import SkinTypeSurvey from "../pages/SkinTypeSurvey";
 import SkinTypeResultPage from "../pages/SkinTypeResultPage";
+import Analysis1 from "../pages/Analysis1";
 
 export default function AppRouter() {
   return (
@@ -17,6 +18,7 @@ export default function AppRouter() {
         <Route path="/main" element={<MainPage />} />
         <Route path="/analysis" element={<SkinTypeSurvey />} />
         <Route path="/analysis/result" element={<SkinTypeResultPage />} />
+        <Route path="/analysis1" element={<Analysis1 />} />
       </Routes>
     </BrowserRouter>
   );
