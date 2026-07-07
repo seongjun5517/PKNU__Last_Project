@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import "./Header.css";
 
 function getLoginUserId() {
-  return localStorage.getItem("userId");
+  return localStorage.getItem("loginUserId");
 }
 
 // ---- 알람 관련 부분 ----
@@ -54,7 +54,7 @@ function Header() {
   const unreadCount = notifications.filter((n) => !n.isRead).length;
 
   const handleLogout = () => {
-    localStorage.removeItem("userId");
+    localStorage.removeItem("loginUserId");
     navigate("/login");
   };
 

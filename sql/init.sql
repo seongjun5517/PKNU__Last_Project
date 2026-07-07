@@ -33,6 +33,7 @@ CREATE TABLE Community_Category (
     category_name VARCHAR(255) NOT NULL COMMENT '카테고리 이름'
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
+
 CREATE TABLE posts_detail (
     post_code BIGINT AUTO_INCREMENT PRIMARY KEY COMMENT '게시글 고유번호',
     post_user_id VARCHAR(255) NOT NULL COMMENT '사용자 아이디',
