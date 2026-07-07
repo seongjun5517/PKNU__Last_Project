@@ -16,6 +16,11 @@
   --gold: #D9A441;
   --line: rgba(46, 36, 56, 0.09);
 
+  /* 버튼 전용 색상: 플럼(자주빛) — rose/sage와 톤은 맞추되 액션 버튼임을 구분 */
+  --plum: #7A5570;
+  --plum-dark: #614259;
+  --plum-tint: #EFE6ED;
+
   min-height: 100vh;
   background: var(--bg-cream);
   background-image:
@@ -67,8 +72,8 @@
 }
 
 .mypage_link:hover {
-  border-color: var(--rose);
-  color: var(--rose-dark);
+  border-color: var(--plum);
+  color: var(--plum-dark);
 }
 
 /* ---------- 전체 그리드 ---------- */
@@ -126,7 +131,7 @@
 }
 
 .card_link_button:hover {
-  color: var(--rose-dark);
+  color: var(--plum-dark);
 }
 
 /* ---------- 달력 ---------- */
@@ -167,7 +172,7 @@
   height: 26px;
   border-radius: 50%;
   font-size: 14px;
-  color: var(--rose-dark);
+  color: var(--plum-dark);
   cursor: pointer;
   line-height: 1;
   display: flex;
@@ -177,7 +182,7 @@
 }
 
 .calendar_nav button:hover {
-  background: var(--rose-tint);
+  background: var(--plum-tint);
 }
 
 .streak_badge {
@@ -219,7 +224,7 @@
 .calendar_cell {
   position: relative;
   min-height: 56px;
-  border: 1px solid transparent;
+  border: 1px solid var(--line);
   background: transparent;
   border-radius: 12px;
   cursor: pointer;
@@ -257,9 +262,9 @@
 }
 
 .calendar_cell.selected .cell_day {
-  background: var(--rose);
+  background: var(--plum);
   color: #ffffff;
-  border-color: var(--rose);
+  border-color: var(--plum);
 }
 
 .cell_entries {
@@ -336,7 +341,7 @@
 .time_input:focus,
 .new_category_input:focus {
   outline: none;
-  border-color: var(--rose);
+  border-color: var(--plum);
 }
 
 .time_input {
@@ -385,8 +390,8 @@
 }
 
 .category_chip.add_chip:hover {
-  border-color: var(--rose);
-  color: var(--rose-dark);
+  border-color: var(--plum);
+  color: var(--plum-dark);
 }
 
 /* 새 카테고리 만들기 */
@@ -427,7 +432,7 @@
 
 .new_category_confirm {
   border: none;
-  background: var(--ink);
+  background: var(--plum);
   color: #ffffff;
   font-size: 12px;
   font-weight: 600;
@@ -435,10 +440,11 @@
   border-radius: 999px;
   cursor: pointer;
   white-space: nowrap;
+  transition: background 160ms ease;
 }
 
 .new_category_confirm:hover {
-  background: var(--rose-dark);
+  background: var(--plum-dark);
 }
 
 /* 반복 토글 */
@@ -456,7 +462,7 @@
 .repeat_toggle input {
   width: 15px;
   height: 15px;
-  accent-color: var(--rose);
+  accent-color: var(--plum);
   cursor: pointer;
 }
 
@@ -479,14 +485,14 @@
 }
 
 .day_toggle.active {
-  background: var(--rose);
-  border-color: var(--rose);
+  background: var(--plum);
+  border-color: var(--plum);
   color: #ffffff;
 }
 
 .entry_add_button {
   border: none;
-  background: var(--ink);
+  background: var(--plum);
   color: #ffffff;
   font-weight: 600;
   font-size: 13.5px;
@@ -497,7 +503,7 @@
 }
 
 .entry_add_button:hover {
-  background: var(--rose-dark);
+  background: var(--plum-dark);
 }
 
 /* 선택 날짜 일정 목록 */
@@ -595,7 +601,7 @@
 }
 
 .check_control input:focus-visible + .check_mark {
-  outline: 2px solid var(--rose);
+  outline: 2px solid var(--plum);
   outline-offset: 2px;
 }
 
@@ -712,7 +718,7 @@
 }
 
 .post_title:hover {
-  color: var(--rose-dark);
+  color: var(--plum-dark);
   text-decoration: underline;
 }
 
@@ -777,7 +783,7 @@
   min-height: 108px;
   border: none;
   border-radius: 20px;
-  background: linear-gradient(160deg, var(--ink) 0%, #43324f 100%);
+  background: linear-gradient(160deg, var(--plum) 0%, #3D2B3F 100%);
   color: #ffffff;
   cursor: pointer;
   overflow: hidden;
@@ -798,29 +804,6 @@
   gap: 12px;             /* 버튼 사이의 간격 */
   justify-content: center; /* 필요 시 가운데 정렬 */
   align-items: stretch;    /* 세로 기준 맞춤 */
-}
-
-.analysis_ring {
-  position: absolute;
-  right: -30px;
-  top: 50%;
-  width: 140px;
-  height: 140px;
-  border-radius: 50%;
-  transform: translateY(-50%);
-  background: radial-gradient(circle, rgba(217, 164, 65, 0.55) 0%, rgba(189, 111, 99, 0.25) 45%, transparent 70%);
-  animation: pulseGlow 3.2s ease-in-out infinite;
-}
-
-@keyframes pulseGlow {
-  0%, 100% { opacity: 0.55; transform: translateY(-50%) scale(0.92); }
-  50% { opacity: 1; transform: translateY(-50%) scale(1.06); }
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .analysis_ring {
-    animation: none;
-  }
 }
 
 .analysis_label {
@@ -860,12 +843,6 @@
   .analysis_button {
     min-height: 92px;
     padding: 0 14px;
-  }
-
-  .analysis_ring {
-    width: 90px;
-    height: 90px;
-    right: -20px;
   }
 
   .analysis_label {

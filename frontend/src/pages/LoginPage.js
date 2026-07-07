@@ -2,9 +2,12 @@ import { Link, useNavigate } from "react-router-dom";
 import { useState } from "react";
 import { loginMember } from "../springApi/memberSpringBootApi";
 import "./LoginPage.css";
+import { useAuth } from "../context/AuthContext";
+
 
 function LoginPage() {
   const navigate = useNavigate();
+  const { login } = useAuth();
 
   const [form, setForm] = useState({
     user_id: "",
@@ -35,7 +38,12 @@ function LoginPage() {
 
     try {
       await loginMember(loginPayload);
-      localStorage.setItem("loginUserId", loginPayload.user_id);
+      
+      // 3. 여기서 전역 상태(Context)를 업데이트합니다.
+      // login() 내부에서 localStorage.setItem도 처리되도록 
+      // AuthContext.js를 작성했으므로 여기선 login(id)만 호출하면 됩니다.
+      login(loginPayload.user_id); 
+      
       navigate("/main");
     } catch (error) {
       setMessage(error.response?.data || "서버와 연결할 수 없습니다.");
