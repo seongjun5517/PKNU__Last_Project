@@ -554,7 +554,7 @@ function MainPage() {
           >
             <span className="analysis_ring" aria-hidden="true" />
             <span className="analysis_label">
-              피부 타입 분석하러 가기
+              피부 타입 진단하기
             </span>
           </button>
           <button
