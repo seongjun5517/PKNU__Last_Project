@@ -3,7 +3,7 @@ import { Link, useNavigate } from "react-router-dom";
 import "./MainPage.css";
 import { setCalInsert } from "../springApi/CalendarSpringBootApi";
 import { getCalList } from "../springApi/CalendarSpringBootApi"; // 2. get 함수 임포트 가정
-import Header from "../components/Header";
+import { useAuth } from "../context/AuthContext";
 
 import { useEffect } from "react";
 
@@ -37,11 +37,12 @@ function sortByTime(list) {
 // 로그인 시 localStorage에 저장해둔 사용자 아이디를 가져옵니다.
 // 실제로 로그인 코드에서 localStorage.setItem("여기 키 이름", ...) 으로
 // 저장하신 키 이름과 다르면 아래 "userId" 부분만 그 키 이름으로 바꿔주세요.
-function getLoginUserId() {
-    return localStorage.getItem("userId");
-}
+// function getLoginUserId() {
+//     return localStorage.getItem("userId");
+// }
 
 function MainPage() {
+    const { userId } = useAuth();
     const navigate = useNavigate();
     const today = useMemo(() => new Date(), []);
     const todayKey = toDateKey(today);
@@ -57,7 +58,6 @@ function MainPage() {
     // 데이터 불러오기 함수
     useEffect(() => {
     const fetchEntries = async () => {
-        const userId = getLoginUserId();
         if (!userId) {
             console.warn("로그인 정보가 없습니다. 캘린더를 불러올 수 없습니다.");
             return;
@@ -191,7 +191,7 @@ function MainPage() {
     const handleAddEntry = async () => {
     if (!titleInput.trim()) return;
 
-    const userId = getLoginUserId();
+    
     if (!userId) {
         alert("로그인이 필요합니다.");
         return;
@@ -261,21 +261,6 @@ function MainPage() {
 
   return (
     <div className="main_app">
-      <header className="main_header">
-        <Header/>
-        {/* <div>
-          <p className="main_eyebrow">SKIN DIARY</p>
-          <p className="main_logo">Triple Skin</p>
-        </div>
-        <button
-          type="button"
-          className="mypage_link"
-          onClick={() => navigate("/mypage")}
-        >
-          마이페이지
-        </button> */}
-      </header>
-      
 
       <div className="main_grid">
         {/* 좌측: 달력 + 오늘의 할일 */}

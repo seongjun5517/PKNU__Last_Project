@@ -1,5 +1,7 @@
 package com.Skin_Predict_Platform.project.repository;
 
+import java.util.Date;
+import java.util.List;
 import java.util.Optional;
 
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -19,4 +21,6 @@ public interface DeepRepository extends JpaRepository<Deepmodel, Long> {
     // 오늘 가장 최근 예측 결과
     @Query(value = "SELECT dtype_result FROM deep WHERE dtype_user_id = :userId AND DATE(dtype_date) = CURDATE() ORDER BY dtype_date DESC LIMIT 1", nativeQuery = true)
     Optional<String> findTodayPredictByUserId(@Param("userId") String userId);
+
+    List<Deepmodel> findByDtypeUserIdAndDtypeDateBetween(String userId, Date start, Date end);
 }
