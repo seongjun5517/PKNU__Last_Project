@@ -1,29 +1,55 @@
+@import url('https://fonts.googleapis.com/css2?family=Gowun+Batang:wght@400;700&display=swap');
+@import url('https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.css');
+
 .signup_page {
+  --bg-cream: #FBF6F1;
+  --card-white: #FFFFFF;
+  --ink: #2E2438;
+  --ink-soft: #6E6478;
+  --ink-faint: #A79FB0;
+  --rose: #BD6F63;
+  --rose-dark: #A65A50;
+  --rose-tint: #F3E4DF;
+  --sage: #7C9B82;
+  --sage-dark: #5F7F66;
+  --lavender: #F1ECF4;
+  --gold: #D9A441;
+  --line: rgba(46, 36, 56, 0.09);
+
   min-height: 100vh;
   display: flex;
   align-items: center;
   justify-content: center;
   padding: 40px 20px;
   box-sizing: border-box;
-  background:
-    linear-gradient(rgba(247, 252, 250, 0.88), rgba(235, 246, 243, 0.94)),
-    url('../logo.jpg') center / cover no-repeat;
+  font-family: 'Pretendard', -apple-system, BlinkMacSystemFont, sans-serif;
+  color: var(--ink);
+  background: var(--bg-cream);
+  background-image:
+    radial-gradient(circle at 8% 0%, rgba(189, 111, 99, 0.07), transparent 40%),
+    radial-gradient(circle at 100% 10%, rgba(124, 155, 130, 0.08), transparent 45%),
+    linear-gradient(rgba(251, 246, 241, 0.9), rgba(251, 246, 241, 0.94)),
+    url('../logo.jpg');
+  background-size: cover, cover, cover, cover;
+  background-position: center;
+  background-repeat: no-repeat;
 }
+
+* { box-sizing: border-box; }
 
 .signup_shell {
   width: min(100%, 1080px);
   display: grid;
   grid-template-columns: 0.92fr 1.08fr;
-  gap: 24px;
+  gap: 22px;
   align-items: stretch;
 }
 
 .signup_panel {
-  border: 1px solid rgba(38, 117, 111, 0.14);
-  border-radius: 8px;
-  background: rgba(255, 255, 255, 0.88);
-  box-shadow: 0 20px 42px rgba(22, 43, 39, 0.12);
-  box-sizing: border-box;
+  border: 1px solid var(--line);
+  border-radius: 20px;
+  background: var(--card-white);
+  box-shadow: 0 18px 40px rgba(46, 36, 56, 0.06);
 }
 
 .signup_intro_panel {
@@ -31,56 +57,87 @@
   flex-direction: column;
   justify-content: center;
   padding: 44px;
+  border-radius: 20px;
+  background: linear-gradient(160deg, var(--ink) 0%, #43324f 100%);
+  position: relative;
+  overflow: hidden;
+}
+
+.signup_intro_panel::after {
+  content: "";
+  position: absolute;
+  right: -30px;
+  top: 50%;
+  width: 180px;
+  height: 180px;
+  border-radius: 50%;
+  transform: translateY(-50%);
+  background: radial-gradient(circle, rgba(217, 164, 65, 0.45) 0%, rgba(189, 111, 99, 0.22) 45%, transparent 70%);
+  animation: signupGlow 3.2s ease-in-out infinite;
+}
+
+@keyframes signupGlow {
+  0%, 100% { opacity: 0.55; transform: translateY(-50%) scale(0.92); }
+  50% { opacity: 1; transform: translateY(-50%) scale(1.06); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .signup_intro_panel::after { animation: none; }
 }
 
 .signup_eyebrow,
 .signup_caption {
   margin: 0;
-  color: #26756f;
-  font-size: 13px;
-  font-weight: 800;
-  letter-spacing: 0;
+  position: relative;
+  z-index: 1;
+  color: var(--gold);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
 }
 
 .signup_intro_panel h1 {
   margin: 14px 0 18px;
-  color: #244a63;
-  font-size: 38px;
-  line-height: 1.2;
+  position: relative;
+  z-index: 1;
+  font-family: 'Gowun Batang', serif;
+  color: #ffffff;
+  font-size: 34px;
+  line-height: 1.25;
 }
 
 .signup_intro_panel > p:not(.signup_eyebrow) {
   margin: 0;
-  color: #506967;
-  font-size: 16px;
+  position: relative;
+  z-index: 1;
+  color: rgba(255, 255, 255, 0.72);
+  font-size: 15px;
   line-height: 1.7;
 }
 
 .signup_start_link {
   width: fit-content;
   margin-top: 24px;
-  color: #26756f;
+  position: relative;
+  z-index: 1;
+  color: var(--gold);
   font-size: 14px;
-  font-weight: 800;
+  font-weight: 700;
   text-decoration: none;
 }
 
-.signup_start_link:hover {
-  text-decoration: underline;
-}
+.signup_start_link:hover { text-decoration: underline; }
 
-.signup_form_panel {
-  padding: 36px;
-}
+.signup_form_panel { padding: 36px; }
 
-.signup_header {
-  margin-bottom: 24px;
-}
+.signup_header { margin-bottom: 24px; }
 
 .signup_header h2 {
   margin: 8px 0 0;
-  color: #1e353f;
-  font-size: 28px;
+  font-family: 'Gowun Batang', serif;
+  color: var(--ink);
+  font-size: 24px;
   line-height: 1.25;
 }
 
@@ -100,9 +157,9 @@
   display: flex;
   flex-direction: column;
   gap: 8px;
-  color: #243f47;
-  font-size: 14px;
-  font-weight: 700;
+  color: var(--ink-soft);
+  font-size: 13px;
+  font-weight: 600;
   text-align: left;
 }
 
@@ -110,17 +167,18 @@
   width: 100%;
   min-height: 48px;
   padding: 0 14px;
-  border: 1px solid rgba(38, 117, 111, 0.22);
-  border-radius: 8px;
-  box-sizing: border-box;
-  color: #1d353a;
-  background: #ffffff;
-  font-size: 15px;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  color: var(--ink);
+  background: var(--bg-cream);
+  font-size: 14px;
+  font-family: 'Pretendard', sans-serif;
 }
 
 .signup_field input:focus {
-  border-color: #26756f;
-  outline: 3px solid rgba(38, 117, 111, 0.14);
+  outline: none;
+  border-color: var(--rose);
+  box-shadow: 0 0 0 3px rgba(189, 111, 99, 0.14);
 }
 
 .signup_profile_upload {
@@ -128,12 +186,13 @@
   align-items: center;
   gap: 14px;
   padding: 14px;
-  border: 1px dashed rgba(38, 117, 111, 0.34);
-  border-radius: 8px;
-  color: #243f47;
-  background: #f8fcfb;
+  border: 1px dashed var(--rose);
+  border-radius: 12px;
+  color: var(--ink-soft);
+  background: var(--bg-cream);
   cursor: pointer;
   text-align: left;
+  position: relative;
 }
 
 .signup_profile_preview {
@@ -144,10 +203,10 @@
   flex: 0 0 auto;
   overflow: hidden;
   border-radius: 50%;
-  color: #26756f;
-  background: #e7f5f1;
+  color: var(--rose-dark);
+  background: var(--rose-tint);
   font-size: 13px;
-  font-weight: 800;
+  font-weight: 700;
 }
 
 .signup_profile_preview img {
@@ -164,10 +223,11 @@
 
 .signup_profile_upload_text strong {
   font-size: 14px;
+  color: var(--ink);
 }
 
 .signup_profile_upload_text small {
-  color: #6c7f7b;
+  color: var(--ink-faint);
   font-size: 13px;
 }
 
@@ -182,78 +242,55 @@
 .signup_message {
   margin: 0;
   padding: 12px 14px;
-  border-radius: 8px;
-  color: #225650;
-  background: #e8f6f3;
-  font-size: 14px;
-  font-weight: 700;
+  border-radius: 12px;
+  color: var(--sage-dark);
+  background: var(--lavender);
+  font-size: 13px;
+  font-weight: 600;
   line-height: 1.45;
 }
 
 .signup_primary_button {
-  min-height: 52px;
+  min-height: 50px;
   border: 0;
-  border-radius: 8px;
+  border-radius: 12px;
   color: #ffffff;
-  background: #26756f;
-  box-shadow: 0 12px 24px rgba(38, 117, 111, 0.2);
-  font-size: 16px;
-  font-weight: 800;
+  background: var(--ink);
+  font-size: 15px;
+  font-weight: 700;
   cursor: pointer;
-  transition:
-    transform 160ms ease,
-    background-color 160ms ease,
-    box-shadow 160ms ease;
+  transition: background 160ms ease, transform 160ms ease;
 }
 
 .signup_primary_button:hover {
+  background: var(--rose-dark);
   transform: translateY(-1px);
-  background: #1f625d;
-  box-shadow: 0 14px 28px rgba(38, 117, 111, 0.26);
 }
 
 .signup_primary_button:focus-visible {
-  outline: 3px solid rgba(38, 117, 111, 0.24);
-  outline-offset: 3px;
+  outline: 2px solid var(--rose);
+  outline-offset: 2px;
 }
 
 .signup_switch {
   margin: 22px 0 0;
-  color: #566a67;
-  font-size: 14px;
+  color: var(--ink-faint);
+  font-size: 13px;
   text-align: center;
 }
 
 .signup_switch a {
-  color: #26756f;
-  font-weight: 800;
+  color: var(--rose-dark);
+  font-weight: 700;
   text-decoration: none;
 }
 
-.signup_switch a:hover {
-  text-decoration: underline;
-}
+.signup_switch a:hover { text-decoration: underline; }
 
 @media (max-width: 780px) {
-  .signup_page {
-    padding: 24px 16px;
-  }
-
-  .signup_shell {
-    grid-template-columns: 1fr;
-    gap: 16px;
-  }
-
-  .signup_intro_panel,
-  .signup_form_panel {
-    padding: 28px 22px;
-  }
-
-  .signup_intro_panel h1 {
-    font-size: 30px;
-  }
-
-  .signup_grid {
-    grid-template-columns: 1fr;
-  }
+  .signup_page { padding: 24px 16px; }
+  .signup_shell { grid-template-columns: 1fr; gap: 16px; }
+  .signup_intro_panel, .signup_form_panel { padding: 28px 22px; }
+  .signup_intro_panel h1 { font-size: 30px; }
+  .signup_grid { grid-template-columns: 1fr; }
 }

@@ -37,7 +37,7 @@ function sortByTime(list) {
 // 실제로 로그인 코드에서 localStorage.setItem("여기 키 이름", ...) 으로
 // 저장하신 키 이름과 다르면 아래 "userId" 부분만 그 키 이름으로 바꿔주세요.
 function getLoginUserId() {
-    return localStorage.getItem("userId");
+    return localStorage.getItem("loginUserId");
 }
 
 function MainPage() {
@@ -56,13 +56,13 @@ function MainPage() {
     // 데이터 불러오기 함수
     useEffect(() => {
     const fetchEntries = async () => {
-        const userId = getLoginUserId();
-        if (!userId) {
+        const loginUserId = getLoginUserId();
+        if (!loginUserId) {
             console.warn("로그인 정보가 없습니다. 캘린더를 불러올 수 없습니다.");
             return;
         }
         try {
-            const response = await getCalList(userId);
+            const response = await getCalList(loginUserId);
 
             const fetchedData = response.data.reduce((acc, item) => {
                 // 서버 응답이 "2026-07-06 14:30:00"(공백) 이든
@@ -190,8 +190,8 @@ function MainPage() {
     const handleAddEntry = async () => {
     if (!titleInput.trim()) return;
 
-    const userId = getLoginUserId();
-    if (!userId) {
+    const loginUserId = getLoginUserId();
+    if (!loginUserId) {
         alert("로그인이 필요합니다.");
         return;
     }
@@ -201,7 +201,7 @@ function MainPage() {
         : `${selectedKey}T09:00:00`;
 
         const newEntry = {
-            calUserId: userId,                 // 로그인한 사용자 아이디
+            calUserId: loginUserId,                 // 로그인한 사용자 아이디
             calTaskDate: combinedDateTime,          // "2026-07-03" 형식
             calTitle: titleInput.trim(),       // 제목
             calDescription: "",                // 필요 시 추가
@@ -260,7 +260,7 @@ function MainPage() {
 
   return (
     <div className="main_app">
-      <header className="main_header">
+      {/* <header className="main_header">
         <div>
           <p className="main_eyebrow">SKIN DIARY</p>
           <p className="main_logo">Triple Skin</p>
@@ -272,7 +272,7 @@ function MainPage() {
         >
           마이페이지
         </button>
-      </header>
+      </header> */}
 
       <div className="main_grid">
         {/* 좌측: 달력 + 오늘의 할일 */}
@@ -564,7 +564,7 @@ function MainPage() {
           >
             <span className="analysis_ring" aria-hidden="true" />
             <span className="analysis_label">
-              피부 분석하러 가기
+              피부 상태 분석하러 가기
               <span className="analysis_sub">사진 한 장으로 지금 상태 확인하기</span>
             </span>
           </button>

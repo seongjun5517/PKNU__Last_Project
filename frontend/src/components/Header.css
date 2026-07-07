@@ -1,0 +1,147 @@
+.site_header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 32px;
+  background-color: #ffffff;
+  border-bottom: 1px solid #eee;
+  position: sticky;
+  top: 0;
+  z-index: 100;
+}
+
+.site_header_logo {
+  cursor: pointer;
+  line-height: 1.2;
+}
+
+.site_header_eyebrow {
+  font-size: 11px;
+  letter-spacing: 0.08em;
+  color: #a79fb0;
+  margin: 0;
+}
+
+.site_header_title {
+  font-size: 28px;
+  font-weight: 700;
+  margin: 0;
+  color: #2b2b2b;
+}
+
+.site_header_nav {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-right: 0px;
+}
+
+.site_header_nav button {
+  background: none;
+  border: none;
+  font-size: 14px;
+  color: #444;
+  padding: 8px 12px;
+  border-radius: 6px;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.site_header_nav button:hover {
+  background-color: #f5f2f7;
+  color: #8b6fa6;
+}
+
+.site_header_nav .logout_button {
+  color: #bd6f63;
+  font-weight: 600;
+}
+
+.site_header_nav .logout_button:hover {
+  background-color: #fdecea;
+}
+
+.site_header_top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+}
+
+/* 햄버거 버튼 - 기본은 숨김 */
+.site_header_toggle {
+  display: none;
+  flex-direction: column;
+  justify-content: center;
+  gap: 5px;
+  width: 32px;
+  height: 32px;
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 0;
+}
+
+.site_header_toggle span {
+  display: block;
+  width: 100%;
+  height: 2px;
+  background-color: #333; /* 색상은 기존 헤더 텍스트 색에 맞춰 조절 */
+  transition: transform 0.25s ease, opacity 0.25s ease;
+}
+
+/* 토글 열렸을 때 X 모양으로 변형 */
+.site_header_toggle.is_open span:nth-child(1) {
+  transform: translateY(7px) rotate(45deg);
+}
+.site_header_toggle.is_open span:nth-child(2) {
+  opacity: 0;
+}
+.site_header_toggle.is_open span:nth-child(3) {
+  transform: translateY(-7px) rotate(-45deg);
+}
+
+/* 모바일 화면에서만 토글 버튼 보이기 + nav 접기 */
+@media (max-width: 768px) {
+  .site_header_toggle {
+    display: flex;
+  }
+
+  .site_header_nav {
+    display: none;
+    /* position: absolute; */
+    top: 100%;      /* 헤더 바로 아래 */
+    left: 0;
+    width: 100%;    /* 화면 전체 너비 확보 - 이게 핵심 */
+    flex-direction: column;
+    /* 버튼들 가운데로 정렬 */
+    align-items: center;
+    gap: 16px;
+    padding: 16px 0;
+    background-color: #fff; /* 배경색 (기존 헤더 색에 맞춰 조절) */
+    margin-right: 0px;
+  }
+
+  .site_header_nav.is_open {
+    display: flex;
+  }
+  
+  .site_header_nav button {
+    width: 80%;        /* 버튼 너비 통일하고 싶으면 */
+    max-width: 280px;
+  }
+}
+
+
+@media (max-width: 900px) {
+  .site_header {
+    width: 100%;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 12px;
+  }
+
+  .site_header_nav {
+    flex-wrap: wrap;
+  }
+}
