@@ -15,18 +15,29 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.Skin_Predict_Platform.project.service.DeepService;
+import com.fasterxml.jackson.annotation.JsonProperty;
 
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 
 @RestController
 @RequestMapping("/deep")
 @RequiredArgsConstructor
+@Slf4j
 public class DeepController {
 
     private final DeepService deepService;
 
     @PostMapping("/save")
     public ResponseEntity<?> save(@RequestBody SaveRequest request) {
+
+        log.info("userId = {}", request.getUserId());
+        log.info("imgPath = {}", request.getImgPath());
+
+        for (Detection d : request.getDetections()) {
+            log.info("result = {}", d.getDtypeResult());
+            log.info("cnt = {}", d.getDtypeCnt());
+        }
 
         List<String> results = request.getDetections().stream()
                 .map(Detection::getDtypeResult).toList();
@@ -44,14 +55,20 @@ public class DeepController {
         return ResponseEntity.ok(Map.of("message", "저장 완료"));
     }
 
+    /**
+     * 오늘 이미 예측한 결과(imgPath + detections)를 반환.
+     * 오늘 기록이 없으면 404.
+     */
     @GetMapping("/today")
-    public ResponseEntity<Map<String, String>> getTodayPredict(@RequestParam String userId) {
-        String result = deepService.getTodayPredictByUserId(userId);
-        if (result.isEmpty()) {
+    public ResponseEntity<?> getTodayPredict(@RequestParam String userId) {
+        DeepService.TodayPredictResult todayResult = deepService.getTodayPredictDetail(userId);
+
+        if (todayResult == null) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND)
                     .body(Map.of("message", "오늘 예측 결과 없음"));
         }
-        return ResponseEntity.ok(Map.of("result", result));
+
+        return ResponseEntity.ok(todayResult);
     }
 
     @DeleteMapping("/{dtypeCode}")
@@ -78,12 +95,27 @@ public class DeepController {
     }
 
     public static class Detection {
+
+        @JsonProperty("dtype_result")
         private String dtypeResult;
+
+        @JsonProperty("dtype_cnt")
         private Integer dtypeCnt;
 
-        public String getDtypeResult() { return dtypeResult; }
-        public void setDtypeResult(String dtypeResult) { this.dtypeResult = dtypeResult; }
-        public Integer getDtypeCnt() { return dtypeCnt; }
-        public void setDtypeCnt(Integer dtypeCnt) { this.dtypeCnt = dtypeCnt; }
+        public String getDtypeResult() {
+            return dtypeResult;
+        }
+
+        public void setDtypeResult(String dtypeResult) {
+            this.dtypeResult = dtypeResult;
+        }
+
+        public Integer getDtypeCnt() {
+            return dtypeCnt;
+        }
+
+        public void setDtypeCnt(Integer dtypeCnt) {
+            this.dtypeCnt = dtypeCnt;
+        }
     }
 }

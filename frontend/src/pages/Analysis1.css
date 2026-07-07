@@ -24,7 +24,7 @@
   box-sizing: border-box;
   font-family: 'Pretendard', -apple-system, BlinkMacSystemFont, sans-serif;
   color: var(--ink);
-  padding: 40px;
+  padding: 26px 40px 56px;
 }
 
 .analysis1_app * {
@@ -33,7 +33,10 @@
 
 /* ---------- 헤더 ---------- */
 .analysis1_header {
-  margin-bottom: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 6px;
 }
 
 .analysis1_eyebrow {
@@ -53,19 +56,34 @@
 }
 
 .analysis1_subtitle {
-  margin: 8px 0 0;
-  font-size: 13px;
+  margin: 0 0 22px;
+  font-size: 13.5px;
   color: var(--ink-soft);
 }
 
-/* ---------- 레이아웃 ---------- */
+.mypage_link {
+  border: 1px solid var(--line);
+  background: var(--card-white);
+  color: var(--ink-soft);
+  font-weight: 600;
+  font-size: 13px;
+  padding: 9px 18px;
+  border-radius: 999px;
+  cursor: pointer;
+  transition: border-color 160ms ease, color 160ms ease;
+}
+
+.mypage_link:hover {
+  border-color: var(--rose);
+  color: var(--rose-dark);
+}
+
+/* ---------- 2단 박스 그리드 ---------- */
 .analysis1_grid {
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 22px;
-  align-items: start;
-  max-width: 1000px;
-  margin: 0 auto;
+  align-items: stretch;
 }
 
 .card {
@@ -74,6 +92,8 @@
   border: 1px solid var(--line);
   box-shadow: 0 18px 40px rgba(46, 36, 56, 0.06);
   padding: 24px 26px;
+  display: flex;
+  flex-direction: column;
 }
 
 .card h2 {
@@ -84,166 +104,314 @@
   color: var(--ink);
 }
 
-/* ---------- 업로드 카드 ---------- */
-.upload_dropzone {
+.card_header_row {
   display: flex;
-  flex-direction: column;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 16px;
+}
+
+.card_header_row h2 {
+  margin: 0;
+}
+
+.today_badge {
+  display: inline-flex;
+  align-items: center;
+  font-size: 11.5px;
+  font-weight: 700;
+  color: var(--sage-dark);
+  background: color-mix(in srgb, var(--sage) 16%, white);
+  padding: 5px 12px;
+  border-radius: 999px;
+}
+
+/* ---------- 왼쪽 박스: 이미지 ---------- */
+.analysis1_image_card {
+  min-height: 460px;
+}
+
+.analysis1_image_stage {
+  position: relative;
+  flex: 1;
+  display: flex;
+}
+
+.upload_dropzone {
+  flex: 1;
+  display: flex;
   align-items: center;
   justify-content: center;
-  width: 100%;
+  min-height: 300px;
   border: 1.5px dashed var(--line);
   border-radius: 16px;
-  padding: 32px 20px;
-  text-align: center;
   cursor: pointer;
-  transition: border-color 160ms ease, background 160ms ease;
+  overflow: hidden;
+  position: relative;
   background: var(--bg-cream);
+  transition: border-color 160ms ease;
 }
 
 .upload_dropzone:hover {
   border-color: var(--rose);
-  background: var(--rose-tint);
 }
 
-.upload_dropzone input {
-  display: none;
+.upload_dropzone input[type="file"] {
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  cursor: pointer;
 }
 
 .upload_hint {
-  margin: 0;
-  font-size: 13px;
   color: var(--ink-faint);
+  text-align: center;
+  font-size: 13.5px;
+  line-height: 1.7;
 }
 
 .upload_preview {
-  margin-top: 16px;
   width: 100%;
+  height: 100%;
+  display: flex;
 }
 
 .upload_preview img {
   width: 100%;
+  max-height: 420px;
+  object-fit: contain;
   display: block;
   border-radius: 14px;
-  border: 1px solid var(--line);
+  margin: auto;
+}
+
+/* 로딩 오버레이: 점 3개가 순서대로 위로 튀는 애니메이션 */
+.analysis1_loading_overlay {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 14px;
+  background: rgba(251, 246, 241, 0.85);
+  backdrop-filter: blur(2px);
+  border-radius: 16px;
+}
+
+.analysis1_loading_overlay p {
+  color: var(--ink-soft);
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.loading_dots {
+  display: flex;
+  gap: 10px;
+}
+
+.loading_dots span {
+  width: 11px;
+  height: 11px;
+  border-radius: 50%;
+  background: var(--rose);
+  animation: dot-bounce 1s infinite ease-in-out;
+}
+
+.loading_dots span:nth-child(1) { animation-delay: 0s; }
+.loading_dots span:nth-child(2) { animation-delay: 0.15s; }
+.loading_dots span:nth-child(3) { animation-delay: 0.3s; }
+
+@keyframes dot-bounce {
+  0%, 80%, 100% { transform: translateY(0); opacity: 0.5; }
+  40% { transform: translateY(-12px); opacity: 1; }
+}
+
+/* 결과 이미지 페이드인 */
+.result_fade_in {
+  animation: fade-in 0.6s ease;
+}
+
+@keyframes fade-in {
+  from { opacity: 0; transform: scale(0.98); }
+  to { opacity: 1; transform: scale(1); }
 }
 
 .analysis1_submit {
   width: 100%;
-  margin-top: 20px;
+  margin-top: 18px;
+  padding: 14px;
   border: none;
+  border-radius: 12px;
   background: var(--ink);
   color: #ffffff;
-  font-weight: 600;
+  font-weight: 700;
   font-size: 14px;
-  padding: 14px 18px;
-  border-radius: 12px;
   cursor: pointer;
-  transition: background 160ms ease, opacity 160ms ease;
+  transition: background 160ms ease;
+}
+
+.analysis1_submit:disabled {
+  background: var(--ink-faint);
+  cursor: not-allowed;
 }
 
 .analysis1_submit:hover:not(:disabled) {
   background: var(--rose-dark);
 }
 
-.analysis1_submit:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
-}
-
-/* ---------- 메시지 ---------- */
 .analysis1_message {
-  margin: 14px 0 0;
-  font-size: 13px;
-  padding: 10px 14px;
-  border-radius: 10px;
-}
-
-.analysis1_message.error {
-  background: var(--rose-tint);
-  color: var(--rose-dark);
+  margin-top: 12px;
+  font-size: 12.5px;
   font-weight: 600;
 }
 
-.analysis1_message.info {
-  background: var(--lavender);
-  color: var(--ink-soft);
+.analysis1_message.error {
+  color: var(--rose-dark);
 }
 
-/* ---------- 결과 카드 ---------- */
+.analysis1_message.info {
+  color: var(--ink-faint);
+}
+
+/* ---------- 오른쪽 박스: 결과 ---------- */
+.analysis1_result_card {
+  min-height: 460px;
+}
+
+.analysis1_result_detail {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+}
+
+.analysis1_result_placeholder {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+}
+
 .result_empty {
   color: var(--ink-faint);
-  font-size: 13px;
-  line-height: 1.6;
-  margin: 0;
-}
-
-.result_image {
-  width: 100%;
-  display: block;
-  border-radius: 14px;
-  border: 1px solid var(--line);
-  margin-bottom: 16px;
+  font-size: 13.5px;
+  line-height: 1.7;
 }
 
 .detection_list {
   list-style: none;
-  margin: 0;
   padding: 0;
+  margin: 0 0 18px;
   display: flex;
-  flex-direction: column;
+  flex-wrap: wrap;
   gap: 8px;
 }
 
 .detection_list li {
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  font-size: 13.5px;
-  color: var(--ink);
-  padding: 12px 14px;
-  border-radius: 10px;
-  background: var(--bg-cream);
+  gap: 6px;
+  padding: 7px 14px;
+  border-radius: 999px;
+  background: var(--rose-tint);
+  font-size: 12.5px;
 }
 
 .detection_name {
-  font-weight: 600;
+  font-weight: 700;
+  color: var(--rose-dark);
 }
 
 .detection_count {
-  font-family: 'Gowun Batang', serif;
-  color: var(--rose-dark);
-  font-weight: 700;
+  color: var(--ink-faint);
 }
 
-/* ---------- 로딩 ---------- */
-.analysis1_loading {
+.analysis1_comment {
+  margin-bottom: 18px;
+}
+
+.analysis1_comment h3,
+.analysis1_recommend h3 {
+  margin: 0 0 10px;
+  font-family: 'Gowun Batang', serif;
+  font-size: 14.5px;
+  font-weight: 700;
+  color: var(--ink);
+}
+
+.analysis1_comment p {
+  margin: 0;
+  color: var(--ink-soft);
+  font-size: 13.5px;
+  line-height: 1.7;
+  background: var(--lavender);
+  padding: 15px 17px;
+  border-radius: 14px;
+  border-left: 3px solid var(--comment-accent, var(--rose));
+}
+
+.analysis1_recommend {
+  margin-top: auto;
+}
+
+.recommend_list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.recommend_list li {
   display: flex;
   align-items: center;
-  gap: 8px;
-  color: var(--ink-soft);
-  font-size: 13px;
+  gap: 12px;
+  padding: 12px 15px;
+  border-radius: 12px;
+  background: var(--bg-cream);
+  border: 1px solid var(--line);
 }
 
-.loading_dot {
-  width: 6px;
-  height: 6px;
+.recommend_dot {
+  width: 8px;
+  height: 8px;
   border-radius: 50%;
-  background: var(--rose);
-  animation: pulseDot 1.2s ease-in-out infinite;
+  background: var(--gold);
+  flex-shrink: 0;
 }
 
-@keyframes pulseDot {
-  0%, 100% { opacity: 0.3; }
-  50% { opacity: 1; }
+.recommend_text {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.recommend_name {
+  font-weight: 700;
+  font-size: 13.5px;
+  color: var(--ink);
+}
+
+.recommend_desc {
+  color: var(--ink-faint);
+  font-size: 12px;
 }
 
 /* ---------- 반응형 ---------- */
 @media (max-width: 900px) {
+  .analysis1_app {
+    padding: 22px 20px 40px;
+  }
+
   .analysis1_grid {
     grid-template-columns: 1fr;
   }
 
-  .analysis1_app {
-    padding: 24px 20px;
+  .analysis1_image_card,
+  .analysis1_result_card {
+    min-height: unset;
   }
 }
