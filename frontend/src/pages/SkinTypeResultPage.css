@@ -119,7 +119,7 @@
 }
 
 .face_outline {
-  fill: var(--skin-tone);
+  fill: var(--card-white);
   stroke: var(--ink);
   stroke-width: 4;
   stroke-linecap: round;
@@ -134,10 +134,11 @@
 }
 
 .u_zone_shape {
-  fill: var(--rose);
-  fill-opacity: 0.32;
+  fill: none;
   stroke: var(--rose);
-  stroke-width: 2.5;
+  stroke-opacity: 0.5;
+  stroke-width: 16;
+  stroke-linecap: round;
   stroke-linejoin: round;
 }
 

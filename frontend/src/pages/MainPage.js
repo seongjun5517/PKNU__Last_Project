@@ -1,6 +1,40 @@
 import { useMemo, useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import "./MainPage.css";
+import { useCalendarEntries } from "../hooks/useCalendarEntries";
+import { toDateKey, sortByTime } from "../utils/dateUtils";
+import CalendarCard from "../components/main/CalendarCard";
+import EntryPanel from "../components/main/EntryPanel";
+import CommunityList from "../components/main/CommunityList";
+import TodoList from "../components/main/TodoList";
+import UpcomingList from "../components/main/UpcomingList";
+import AnalysisButtons from "../components/main/AnalysisButtons";
+
+function MainPage() {
+  const navigate = useNavigate();
+  const today = useMemo(() => new Date(), []);
+  const todayKey = toDateKey(today);
+
+  const [viewMonth, setViewMonth] = useState(new Date(today.getFullYear(), today.getMonth(), 1));
+  const [selectedKey, setSelectedKey] = useState(todayKey);
+  const [categories] = useState([
+    { id: "pack", name: "팩", color: "#BD6F63" },
+    { id: "procedure", name: "시술", color: "#7C9B82" },
+  ]);
+
+  const { entries, addEntry, toggleEntryDone } = useCalendarEntries();
+
+  const getCategory = (id) => categories.find((c) => c.id === id) || { name: "", color: "#A79FB0" };
+
+  const streakCount = useMemo(() => {
+    let count = 0;
+    const cursor = new Date(today);
+    while (true) {
+      const key = toDateKey(cursor);
+      if ((entries[key] || []).length > 0) {
+        count += 1;
+        cursor.setDate(cursor.getDate() - 1);
+      } else break;
 import { setCalInsert } from "../springApi/CalendarSpringBootApi";
 import { getCalList } from "../springApi/CalendarSpringBootApi"; // 2. get 함수 임포트 가정
 import { useAuth } from "../context/AuthContext";
@@ -129,40 +163,23 @@ function MainPage() {
     for (let day = 1; day <= daysInMonth; day++) {
         cells.push(new Date(year, month, day));
     }
-    return cells;
-    }, [viewMonth]);
+    return count;
+  }, [entries, today]);
 
-    const streakCount = useMemo(() => {
-        let count = 0;
-        const cursor = new Date(today);
-        while (true) {
-            const key = toDateKey(cursor);
-            if ((entries[key] || []).length > 0) {
-                count += 1;
-                cursor.setDate(cursor.getDate() - 1);
-                } else break;
-            }
-        return count;
-    }, [entries, today]);
-
-    const upcomingEntries = useMemo(() => {
-        const todayStart = new Date(`${todayKey}T00:00:00`);
-        const list = [];
-        Object.entries(entries).forEach(([dateKey, dayList]) => {
-            const d = new Date(`${dateKey}T00:00:00`);
-            if (d >= todayStart) {
-                dayList.forEach((entry) => {
-                    if (!entry.done) list.push({ ...entry, dateKey });
-                });
-            }
-        });
-    list.sort((a, b) => {
-        if (a.dateKey !== b.dateKey) return a.dateKey.localeCompare(b.dateKey);
-        return (a.time || "").localeCompare(b.time || "");
+  const upcomingEntries = useMemo(() => {
+    const todayStart = new Date(`${todayKey}T00:00:00`);
+    const list = [];
+    Object.entries(entries).forEach(([dateKey, dayList]) => {
+      const d = new Date(`${dateKey}T00:00:00`);
+      if (d >= todayStart) {
+        dayList.forEach((entry) => { if (!entry.done) list.push({ ...entry, dateKey }); });
+      }
     });
+    list.sort((a, b) => (a.dateKey !== b.dateKey ? a.dateKey.localeCompare(b.dateKey) : (a.time || "").localeCompare(b.time || "")));
     return list.slice(0, 5);
-    }, [entries, todayKey]);
+  }, [entries, todayKey]);
 
+  const changeMonth = (offset) => setViewMonth((prev) => new Date(prev.getFullYear(), prev.getMonth() + offset, 1));
     const changeMonth = (offset) => {
         setViewMonth(
             (prev) => new Date(prev.getFullYear(), prev.getMonth() + offset, 1)
@@ -256,308 +273,40 @@ function MainPage() {
     return `${m}월 ${d}일`;
   }, [selectedKey]);
 
-  const selectedEntries = sortByTime(entries[selectedKey] || []);
   const todayTodos = sortByTime(entries[todayKey] || []);
 
   return (
     <div className="main_app">
 
       <div className="main_grid">
-        {/* 좌측: 달력 + 오늘의 할일 */}
         <div className="main_col main_col_left">
           <section className="card calendar_card">
-            <div className="calendar_top">
-              <div className="calendar_nav">
-                <button type="button" onClick={() => changeMonth(-1)} aria-label="이전 달">
-                  ‹
-                </button>
-                <h2>
-                  {viewMonth.getFullYear()}. {String(viewMonth.getMonth() + 1).padStart(2, "0")}
-                </h2>
-                <button type="button" onClick={() => changeMonth(1)} aria-label="다음 달">
-                  ›
-                </button>
-              </div>
-              {streakCount > 0 && (
-                <div className="streak_badge">
-                  <span className="streak_dot" />
-                  {streakCount}일 연속 기록 중
-                </div>
-              )}
-            </div>
-
-            <div className="calendar_weekdays">
-              {WEEKDAYS.map((w) => (
-                <span key={w}>{w}</span>
-              ))}
-            </div>
-
-            <div className="calendar_grid">
-              {calendarCells.map((date, idx) => {
-                if (!date) {
-                  return <div key={`empty-${idx}`} className="calendar_cell empty" />;
-                }
-                const key = toDateKey(date);
-                const dayEntries = sortByTime(entries[key] || []);
-                const isSelected = key === selectedKey;
-                const isToday = key === todayKey;
-
-                return (
-                  <button
-                    type="button"
-                    key={key}
-                    className={`calendar_cell${isSelected ? " selected" : ""}${
-                      isToday ? " today" : ""
-                    }`}
-                    onClick={() => setSelectedKey(key)}
-                  >
-                    <span className="cell_day">{date.getDate()}</span>
-                    {dayEntries.length > 0 && (
-                      <ul className="cell_entries">
-                        {dayEntries.slice(0, 2).map((entry) => {
-                          const cat = getCategory(entry.categoryId);
-                          return (
-                            <li key={entry.id} className={entry.done ? "done" : ""}>
-                              <span className="cell_dot" style={{ backgroundColor: cat.color }} />
-                              {entry.title}
-                            </li>
-                          );
-                        })}
-                        {dayEntries.length > 2 && (
-                          <li className="cell_more">+{dayEntries.length - 2}</li>
-                        )}
-                      </ul>
-                    )}
-                  </button>
-                );
-              })}
-            </div>
-
-            <div className="entry_panel">
-              <p className="entry_panel_title">{selectedDateLabel}에 일정 추가</p>
-
-              <input
-                type="text"
-                className="title_input"
-                placeholder="무슨 일정인가요? 예: 팩 하기"
-                value={titleInput}
-                onChange={(e) => setTitleInput(e.target.value)}
-              />
-
-              <input
-                type="time"
-                className="time_input"
-                value={timeInput}
-                onChange={(e) => setTimeInput(e.target.value)}
-              />
-
-              <div className="category_row">
-                {categories.map((cat) => (
-                  <button
-                    key={cat.id}
-                    type="button"
-                    className={`category_chip${selectedCategoryId === cat.id ? " active" : ""}`}
-                    style={{ "--chip-color": cat.color }}
-                    onClick={() => setSelectedCategoryId(cat.id)}
-                  >
-                    <span className="chip_dot" />
-                    {cat.name}
-                  </button>
-                ))}
-                <button
-                  type="button"
-                  className="category_chip add_chip"
-                  onClick={() => setShowNewCategory((v) => !v)}
-                >
-                  + 새 카테고리
-                </button>
-              </div>
-
-              {showNewCategory && (
-                <div className="new_category_box">
-                  <input
-                    type="text"
-                    className="new_category_input"
-                    placeholder="카테고리 이름"
-                    value={newCategoryName}
-                    onChange={(e) => setNewCategoryName(e.target.value)}
-                  />
-                  <div className="palette_row">
-                    {PALETTE.map((color) => (
-                      <button
-                        key={color}
-                        type="button"
-                        className={`palette_swatch${newCategoryColor === color ? " active" : ""}`}
-                        style={{ backgroundColor: color }}
-                        onClick={() => setNewCategoryColor(color)}
-                        aria-label={color}
-                      />
-                    ))}
-                  </div>
-                  <button
-                    type="button"
-                    className="new_category_confirm"
-                    onClick={handleAddCategory}
-                  >
-                    추가
-                  </button>
-                </div>
-              )}
-
-              <label className="repeat_toggle">
-                <input
-                  type="checkbox"
-                  checked={repeatOn}
-                  onChange={(e) => setRepeatOn(e.target.checked)}
-                />
-                <span>매주 반복</span>
-              </label>
-
-              {repeatOn && (
-                <div className="repeat_days">
-                  {WEEKDAYS.map((w, idx) => (
-                    <button
-                      key={w}
-                      type="button"
-                      className={`day_toggle${repeatDays.includes(idx) ? " active" : ""}`}
-                      onClick={() => toggleRepeatDay(idx)}
-                    >
-                      {w}
-                    </button>
-                  ))}
-                </div>
-              )}
-
-              <button type="button" className="entry_add_button" onClick={handleAddEntry}>
-                일정 추가
-              </button>
-
-              {selectedEntries.length > 0 && (
-                <ul className="entry_list">
-                  {selectedEntries.map((entry) => {
-                    const cat = getCategory(entry.categoryId);
-                    return (
-                      <li key={entry.id} className={entry.done ? "done" : ""}>
-                        <span className="entry_dot" style={{ backgroundColor: cat.color }} />
-                        {entry.time && <span className="entry_time">{entry.time}</span>}
-                        <span className="entry_text">{entry.title}</span>
-                        <label className="check_control">
-                          <input
-                            type="checkbox"
-                            checked={entry.done}
-                            onChange={() => toggleEntryDone(selectedKey, entry.id)}
-                          />
-                          <span className="check_mark" />
-                        </label>
-                      </li>
-                    );
-                  })}
-                </ul>
-              )}
-            </div>
+            <CalendarCard
+              viewMonth={viewMonth}
+              onChangeMonth={changeMonth}
+              todayKey={todayKey}
+              selectedKey={selectedKey}
+              onSelectDate={setSelectedKey}
+              entries={entries}
+              getCategory={getCategory}
+              streakCount={streakCount}
+            />
+            <EntryPanel
+              selectedKey={selectedKey}
+              selectedDateLabel={selectedDateLabel}
+              entries={entries}
+              getCategory={getCategory}
+              onAddEntry={addEntry}
+              onToggleDone={toggleEntryDone}
+            />
           </section>
         </div>
 
-        {/* 우측: 커뮤니티 인기글 + 오늘의 할일 + 다가오는 일정 + 분석하러 가기 */}
         <div className="main_col main_col_right">
-          <section className="card community_card">
-            <div className="card_header_row">
-              <h2>커뮤니티 인기글</h2>
-              <button
-                type="button"
-                className="card_link_button"
-                onClick={() => navigate("/community")}
-              >
-                커뮤니티 보러가기 ›
-              </button>
-            </div>
-            <ul className="community_list">
-              {popularPosts.map((post, idx) => (
-                <li key={post.id}>
-                  <span className="post_rank">{String(idx + 1).padStart(2, "0")}</span>
-                  <Link className="post_title" to={`/community/${post.id}`}>
-                    {post.title}
-                  </Link>
-                  <span className="post_likes">♥ {post.likes}</span>
-                </li>
-              ))}
-            </ul>
-          </section>
-
-          <section className="card todo_card">
-            <h2>오늘의 할일</h2>
-            {todayTodos.length === 0 ? (
-              <p className="todo_empty">오늘 등록된 일정이 없어요. 달력에서 오늘 날짜를 눌러 추가해보세요.</p>
-            ) : (
-              <ul className="todo_list">
-                {todayTodos.map((todo) => {
-                  const cat = getCategory(todo.categoryId);
-                  return (
-                    <li key={todo.id} className={todo.done ? "done" : ""}>
-                      <span className="todo_left">
-                        <span className="todo_dot" style={{ backgroundColor: cat.color }} />
-                        {todo.time && <span className="todo_time">{todo.time}</span>}
-                        <span className="todo_text">{todo.title}</span>
-                      </span>
-                      <label className="check_control">
-                        <input
-                          type="checkbox"
-                          checked={todo.done}
-                          onChange={() => toggleEntryDone(todayKey, todo.id)}
-                        />
-                        <span className="check_mark" />
-                      </label>
-                    </li>
-                  );
-                })}
-              </ul>
-            )}
-          </section>
-
-          <section className="card upcoming_card">
-            <h2>다가오는 일정</h2>
-            {upcomingEntries.length === 0 ? (
-              <p className="todo_empty">예정된 일정이 없어요.</p>
-            ) : (
-              <ul className="upcoming_list">
-                {upcomingEntries.map((entry) => {
-                  const cat = getCategory(entry.categoryId);
-                  return (
-                    <li key={entry.id}>
-                      <span className="upcoming_dot" style={{ backgroundColor: cat.color }} />
-                      <span className="upcoming_date">{formatDateLabel(entry.dateKey)}</span>
-                      {entry.time && <span className="upcoming_time">{entry.time}</span>}
-                      <span className="upcoming_title">{entry.title}</span>
-                    </li>
-                  );
-                })}
-              </ul>
-            )}
-          </section>
-        <div className="button-container">
-          <button
-            type="button"
-            className="analysis_button"
-            onClick={() => navigate("/analysis")}
-          >
-            <span className="analysis_ring" aria-hidden="true" />
-            <span className="analysis_label">
-              피부 타입 분석하러 가기
-            </span>
-          </button>
-          <button
-            type="button"
-            className="analysis_button"
-            onClick={() => navigate("/analysis1")}
-          >
-            <span className="analysis_ring" aria-hidden="true" />
-            <span className="analysis_label">
-              피부 상태 분석하러 가기
-              <span className="analysis_sub">사진 한 장으로 지금 상태 확인하기</span>
-            </span>
-          </button>
-
-        </div>
+        <CommunityList />
+        <TodoList todayTodos={todayTodos} getCategory={getCategory} todayKey={todayKey} onToggleDone={toggleEntryDone} />
+        <UpcomingList upcomingEntries={upcomingEntries} getCategory={getCategory} />
+        <AnalysisButtons onNavigate={navigate} />
         </div>
       </div>
     </div>

@@ -106,54 +106,40 @@ function SkinTypeResultPage() {
             <section className="face_result_panel">
               <div className="face_diagram_wrap">
                 <div className="face_diagram" aria-label="T존과 U존 피부 타입 결과">
-                  <svg viewBox="0 0 240 280" role="img">
+                  <svg viewBox="0 0 240 300" role="img">
                     {/* 얼굴 윤곽 */}
                     <path
                       className="face_outline"
-                      d="M120 25 C82 25 58 62 58 108 C58 150 68 190 88 220 C100 238 110 250 120 250 C130 250 140 238 152 220 C172 190 182 150 182 108 C182 62 158 25 120 25 Z"
-                    />
-                    {/* 귀 */}
-                    <path
-                      className="ear_shape"
-                      d="M58 105 C48 106 46 122 49 133 C52 141 58 139 60 129 Z"
-                    />
-                    <path
-                      className="ear_shape"
-                      d="M182 105 C192 106 194 122 191 133 C188 141 182 139 180 129 Z"
+                      d="M120 30 C85 30 62 58 58 98 C55 130 62 162 78 190 C92 214 104 232 120 236 C136 232 148 214 162 190 C178 162 185 130 182 98 C178 58 155 30 120 30 Z"
                     />
 
-                    {/* U존: 볼~턱선 */}
+                    {/* U존: 턱선을 따라가는 라인 */}
                     <path
                       className="u_zone_shape"
-                      d="M70 128 C71 163 81 199 99 221 C108 232 132 232 141 221 C159 199 169 163 170 128 C166 144 154 158 140 151 C130 146 124 144 120 144 C116 144 110 146 100 151 C86 158 74 144 70 128 Z"
+                      d="M82 140 C84 168 92 194 105 212 C111 220 129 220 135 212 C148 194 156 168 158 140"
                     />
 
                     {/* T존: 이마 가로 밴드 */}
                     <path
                       className="t_zone_shape"
-                      d="M78 96 C77 71 95 51 120 49 C145 51 163 71 162 96 C162 101 149 103 120 103 C91 103 78 101 78 96 Z"
+                      d="M84 92 C82 68 99 52 120 50 C141 52 158 68 156 92 C156 98 143 100 120 100 C97 100 84 98 84 92 Z"
                     />
-                    {/* T존: 콧대(세로) */}
+                    {/* T존: 콧대~인중 */}
                     <path
                       className="t_zone_shape"
-                      d="M109 96 L131 96 L127 174 C123 179 117 179 113 174 Z"
+                      d="M112 98 L128 98 L124 168 C120 172 120 172 116 168 Z"
                     />
 
                     {/* 눈썹 */}
-                    <path className="face_feature_line" d="M90 108 C97 102 108 102 115 107" />
-                    <path className="face_feature_line" d="M125 107 C132 102 143 102 150 108" />
+                    <path className="face_feature_line" d="M95 108 C102 103 111 103 117 107" />
+                    <path className="face_feature_line" d="M123 107 C129 103 138 103 145 108" />
 
-                    {/* 눈 */}
-                    <ellipse className="eye_shape" cx="100" cy="121" rx="10" ry="5" />
-                    <ellipse className="eye_shape" cx="140" cy="121" rx="10" ry="5" />
-                    <circle className="pupil_shape" cx="100" cy="121" r="2.4" />
-                    <circle className="pupil_shape" cx="140" cy="121" r="2.4" />
+                    {/* 눈 (점 형태) */}
+                    <circle className="pupil_shape" cx="101" cy="121" r="3.2" />
+                    <circle className="pupil_shape" cx="139" cy="121" r="3.2" />
 
-                    {/* 입술 */}
-                    <path
-                      className="lip_shape"
-                      d="M100 187 C110 182 130 182 140 187 C130 197 110 197 100 187 Z"
-                    />
+                    {/* 입 (라인형) */}
+                    <path className="face_feature_line" d="M105 178 C113 184 127 184 135 178" />
                   </svg>
                 </div>
                 <div className="face_legend">
