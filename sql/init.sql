@@ -140,7 +140,7 @@ CREATE TABLE calendar_tasks (
     cal_user_id VARCHAR(255) NOT NULL COMMENT '사용자 아이디',
     cal_task_date DATE NOT NULL COMMENT '날짜',
     cal_title VARCHAR(255) NOT NULL COMMENT '제목',
-    cal_description VARCHAR(255) COMMENT '상세설명',
+    -- cal_description VARCHAR(255) COMMENT '상세설명',
     cal_is_completed BOOLEAN DEFAULT FALSE COMMENT '완료여부',
     cal_img_path VARCHAR(255) COMMENT '캘린더 이미지 경로',
     cal_category VARCHAR(255) COMMENT '캘린더 카테고리',
