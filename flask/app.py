@@ -46,7 +46,7 @@ def health():
     return jsonify({"status": "ok"})
 
 
-@app.route("/images/<filename>")
+@app.route("/uploads/<filename>")
 def get_image(filename):
     return send_from_directory(UPLOAD_FOLDER, filename)
 
@@ -96,7 +96,7 @@ def predict():
     save_path = os.path.join(UPLOAD_FOLDER, filename)
     cv2.imwrite(save_path, img_result)
 
-    img_path = f"/images/{filename}"
+    img_path = f"/uploads/{filename}"
 
     return jsonify({
         "detections": detections,
