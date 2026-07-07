@@ -1,0 +1,445 @@
+@import url('https://fonts.googleapis.com/css2?family=Gowun+Batang:wght@400;700&display=swap');
+@import url('https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.css');
+
+.survey_app {
+  --bg-cream: #fbf6f1;
+  --card-white: #ffffff;
+  --ink: #2e2438;
+  --ink-soft: #6e6478;
+  --ink-faint: #a79fb0;
+  --rose: #bd6f63;
+  --rose-dark: #a65a50;
+  --rose-tint: #f3e4df;
+  --sage: #7c9b82;
+  --sage-dark: #5f7f66;
+  --gold: #d9a441;
+  --line: rgba(46, 36, 56, 0.09);
+
+  min-height: 100vh;
+  padding: 30px 40px 56px;
+  background: var(--bg-cream);
+  background-image:
+    radial-gradient(circle at 8% 0%, rgba(189, 111, 99, 0.07), transparent 40%),
+    radial-gradient(circle at 100% 10%, rgba(124, 155, 130, 0.08), transparent 45%);
+  color: var(--ink);
+  font-family: 'Pretendard', -apple-system, BlinkMacSystemFont, sans-serif;
+}
+
+.survey_app * {
+  box-sizing: border-box;
+}
+
+.survey_header {
+  max-width: 1180px;
+  margin: 0 auto 24px;
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 24px;
+  align-items: start;
+}
+
+.survey_back_button {
+  border: 1px solid var(--line);
+  background: var(--card-white);
+  color: var(--ink-soft);
+  font-size: 13px;
+  font-weight: 700;
+  padding: 10px 16px;
+  border-radius: 999px;
+  cursor: pointer;
+  transition: border-color 160ms ease, color 160ms ease;
+}
+
+.survey_back_button:hover {
+  border-color: var(--rose);
+  color: var(--rose-dark);
+}
+
+.survey_eyebrow {
+  margin: 3px 0 8px;
+  color: var(--sage-dark);
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.16em;
+}
+
+.survey_header h1 {
+  margin: 0;
+  font-family: 'Gowun Batang', serif;
+  font-size: 32px;
+  line-height: 1.25;
+}
+
+.survey_description {
+  max-width: 720px;
+  margin: 10px 0 0;
+  color: var(--ink-soft);
+  font-size: 14px;
+  line-height: 1.7;
+}
+
+.survey_layout {
+  max-width: 1180px;
+  margin: 0 auto;
+  display: grid;
+  grid-template-columns: 280px minmax(0, 1fr);
+  gap: 22px;
+  align-items: start;
+}
+
+.survey_summary,
+.question_section,
+.question_card {
+  background: var(--card-white);
+  border: 1px solid var(--line);
+  box-shadow: 0 18px 40px rgba(46, 36, 56, 0.06);
+}
+
+.survey_summary {
+  position: sticky;
+  top: 22px;
+  padding: 22px;
+  border-radius: 20px;
+}
+
+.summary_label {
+  margin: 0 0 6px;
+  color: var(--ink-faint);
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.survey_summary strong {
+  display: block;
+  color: var(--ink);
+  font-family: 'Gowun Batang', serif;
+  font-size: 32px;
+  line-height: 1;
+}
+
+.progress_track {
+  height: 8px;
+  margin: 18px 0 14px;
+  overflow: hidden;
+  border-radius: 999px;
+  background: var(--rose-tint);
+}
+
+.progress_track span {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: linear-gradient(90deg, var(--rose), var(--gold));
+  transition: width 180ms ease;
+}
+
+.summary_hint {
+  margin: 0;
+  color: var(--ink-soft);
+  font-size: 13px;
+  line-height: 1.6;
+}
+
+.section_step_list {
+  list-style: none;
+  margin: 18px 0 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.section_step_list button {
+  width: 100%;
+  min-height: 42px;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: var(--bg-cream);
+  color: var(--ink-soft);
+  font-family: 'Pretendard', sans-serif;
+  font-size: 13px;
+  font-weight: 800;
+  text-align: left;
+  padding: 8px 10px;
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  cursor: pointer;
+  transition: background 160ms ease, border-color 160ms ease, color 160ms ease;
+}
+
+.section_step_list button:hover,
+.section_step_list button.active {
+  border-color: var(--rose);
+  background: var(--rose-tint);
+  color: var(--ink);
+}
+
+.section_step_list button.done {
+  border-color: rgba(124, 155, 130, 0.4);
+}
+
+.section_step_list span {
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: var(--card-white);
+  color: var(--rose-dark);
+  font-size: 11px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.section_step_list button.done span {
+  background: var(--sage);
+  color: #ffffff;
+}
+
+.section_step_list em {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-style: normal;
+}
+
+.survey_submit_button {
+  width: 100%;
+  margin-top: 18px;
+  border: none;
+  border-radius: 12px;
+  background: var(--ink);
+  color: #ffffff;
+  font-size: 14px;
+  font-weight: 800;
+  padding: 13px 16px;
+  cursor: pointer;
+  transition: background 160ms ease, transform 160ms ease;
+}
+
+.survey_submit_button:hover {
+  background: var(--rose-dark);
+  transform: translateY(-1px);
+}
+
+.question_list {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+
+.question_section {
+  padding: 22px;
+  border-radius: 20px;
+}
+
+.section_title_row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 14px;
+}
+
+.section_title_row h2 {
+  margin: 0;
+  font-family: 'Gowun Batang', serif;
+  font-size: 21px;
+}
+
+.section_page_label {
+  margin: 0 0 5px;
+  color: var(--rose-dark);
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.section_title_row span {
+  flex-shrink: 0;
+  color: var(--sage-dark);
+  background: rgba(124, 155, 130, 0.13);
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 800;
+  padding: 6px 11px;
+}
+
+.question_card {
+  padding: 18px;
+  border-radius: 16px;
+}
+
+.question_card + .question_card {
+  margin-top: 12px;
+}
+
+.question_top {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 10px;
+}
+
+.question_number,
+.question_area {
+  display: inline-flex;
+  align-items: center;
+  min-height: 25px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 800;
+  padding: 5px 10px;
+}
+
+.question_number {
+  color: var(--rose-dark);
+  background: var(--rose-tint);
+}
+
+.question_area {
+  color: var(--ink-soft);
+  background: var(--bg-cream);
+}
+
+.question_card h3 {
+  margin: 0 0 14px;
+  color: var(--ink);
+  font-size: 16px;
+  line-height: 1.55;
+}
+
+.option_grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 9px;
+}
+
+.option_button {
+  min-height: 48px;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: var(--bg-cream);
+  color: var(--ink-soft);
+  font-family: 'Pretendard', sans-serif;
+  font-size: 13px;
+  font-weight: 700;
+  line-height: 1.35;
+  text-align: left;
+  padding: 10px 11px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+  transition: background 160ms ease, border-color 160ms ease, color 160ms ease;
+}
+
+.option_button:hover,
+.option_button.selected {
+  border-color: var(--rose);
+  background: var(--rose-tint);
+  color: var(--ink);
+}
+
+.option_mark {
+  width: 15px;
+  height: 15px;
+  flex-shrink: 0;
+  border: 1.5px solid var(--ink-faint);
+  border-radius: 50%;
+  background: var(--card-white);
+}
+
+.option_button.selected .option_mark {
+  border: 4px solid var(--rose);
+}
+
+.survey_pagination {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-top: 18px;
+  padding-top: 18px;
+  border-top: 1px dashed var(--line);
+}
+
+.page_button {
+  min-width: 116px;
+  min-height: 46px;
+  border-radius: 12px;
+  font-family: 'Pretendard', sans-serif;
+  font-size: 14px;
+  font-weight: 800;
+  cursor: pointer;
+  transition: background 160ms ease, border-color 160ms ease, color 160ms ease,
+    transform 160ms ease;
+}
+
+.page_button:not(:disabled):hover {
+  transform: translateY(-1px);
+}
+
+.page_button.primary {
+  border: none;
+  background: var(--ink);
+  color: #ffffff;
+}
+
+.page_button.primary:hover {
+  background: var(--rose-dark);
+}
+
+.page_button.secondary {
+  border: 1px solid var(--line);
+  background: var(--card-white);
+  color: var(--ink-soft);
+}
+
+.page_button.secondary:not(:disabled):hover {
+  border-color: var(--rose);
+  color: var(--rose-dark);
+}
+
+.page_button:disabled {
+  cursor: not-allowed;
+  opacity: 0.45;
+}
+
+@media (max-width: 900px) {
+  .survey_app {
+    padding: 22px 20px 40px;
+  }
+
+  .survey_header,
+  .survey_layout {
+    grid-template-columns: 1fr;
+  }
+
+  .survey_summary {
+    position: static;
+  }
+
+  .option_grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 560px) {
+  .survey_header h1 {
+    font-size: 26px;
+  }
+
+  .option_grid {
+    grid-template-columns: 1fr;
+  }
+
+  .survey_pagination {
+    flex-direction: column-reverse;
+  }
+
+  .page_button {
+    width: 100%;
+  }
+}
