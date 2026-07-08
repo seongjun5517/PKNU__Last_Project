@@ -14,3 +14,11 @@ export const scrapCommunityPost = (postCode, userId) =>
   springApi.post(`/community/posts/${postCode}/scrap`, { userId });
 export const getCommunityPostScrapStatus = (postCode, userId) =>
   springApi.get(`/community/posts/${postCode}/scrap`, { params: { userId } });
+export const getCommunityPostComments = (postCode) =>
+  springApi.get(`/community/posts/${postCode}/comments`);
+export const createCommunityPostComment = (postCode, userId, contents) =>
+  springApi.post(`/community/posts/${postCode}/comments`, { userId, contents });
+export const getMyCommunityComments = (userId) =>
+  springApi.get(`/community/comments/mine/${userId}`);
+export const deleteCommunityComment = (commentCode, userId) =>
+  springApi.delete(`/community/comments/${commentCode}`, { params: { userId } });

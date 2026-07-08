@@ -7,7 +7,7 @@ services:
     restart: always
 
     ports:
-      - "13308:3306"
+      - "3307:3306"
 
     environment:
       MYSQL_ROOT_PASSWORD: tripleskin

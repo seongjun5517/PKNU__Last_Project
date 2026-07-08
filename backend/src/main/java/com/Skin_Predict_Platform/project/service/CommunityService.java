@@ -6,14 +6,18 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
 
+import com.Skin_Predict_Platform.project.dto.CommunityCommentCreateRequest;
+import com.Skin_Predict_Platform.project.dto.CommunityMyCommentResponse;
 import com.Skin_Predict_Platform.project.dto.CommunityPostCreateRequest;
 import com.Skin_Predict_Platform.project.dto.CommunityPostLikeResponse;
 import com.Skin_Predict_Platform.project.dto.CommunityPostScrapResponse;
 import com.Skin_Predict_Platform.project.model.CommunityCategory;
+import com.Skin_Predict_Platform.project.model.CommunityComment;
 import com.Skin_Predict_Platform.project.model.CommunityPostLike;
 import com.Skin_Predict_Platform.project.model.CommunityPostScrap;
 import com.Skin_Predict_Platform.project.model.PostDetail;
 import com.Skin_Predict_Platform.project.repository.CommunityCategoryRepository;
+import com.Skin_Predict_Platform.project.repository.CommunityCommentRepository;
 import com.Skin_Predict_Platform.project.repository.CommunityPostLikeRepository;
 import com.Skin_Predict_Platform.project.repository.CommunityPostScrapRepository;
 import com.Skin_Predict_Platform.project.repository.PostDetailRepository;
@@ -28,6 +32,7 @@ public class CommunityService {
     private final CommunityCategoryRepository communityCategoryRepository;
     private final CommunityPostLikeRepository communityPostLikeRepository;
     private final CommunityPostScrapRepository communityPostScrapRepository;
+    private final CommunityCommentRepository communityCommentRepository;
 
     public List<PostDetail> getPostList() {
         return postDetailRepository.findAllByOrderByPostCodeDesc();
@@ -145,6 +150,59 @@ public class CommunityService {
                 .build();
 
         return postDetailRepository.save(post);
+    }
+
+    public List<CommunityComment> getPostComments(Long postCode) {
+        return communityCommentRepository.findByPostCode(postCode);
+    }
+
+    @Transactional
+    public CommunityComment createComment(Long postCode, CommunityCommentCreateRequest request) {
+        if (request == null || !StringUtils.hasText(request.getUserId())
+                || !StringUtils.hasText(request.getContents())) {
+            throw new IllegalArgumentException("댓글 작성 정보가 필요합니다.");
+        }
+        if (!postDetailRepository.existsById(postCode)) {
+            return null;
+        }
+
+        CommunityComment comment = CommunityComment.builder()
+                .cmtPostCode(postCode)
+                .cmtUserId(request.getUserId())
+                .cmtContents(request.getContents().trim())
+                .build();
+
+        return communityCommentRepository.save(comment);
+    }
+
+    public List<CommunityMyCommentResponse> getMyComments(String userId) {
+        return communityCommentRepository.findByUserId(userId)
+                .stream()
+                .map((comment) -> new CommunityMyCommentResponse(
+                        comment.getCmtCode(),
+                        comment.getCmtPostCode(),
+                        postDetailRepository.findById(comment.getCmtPostCode())
+                                .map(PostDetail::getPostTitle)
+                                .orElse("삭제된 게시글"),
+                        comment.getCmtContents(),
+                        comment.getCmtCreatedAt()
+                ))
+                .toList();
+    }
+
+    @Transactional
+    public Boolean deleteComment(Long commentCode, String userId) {
+        CommunityComment comment = communityCommentRepository.findById(commentCode).orElse(null);
+
+        if (comment == null) {
+            return null;
+        }
+        if (!comment.getCmtUserId().equals(userId)) {
+            return false;
+        }
+
+        communityCommentRepository.delete(comment);
+        return true;
     }
 
     public List<PostDetail> getMyPosts(String userId) {
