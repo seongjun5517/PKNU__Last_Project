@@ -15,6 +15,9 @@
   --lavender: #F1ECF4;
   --gold: #D9A441;
   --line: rgba(46, 36, 56, 0.09);
+  --plum: #7A5570;       /* ← 추가 */
+  --plum-dark: #614259;  /* ← 추가 */
+  --plum-tint: #EFE6ED;  /* ← 추가 (혹시 나중에 필요할 수도 있어서) */
 
   min-height: 100vh;
   text-align: center;
@@ -101,11 +104,11 @@
 
 .login_btn {
   color: #ffffff;
-  background: var(--ink);
-  box-shadow: 0 14px 28px rgba(46, 36, 56, 0.18);
+  background: var(--plum);
+  box-shadow: 0 10px 22px rgba(122, 85, 112, 0.22); /* plum 톤 그림자로 교체, 블러/투명도도 살짝 줄임 */
 }
 
-.login_btn:hover { background: var(--rose-dark); }
+.login_btn:hover { background: var(--plum-dark); }
 
 .signup_btn {
   color: var(--ink);
