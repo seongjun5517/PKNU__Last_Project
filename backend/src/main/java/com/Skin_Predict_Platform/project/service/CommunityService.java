@@ -146,4 +146,24 @@ public class CommunityService {
 
         return postDetailRepository.save(post);
     }
+
+    public List<PostDetail> getMyPosts(String userId) {
+        return postDetailRepository.findByPostUserIdOrderByPostCodeDesc(userId);
+        }
+
+    public List<PostDetail> getLikedPosts(String userId) {
+        List<Long> postCodes = communityPostLikeRepository.findByLikeUserId(userId)
+                .stream()
+                .map(CommunityPostLike::getLikePostCode)
+                .toList();
+        return postDetailRepository.findByPostCodeInOrderByPostCodeDesc(postCodes);
+    }
+
+    public List<PostDetail> getScrappedPosts(String userId) {
+        List<Long> postCodes = communityPostScrapRepository.findByScrapUserId(userId)
+                .stream()
+                .map(CommunityPostScrap::getScrapPostCode)
+                .toList();
+        return postDetailRepository.findByPostCodeInOrderByPostCodeDesc(postCodes);
+    }
 }

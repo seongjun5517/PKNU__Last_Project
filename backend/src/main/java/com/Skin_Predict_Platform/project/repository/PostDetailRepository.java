@@ -8,4 +8,6 @@ import com.Skin_Predict_Platform.project.model.PostDetail;
 
 public interface PostDetailRepository extends JpaRepository<PostDetail, Long> {
     List<PostDetail> findAllByOrderByPostCodeDesc();
+    List<PostDetail> findByPostUserIdOrderByPostCodeDesc(String postUserId);
+    List<PostDetail> findByPostCodeInOrderByPostCodeDesc(List<Long> postCodes);
 }

@@ -129,4 +129,19 @@ public class CommunityController {
     public PostDetail createPost(@RequestBody CommunityPostCreateRequest request) {
         return communityService.createPost(request);
     }
+
+    @GetMapping("/posts/mine/{userId}")
+    public List<PostDetail> getMyPosts(@PathVariable String userId) {
+        return communityService.getMyPosts(userId);
+    }
+
+    @GetMapping("/posts/liked/{userId}")
+    public List<PostDetail> getLikedPosts(@PathVariable String userId) {
+        return communityService.getLikedPosts(userId);
+    }
+
+    @GetMapping("/posts/scrapped/{userId}")
+    public List<PostDetail> getScrappedPosts(@PathVariable String userId) {
+        return communityService.getScrappedPosts(userId);
+    }
 }
