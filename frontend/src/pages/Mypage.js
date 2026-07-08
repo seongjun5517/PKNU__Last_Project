@@ -1,4 +1,5 @@
 import React, { useEffect, useMemo, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import "./Mypage.css";
 // 프로젝트의 실제 axios 인스턴스 경로에 맞게 수정하세요.
 // (프로젝트에서 쓰던 springApi 를 그대로 재사용합니다)
@@ -19,6 +20,7 @@ const POST_MENU = [
   { key: "liked", label: "좋아요한 글" },
   { key: "comment", label: "내가 쓴 댓글"},
   { key: "scrapped", label: "스크랩한 게시물" },
+  { key: "comments", label: "내가 작성한 댓글" },
 ];
 
 /* ---------------- 분석 기록 라인 차트 (외부 라이브러리 없이 순수 SVG) ---------------- */
@@ -147,6 +149,7 @@ function AnalysisChart({ data }) {
 
 /* ---------------- 마이페이지 ---------------- */
 export default function Mypage() {
+  const navigate = useNavigate();
   const userId = localStorage.getItem("userId");
   const navigate = useNavigate();
 
@@ -163,6 +166,9 @@ export default function Mypage() {
 
   const [postsByTab, setPostsByTab] = useState({ mine: null, liked: null, scrapped: null });
   const [postsLoadingTab, setPostsLoadingTab] = useState({ mine: false, liked: false, scrapped: false });
+  const [myComments, setMyComments] = useState(null);
+  const [commentsLoading, setCommentsLoading] = useState(false);
+  const [deletingCommentCodes, setDeletingCommentCodes] = useState({});
 
   // 분석 기록은 백엔드 연결 전까지 보류 (state만 남겨둠)
   const [analysisHistory] = useState(null);
@@ -226,6 +232,7 @@ export default function Mypage() {
   // GET /community/posts/scrapped/{userId}
   useEffect(() => {
     if (!userId || !activePostTab) return;
+    if (activePostTab === "comments") return;
     if (postsByTab[activePostTab] !== null) return;
 
     const endpointByTab = {
@@ -250,6 +257,21 @@ export default function Mypage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [activePostTab, userId]);
 
+  useEffect(() => {
+    if (!userId || activeSection !== "posts" || activePostTab !== "comments") return;
+    if (myComments !== null) return;
+
+    setCommentsLoading(true);
+    springApi
+      .get(`/community/comments/mine/${userId}`)
+      .then((res) => setMyComments(res.data || []))
+      .catch((err) => {
+        console.error("내 댓글 조회 실패:", err);
+        setMyComments([]);
+      })
+      .finally(() => setCommentsLoading(false));
+  }, [activePostTab, activeSection, myComments, userId]);
+
   const handleSelectInfoTab = (key) => {
     setActiveInfoTab(key);
     setActiveSection("info");
@@ -260,6 +282,28 @@ export default function Mypage() {
   const handleSelectPostTab = (key) => {
     setActivePostTab(key);
     setActiveSection("posts");
+  };
+
+  const handleDeleteComment = async (event, commentCode) => {
+    event.stopPropagation();
+
+    if (!userId || deletingCommentCodes[commentCode]) return;
+
+    setDeletingCommentCodes((prev) => ({ ...prev, [commentCode]: true }));
+
+    try {
+      await springApi.delete(`/community/comments/${commentCode}`, {
+        params: { userId },
+      });
+      setMyComments((prev) =>
+        (prev || []).filter((comment) => comment.cmtCode !== commentCode)
+      );
+    } catch (err) {
+      console.error("댓글 삭제 실패:", err);
+      alert("댓글 삭제에 실패했습니다.");
+    } finally {
+      setDeletingCommentCodes((prev) => ({ ...prev, [commentCode]: false }));
+    }
   };
 
   const handleImageChange = (e) => {
@@ -607,39 +651,68 @@ export default function Mypage() {
             <section className="card">
               <h2>{POST_MENU.find((t) => t.key === activePostTab)?.label}</h2>
 
-              {(() => {
-                const list = postsByTab[activePostTab];
-                const isLoading = postsLoadingTab[activePostTab];
-
-                if (isLoading && list === null) {
-                  return <p className="posts_loading">불러오는 중...</p>;
-                }
-                if (list && list.length > 0) {
-                  return (
-                    <ul className="posts_list">
-                    {list.map((post) => (
-                        <li
-                        key={post.postCode}
-                        className="posts_list_item"
-                        onClick={() => navigate(`/community/posts/${post.postCode}`)}
-                        >
-                        <span className="posts_list_dot" />
-                        <div className="posts_list_text">
-                            <div className="posts_list_title">{post.postTitle}</div>
-                            <div className="posts_list_meta">
-                            {post.postDate ? post.postDate.slice(0, 10) : ""}
-                            </div>
+              {activePostTab === "comments" ? (
+                commentsLoading && myComments === null ? (
+                  <p className="posts_loading">불러오는 중...</p>
+                ) : myComments && myComments.length > 0 ? (
+                  <ul className="mypage_comments_list">
+                    {myComments.map((comment) => (
+                      <li
+                        key={comment.cmtCode}
+                        onClick={() => navigate(`/community/posts/${comment.postCode}`)}
+                      >
+                        <div className="mypage_comment_top">
+                          <div className="mypage_comment_post">{comment.postTitle}</div>
+                          <button
+                            type="button"
+                            onClick={(event) => handleDeleteComment(event, comment.cmtCode)}
+                            disabled={deletingCommentCodes[comment.cmtCode]}
+                            aria-label="댓글 삭제"
+                          >
+                            x
+                          </button>
                         </div>
-                        </li>
+                        <p>{comment.contents}</p>
+                        <span>
+                          {comment.createdAt ? comment.createdAt.slice(0, 10) : ""}
+                        </span>
+                      </li>
                     ))}
-                    </ul>
-                  );
-                }
-                if (list !== null) {
-                  return <p className="posts_empty">아직 게시글이 없어요.</p>;
-                }
-                return null;
-              })()}
+                  </ul>
+                ) : myComments !== null ? (
+                  <p className="posts_empty">아직 작성한 댓글이 없어요.</p>
+                ) : null
+              ) : (
+                (() => {
+                  const list = postsByTab[activePostTab];
+                  const isLoading = postsLoadingTab[activePostTab];
+
+                  if (isLoading && list === null) {
+                    return <p className="posts_loading">불러오는 중...</p>;
+                  }
+                  if (list && list.length > 0) {
+                    return (
+                      <ul className="posts_list">
+                        {list.map((post) => (
+                          <li key={post.postCode}>
+                            <span className="posts_list_dot" />
+                            <div className="posts_list_text">
+                              <div className="posts_list_title">{post.postTitle}</div>
+                              <div className="posts_list_meta">
+                                {post.postDate ? post.postDate.slice(0, 10) : ""}
+                              </div>
+                            </div>
+                          </li>
+                        ))}
+                      </ul>
+                    );
+                  }
+                  if (list !== null) {
+                    return <p className="posts_empty">아직 게시글이 없어요.</p>;
+                  }
+                  return null;
+                })()
+              )}
             </section>
           )}
 
