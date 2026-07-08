@@ -8,11 +8,14 @@ import org.springframework.util.StringUtils;
 
 import com.Skin_Predict_Platform.project.dto.CommunityPostCreateRequest;
 import com.Skin_Predict_Platform.project.dto.CommunityPostLikeResponse;
+import com.Skin_Predict_Platform.project.dto.CommunityPostScrapResponse;
 import com.Skin_Predict_Platform.project.model.CommunityCategory;
 import com.Skin_Predict_Platform.project.model.CommunityPostLike;
+import com.Skin_Predict_Platform.project.model.CommunityPostScrap;
 import com.Skin_Predict_Platform.project.model.PostDetail;
 import com.Skin_Predict_Platform.project.repository.CommunityCategoryRepository;
 import com.Skin_Predict_Platform.project.repository.CommunityPostLikeRepository;
+import com.Skin_Predict_Platform.project.repository.CommunityPostScrapRepository;
 import com.Skin_Predict_Platform.project.repository.PostDetailRepository;
 
 import lombok.RequiredArgsConstructor;
@@ -24,6 +27,7 @@ public class CommunityService {
     private final PostDetailRepository postDetailRepository;
     private final CommunityCategoryRepository communityCategoryRepository;
     private final CommunityPostLikeRepository communityPostLikeRepository;
+    private final CommunityPostScrapRepository communityPostScrapRepository;
 
     public List<PostDetail> getPostList() {
         return postDetailRepository.findAllByOrderByPostCodeDesc();
@@ -35,6 +39,23 @@ public class CommunityService {
 
     public PostDetail getPost(Long postCode) {
         return postDetailRepository.findById(postCode).orElse(null);
+    }
+
+    @Transactional
+    public PostDetail increasePostView(Long postCode, String viewerUserId) {
+        PostDetail post = postDetailRepository.findById(postCode).orElse(null);
+
+        if (post == null) {
+            return null;
+        }
+
+        if (StringUtils.hasText(viewerUserId) && !viewerUserId.equals(post.getPostUserId())) {
+            int currentViews = post.getPostViews() == null ? 0 : post.getPostViews();
+            post.setPostViews(currentViews + 1);
+            return postDetailRepository.save(post);
+        }
+
+        return post;
     }
     // 조아요 ~
     @Transactional
@@ -51,12 +72,12 @@ public class CommunityService {
                 .orElse(null);
 
         if (existingLike == null) {
+            // 생성자 생성
             communityPostLikeRepository.save(CommunityPostLike.builder()
                     .likePostCode(postCode)
                     .likeUserId(userId)
                     .build());
             post.setPostLike(currentLikeCount + 1);
-
             return new CommunityPostLikeResponse(postDetailRepository.save(post), true);
         }
 
@@ -68,6 +89,38 @@ public class CommunityService {
     // 좋아요 눌렀던
     public boolean hasLikedPost(Long postCode, String userId) {
         return communityPostLikeRepository.existsByLikePostCodeAndLikeUserId(postCode, userId);
+    }
+
+    @Transactional
+    public CommunityPostScrapResponse togglePostScrap(Long postCode, String userId) {
+        PostDetail post = postDetailRepository.findById(postCode).orElse(null);
+
+        if (post == null) {
+            return null;
+        }
+
+        int currentScrapCount = post.getPostScrap() == null ? 0 : post.getPostScrap();
+        CommunityPostScrap existingScrap = communityPostScrapRepository
+                .findByScrapPostCodeAndScrapUserId(postCode, userId)
+                .orElse(null);
+
+        if (existingScrap == null) {
+            communityPostScrapRepository.save(CommunityPostScrap.builder()
+                    .scrapPostCode(postCode)
+                    .scrapUserId(userId)
+                    .build());
+            post.setPostScrap(currentScrapCount + 1);
+            return new CommunityPostScrapResponse(postDetailRepository.save(post), true);
+        }
+
+        communityPostScrapRepository.delete(existingScrap);
+        post.setPostScrap(Math.max(currentScrapCount - 1, 0));
+
+        return new CommunityPostScrapResponse(postDetailRepository.save(post), false);
+    }
+
+    public boolean hasScrappedPost(Long postCode, String userId) {
+        return communityPostScrapRepository.existsByScrapPostCodeAndScrapUserId(postCode, userId);
     }
 
     public PostDetail createPost(CommunityPostCreateRequest request) {

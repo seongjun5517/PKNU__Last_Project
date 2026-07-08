@@ -16,6 +16,7 @@ import org.springframework.web.bind.annotation.RestController;
 import com.Skin_Predict_Platform.project.dto.CommunityPostCreateRequest;
 import com.Skin_Predict_Platform.project.dto.CommunityPostLikeRequest;
 import com.Skin_Predict_Platform.project.dto.CommunityPostLikeResponse;
+import com.Skin_Predict_Platform.project.dto.CommunityPostScrapResponse;
 import com.Skin_Predict_Platform.project.model.CommunityCategory;
 import com.Skin_Predict_Platform.project.model.PostDetail;
 import com.Skin_Predict_Platform.project.service.CommunityService;
@@ -51,6 +52,23 @@ public class CommunityController {
         return ResponseEntity.ok(post);
     }
 
+    @PostMapping("/posts/{postCode}/view")
+    public ResponseEntity<PostDetail> increasePostView(
+            @PathVariable Long postCode,
+            @RequestBody CommunityPostLikeRequest request) {
+        if (request == null || !StringUtils.hasText(request.getUserId())) {
+            return ResponseEntity.badRequest().build();
+        }
+
+        PostDetail post = communityService.increasePostView(postCode, request.getUserId());
+
+        if (post == null) {
+            return ResponseEntity.notFound().build();
+        }
+
+        return ResponseEntity.ok(post);
+    }
+
     @PostMapping("/posts/{postCode}/like")
     public ResponseEntity<CommunityPostLikeResponse> togglePostLike(
             @PathVariable Long postCode,
@@ -77,6 +95,34 @@ public class CommunityController {
         }
 
         return ResponseEntity.ok(communityService.hasLikedPost(postCode, userId));
+    }
+
+    @PostMapping("/posts/{postCode}/scrap")
+    public ResponseEntity<CommunityPostScrapResponse> togglePostScrap(
+            @PathVariable Long postCode,
+            @RequestBody CommunityPostLikeRequest request) {
+        if (request == null || !StringUtils.hasText(request.getUserId())) {
+            return ResponseEntity.badRequest().build();
+        }
+
+        CommunityPostScrapResponse response = communityService.togglePostScrap(postCode, request.getUserId());
+
+        if (response == null) {
+            return ResponseEntity.notFound().build();
+        }
+
+        return ResponseEntity.ok(response);
+    }
+
+    @GetMapping("/posts/{postCode}/scrap")
+    public ResponseEntity<Boolean> hasScrappedPost(
+            @PathVariable Long postCode,
+            @RequestParam String userId) {
+        if (!StringUtils.hasText(userId)) {
+            return ResponseEntity.badRequest().build();
+        }
+
+        return ResponseEntity.ok(communityService.hasScrappedPost(postCode, userId));
     }
 
     @PostMapping("/posts")

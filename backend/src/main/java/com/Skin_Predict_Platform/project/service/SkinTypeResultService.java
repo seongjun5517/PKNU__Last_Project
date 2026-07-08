@@ -50,7 +50,7 @@ public class SkinTypeResultService {
 
         // stype_date 를 최신 진단시간으로 봐서 최신 진단 데이터를 가져오도록 함.
         List<SkinTypeResult> allResults =
-                skinTypeResultRepository.findByStypeUserIdOrderByStypeDateDescStypeCodeAsc(userId);
+                skinTypeResultRepository.findAllByUserId(userId);
 
         if (allResults.isEmpty()) {
             return allResults;
@@ -72,7 +72,7 @@ public class SkinTypeResultService {
         LocalDateTime endDate = startDate.plusDays(1);
         List<SkinTypeResult> allResults =
                 skinTypeResultRepository
-                        .findByStypeUserIdAndStypeDateGreaterThanEqualAndStypeDateLessThanOrderByStypeDateDescStypeCodeAsc(
+                        .findByUserIdAndDateRange(
                                 userId,
                                 startDate,
                                 endDate
@@ -90,7 +90,7 @@ public class SkinTypeResultService {
         LocalDateTime startDate = LocalDate.now().atStartOfDay();
         LocalDateTime endDate = startDate.plusDays(1);
         return skinTypeResultRepository
-                .deleteByStypeUserIdAndStypeDateGreaterThanEqualAndStypeDateLessThan(
+                .deleteByUserIdAndDateRange(
                         userId,
                         startDate,
                         endDate
