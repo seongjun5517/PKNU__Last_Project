@@ -19,6 +19,7 @@ const POST_MENU = [
 ];
 
 /* ---------------- 분석 기록 라인 차트 (외부 라이브러리 없이 순수 SVG) ---------------- */
+/* 백엔드 연결 전까지는 사용하지 않지만, 나중에 다시 쓸 수 있도록 컴포넌트는 그대로 둡니다. */
 function AnalysisChart({ data }) {
   const [hoverIdx, setHoverIdx] = useState(null);
 
@@ -159,10 +160,12 @@ export default function Mypage() {
   const [postsByTab, setPostsByTab] = useState({ mine: null, liked: null, scrapped: null });
   const [postsLoadingTab, setPostsLoadingTab] = useState({ mine: false, liked: false, scrapped: false });
 
-  const [analysisHistory, setAnalysisHistory] = useState(null);
+  // 분석 기록은 백엔드 연결 전까지 보류 (state만 남겨둠)
+  const [analysisHistory] = useState(null);
 
   // 정보 수정 폼 상태
   const [editNickname, setEditNickname] = useState("");
+  const [editImageFile, setEditImageFile] = useState(null);
   const [editPreview, setEditPreview] = useState(null);
   const [editSaving, setEditSaving] = useState(false);
   const [editMessage, setEditMessage] = useState(null);
@@ -178,49 +181,53 @@ export default function Mypage() {
   const [deleteChecked, setDeleteChecked] = useState(false);
   const [deleting, setDeleting] = useState(false);
 
-  // 내 정보 조회
-  // 오류 날 수 있으니 일단 주석처리
+  // ---------------- 내 정보 조회 ----------------
+  // GET /user/{user_id}
+  // 응답은 User 엔티티가 그대로 내려옴 (camelCase: userId, userNickname, userProfileImage, userCreatedAt, ...)
   useEffect(() => {
     if (!userId) return;
     springApi
-      .get(`/api/member/${userId}`)
+      .get(`/user/${userId}`)
       .then((res) => {
         setProfile(res.data);
-        setEditNickname(res.data?.nickname || "");
+        setEditNickname(res.data?.userNickname || "");
       })
       .catch((err) => console.error("내 정보 조회 실패:", err))
       .finally(() => setProfileLoading(false));
   }, [userId]);
 
-  // 분석 기록 조회
-  useEffect(() => {
-    if (!userId) return;
-    springApi
-      .get(`/api/deep/history/${userId}`)
-      .then((res) => {
-        // 서버 응답을 { label, score, dominant } 형태로 매핑
-        const mapped = (res.data || []).map((item) => ({
-          label: (item.createdAt || item.date || "").slice(5, 10), // MM-DD
-          score: item.score ?? item.confidence ?? 0,
-          dominant: item.dominantClass ?? item.result ?? "",
-        }));
-        setAnalysisHistory(mapped);
-      })
-      .catch((err) => {
-        console.error("분석 기록 조회 실패:", err);
-        setAnalysisHistory([]);
-      });
-  }, [userId]);
+  // ---------------- 분석 기록 조회 ----------------
+  // 백엔드 엔드포인트가 아직 없어서 보류. 나중에 연결할 때 아래 주석을 해제하세요.
+  // useEffect(() => {
+  //   if (!userId) return;
+  //   springApi
+  //     .get(`/deep/history/${userId}`)
+  //     .then((res) => {
+  //       const mapped = (res.data || []).map((item) => ({
+  //         label: (item.createdAt || item.date || "").slice(5, 10), // MM-DD
+  //         score: item.score ?? item.confidence ?? 0,
+  //         dominant: item.dominantClass ?? item.result ?? "",
+  //       }));
+  //       setAnalysisHistory(mapped);
+  //     })
+  //     .catch((err) => {
+  //       console.error("분석 기록 조회 실패:", err);
+  //       setAnalysisHistory([]);
+  //     });
+  // }, [userId]);
 
-  // 선택된 게시물 탭 하나만 지연 로딩 (아직 안 불러왔을 때만)
+  // ---------------- 선택된 게시물 탭 하나만 지연 로딩 (아직 안 불러왔을 때만) ----------------
+  // GET /community/posts/mine/{userId}
+  // GET /community/posts/liked/{userId}
+  // GET /community/posts/scrapped/{userId}
   useEffect(() => {
     if (!userId || !activePostTab) return;
     if (postsByTab[activePostTab] !== null) return;
 
     const endpointByTab = {
-      mine: `/api/community/posts/mine/${userId}`,
-      liked: `/api/community/likes/${userId}`,
-      scrapped: `/api/community/scraps/${userId}`,
+      mine: `/community/posts/mine/${userId}`,
+      liked: `/community/posts/liked/${userId}`,
+      scrapped: `/community/posts/scrapped/${userId}`,
     };
 
     setPostsLoadingTab((prev) => ({ ...prev, [activePostTab]: true }));
@@ -254,26 +261,55 @@ export default function Mypage() {
   const handleImageChange = (e) => {
     const file = e.target.files?.[0];
     if (!file) return;
+    setEditImageFile(file);
     setEditPreview(URL.createObjectURL(file));
   };
 
-  const handleEditSubmit = (e) => {
+  // ---------------- 정보 수정 ----------------
+  // 이미지가 선택되어 있으면: POST /user/profile-image (multipart) 먼저 호출 -> 그 다음 닉네임 반영
+  // 이미지가 없으면: PUT /user/update 로 닉네임만 반영
+  const handleEditSubmit = async (e) => {
     e.preventDefault();
     setEditSaving(true);
     setEditMessage(null);
-    springApi
-      .put(`/api/member/${userId}`, { nickname: editNickname })
-      .then((res) => {
-        setProfile((prev) => ({ ...prev, nickname: editNickname, ...res.data }));
-        setEditMessage({ type: "success", text: "정보가 수정됐어요." });
-      })
-      .catch((err) => {
-        console.error("정보 수정 실패:", err);
-        setEditMessage({ type: "error", text: "수정 중 문제가 발생했어요. 다시 시도해주세요." });
-      })
-      .finally(() => setEditSaving(false));
+
+    try {
+      let uploadedImagePath = null;
+
+      if (editImageFile) {
+        const formData = new FormData();
+        formData.append("user_id", userId);
+        formData.append("image", editImageFile);
+
+        const imgRes = await springApi.post("/user/profile-image", formData, {
+          headers: { "Content-Type": "multipart/form-data" },
+        });
+        // 응답: { user_profile_image: "/images/profile/xxx.jpg" }
+        uploadedImagePath = imgRes.data?.user_profile_image ?? null;
+      }
+
+      const res = await springApi.put(`/user/update`, {
+        user_id: userId,
+        user_nickname: editNickname,
+      });
+
+      setProfile((prev) => ({
+        ...prev,
+        ...res.data,
+        ...(uploadedImagePath ? { userProfileImage: uploadedImagePath } : {}),
+      }));
+      setEditImageFile(null);
+      setEditMessage({ type: "success", text: "정보가 수정됐어요." });
+    } catch (err) {
+      console.error("정보 수정 실패:", err);
+      setEditMessage({ type: "error", text: "수정 중 문제가 발생했어요. 다시 시도해주세요." });
+    } finally {
+      setEditSaving(false);
+    }
   };
 
+  // ---------------- 비밀번호 변경 ----------------
+  // PUT /user/password  body: { user_id, current_pwd, new_pwd }
   const handlePasswordSubmit = (e) => {
     e.preventDefault();
     if (pwNext !== pwConfirm) {
@@ -283,9 +319,10 @@ export default function Mypage() {
     setPwSaving(true);
     setPwMessage(null);
     springApi
-      .put(`/api/member/${userId}/password`, {
-        currentPassword: pwCurrent,
-        newPassword: pwNext,
+      .put(`/user/password`, {
+        user_id: userId,
+        current_pwd: pwCurrent,
+        new_pwd: pwNext,
       })
       .then(() => {
         setPwMessage({ type: "success", text: "비밀번호가 변경됐어요." });
@@ -295,16 +332,22 @@ export default function Mypage() {
       })
       .catch((err) => {
         console.error("비밀번호 변경 실패:", err);
-        setPwMessage({ type: "error", text: "현재 비밀번호를 다시 확인해주세요." });
+        const serverMsg = err.response?.data;
+        setPwMessage({
+          type: "error",
+          text: typeof serverMsg === "string" ? serverMsg : "현재 비밀번호를 다시 확인해주세요.",
+        });
       })
       .finally(() => setPwSaving(false));
   };
 
+  // ---------------- 회원 탈퇴 ----------------
+  // DELETE /user/delete/{user_id}
   const handleDeleteAccount = () => {
     if (!deleteChecked) return;
     setDeleting(true);
     springApi
-      .delete(`/api/member/${userId}`)
+      .delete(`/user/delete/${userId}`)
       .then(() => {
         localStorage.removeItem("userId");
         window.location.href = "/";
@@ -398,9 +441,9 @@ export default function Mypage() {
             <section className="card">
               <h2>프로필</h2>
               <div className="info_card_body">
-                {profile?.profileImageUrl ? (
+                {profile?.userProfileImage ? (
                   <img
-                    src={profile.profileImageUrl}
+                    src={profile.userProfileImage}
                     alt="프로필 사진"
                     className="info_avatar"
                   />
@@ -415,12 +458,12 @@ export default function Mypage() {
                     {profileLoading ? "불러오는 중..." : profile?.userId || userId}
                   </div>
                   <div className="info_meta">
-                    {profile?.nickname && (
-                      <span className="info_meta_pill">{profile.nickname}</span>
+                    {profile?.userNickname && (
+                      <span className="info_meta_pill">{profile.userNickname}</span>
                     )}
-                    {profile?.joinedAt && (
+                    {profile?.userCreatedAt && (
                       <span className="info_meta_pill rose">
-                        가입일 {profile.joinedAt.slice(0, 10)}
+                        가입일 {profile.userCreatedAt.slice(0, 10)}
                       </span>
                     )}
                   </div>
@@ -434,9 +477,9 @@ export default function Mypage() {
               <h2>정보 수정</h2>
               <form className="mypage_form" onSubmit={handleEditSubmit}>
                 <div className="form_avatar_row">
-                  {editPreview || profile?.profileImageUrl ? (
+                  {editPreview || profile?.userProfileImage ? (
                     <img
-                      src={editPreview || profile.profileImageUrl}
+                      src={editPreview || profile.userProfileImage}
                       alt="프로필 미리보기"
                       className="info_avatar"
                     />
@@ -571,12 +614,12 @@ export default function Mypage() {
                   return (
                     <ul className="posts_list">
                       {list.map((post) => (
-                        <li key={post.id}>
+                        <li key={post.postCode}>
                           <span className="posts_list_dot" />
                           <div className="posts_list_text">
-                            <div className="posts_list_title">{post.title}</div>
+                            <div className="posts_list_title">{post.postTitle}</div>
                             <div className="posts_list_meta">
-                              {post.createdAt ? post.createdAt.slice(0, 10) : ""}
+                              {post.postDate ? post.postDate.slice(0, 10) : ""}
                             </div>
                           </div>
                         </li>
@@ -598,7 +641,7 @@ export default function Mypage() {
                 <h2>분석 기록</h2>
                 <span className="analysis_card_sub">최근 피부 분석 결과 추이</span>
               </div>
-              <AnalysisChart data={analysisHistory} />
+              <p className="analysis_empty">아직 분석을 하지 않으셨어요</p>
             </section>
           )}
         </div>
