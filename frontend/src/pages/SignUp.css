@@ -15,6 +15,9 @@
   --lavender: #F1ECF4;
   --gold: #D9A441;
   --line: rgba(46, 36, 56, 0.09);
+  --plum: #7A5570;
+  --plum-dark: #614259;
+  --plum-tint: #EFE6ED;
 
   min-height: 100vh;
   display: flex;
@@ -58,7 +61,7 @@
   justify-content: center;
   padding: 44px;
   border-radius: 20px;
-  background: linear-gradient(160deg, var(--ink) 0%, #43324f 100%);
+  background: linear-gradient(160deg, var(--plum) 0%, var(--plum-dark) 100%);
   position: relative;
   overflow: hidden;
 }
@@ -233,7 +236,7 @@
   border: 0;
   border-radius: 12px;
   color: #ffffff;
-  background: var(--ink);
+  background: var(--plum);
   font-size: 15px;
   font-weight: 700;
   cursor: pointer;
@@ -241,7 +244,7 @@
 }
 
 .signup_primary_button:hover {
-  background: var(--rose-dark);
+  background: var(--plum-dark);
   transform: translateY(-1px);
 }
 
