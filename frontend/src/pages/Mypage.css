@@ -531,6 +531,13 @@
   padding: 20px 0 4px;
 }
 
+.posts_list_item {
+  cursor: pointer;
+  transition: background-color 0.15s ease;
+}
+
+.posts_list_item:hover {
+  background-color: var(--gray-50, #f8f8f8);
 .mypage_comments_card {
   margin-top: 14px;
 }

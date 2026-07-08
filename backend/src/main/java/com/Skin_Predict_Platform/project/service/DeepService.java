@@ -1,9 +1,12 @@
 package com.Skin_Predict_Platform.project.service;
 
+import java.text.SimpleDateFormat;
 import java.util.Calendar;
 import java.util.Collections;
 import java.util.Date;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
@@ -156,6 +159,39 @@ public class DeepService {
         }
 
         public String getImgPath() { return imgPath; }
+        public List<DetectionDto> getDetections() { return detections; }
+    }
+
+    /**
+     * 유저의 전체 예측 기록을 날짜별로 그룹핑해서 반환.
+     */
+    public List<DayHistoryDto> getDeepHistory(String userId) {
+        List<Deepmodel> rows = this.deeprepository.findByDtypeUserIdOrderByDtypeDateAsc(userId);
+
+        SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
+        Map<String, List<DetectionDto>> grouped = new LinkedHashMap<>();
+
+        for (Deepmodel r : rows) {
+            String dateKey = sdf.format(r.getDtypeDate());
+            grouped.computeIfAbsent(dateKey, k -> new java.util.ArrayList<>())
+                .add(new DetectionDto(r.getDtypeResult(), r.getDtypeCnt()));
+        }
+
+        return grouped.entrySet().stream()
+                .map(e -> new DayHistoryDto(e.getKey(), e.getValue()))
+                .collect(Collectors.toList());
+    }
+
+    public static class DayHistoryDto {
+        private String date;
+        private List<DetectionDto> detections;
+
+        public DayHistoryDto(String date, List<DetectionDto> detections) {
+            this.date = date;
+            this.detections = detections;
+        }
+
+        public String getDate() { return date; }
         public List<DetectionDto> getDetections() { return detections; }
     }
 }

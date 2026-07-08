@@ -118,4 +118,13 @@ public class DeepController {
             this.dtypeCnt = dtypeCnt;
         }
     }
+
+    /**
+     * 유저의 전체 예측 기록을 날짜별로 그룹핑해서 반환.
+     */
+    @GetMapping("/history")
+    public ResponseEntity<?> getDeepHistory(@RequestParam String userId) {
+        List<DeepService.DayHistoryDto> history = deepService.getDeepHistory(userId);
+        return ResponseEntity.ok(history);
+    }
 }

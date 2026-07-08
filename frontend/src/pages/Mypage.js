@@ -4,6 +4,8 @@ import "./Mypage.css";
 // 프로젝트의 실제 axios 인스턴스 경로에 맞게 수정하세요.
 // (프로젝트에서 쓰던 springApi 를 그대로 재사용합니다)
 import { springApi } from "../config/axiosInstance";
+import { useNavigate } from "react-router-dom";
+import AnalysisHistory from "./AnalysisHistory";
 
 
 const INFO_MENU = [
@@ -16,6 +18,7 @@ const INFO_MENU = [
 const POST_MENU = [
   { key: "mine", label: "내가 쓴 게시글" },
   { key: "liked", label: "좋아요한 글" },
+  { key: "comment", label: "내가 쓴 댓글"},
   { key: "scrapped", label: "스크랩한 게시물" },
   { key: "comments", label: "내가 작성한 댓글" },
 ];
@@ -148,6 +151,7 @@ function AnalysisChart({ data }) {
 export default function Mypage() {
   const navigate = useNavigate();
   const userId = localStorage.getItem("userId");
+  const navigate = useNavigate();
 
   const [activeSection, setActiveSection] = useState("info");
 
@@ -714,13 +718,13 @@ export default function Mypage() {
 
           {activeSection === "analysis" && (
             <section className="card">
-              <div className="analysis_card_header">
-                <h2>분석 기록</h2>
+                <div className="analysis_card_header">
+                <h2>분석 기록(최근 10일 추이)</h2>
                 <span className="analysis_card_sub">최근 피부 분석 결과 추이</span>
-              </div>
-              <p className="analysis_empty">아직 분석을 하지 않으셨어요</p>
+                </div>
+                <AnalysisHistory />
             </section>
-          )}
+            )}
         </div>
       </div>
     </div>
