@@ -1,8 +1,11 @@
 import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { useAuth } from "../context/AuthContext";
 import {
   getCommunityCategoryList,
   getCommunityPostList,
+  getCommunityPostScrapStatus,
+  scrapCommunityPost,
 } from "../springApi/communitySpringBootApi";
 import "./CommunityPage.css";
 
@@ -21,6 +24,9 @@ function formatPostDate(value) {
 
 function CommunityPage() {
   const navigate = useNavigate();
+  const { userId } = useAuth();
+  const loginUserId =
+    userId || localStorage.getItem("userId") || localStorage.getItem("loginUserId");
 
   // 현재 선택된 게시판 카테고리. "all"이면 전체 카테고리
   const [selectedCategoryCode, setSelectedCategoryCode] = useState("all");
@@ -39,6 +45,8 @@ function CommunityPage() {
 
   // DB에서 조회한 커뮤니티 카테고리 목록
   const [categories, setCategories] = useState([]);
+  const [scrappedPostCodes, setScrappedPostCodes] = useState({});
+  const [scrappingPostCodes, setScrappingPostCodes] = useState({});
 
   useEffect(() => {
     const fetchCommunityData = async () => {
@@ -47,16 +55,31 @@ function CommunityPage() {
           getCommunityCategoryList(),
           getCommunityPostList(),
         ]);
+        const postList = postResponse.data;
 
         setCategories(categoryResponse.data);
-        setPosts(postResponse.data);
+        setPosts(postList);
+
+        if (loginUserId) {
+          const scrapStatuses = await Promise.all(
+            postList.map((post) =>
+              getCommunityPostScrapStatus(post.postCode, loginUserId)
+                .then((response) => [post.postCode, Boolean(response.data)])
+                .catch(() => [post.postCode, false])
+            )
+          );
+
+          setScrappedPostCodes(Object.fromEntries(scrapStatuses));
+        } else {
+          setScrappedPostCodes({});
+        }
       } catch (error) {
         console.error("커뮤니티 데이터 조회 실패:", error);
       }
     };
 
     fetchCommunityData();
-  }, []);
+  }, [loginUserId]);
 
   const filteredPosts = useMemo(() => {
     const searchKeyword = keyword.trim().toLowerCase();
@@ -92,6 +115,36 @@ function CommunityPage() {
   const getCategoryName = (categoryCode) =>
     categories.find((category) => category.categoryCode === categoryCode)
       ?.categoryName || "기타";
+
+  const handleScrapClick = async (postCode) => {
+    if (!loginUserId) {
+      alert("로그인 후 스크랩할 수 있습니다.");
+      return;
+    }
+
+    if (scrappingPostCodes[postCode]) return;
+
+    setScrappingPostCodes((current) => ({ ...current, [postCode]: true }));
+
+    try {
+      const response = await scrapCommunityPost(postCode, loginUserId);
+
+      setPosts((currentPosts) =>
+        currentPosts.map((post) =>
+          post.postCode === postCode ? response.data.post : post
+        )
+      );
+      setScrappedPostCodes((current) => ({
+        ...current,
+        [postCode]: response.data.scrapped,
+      }));
+    } catch (error) {
+      console.error("커뮤니티 게시글 스크랩 실패:", error.response?.data || error);
+      alert("스크랩 반영에 실패했습니다.");
+    } finally {
+      setScrappingPostCodes((current) => ({ ...current, [postCode]: false }));
+    }
+  };
 
   return (
     <main className="community_page">
@@ -199,7 +252,20 @@ function CommunityPage() {
                   <div className="post_metrics">
                     <span>조회 {post.postViews}</span>
                     <span>조화효~ {post.postLike}</span>
-                    <span>스크랩 {post.postScrap}</span>
+                    <button
+                      type="button"
+                      className={`post_scrap_button${
+                        scrappedPostCodes[post.postCode] ? " is_scrapped" : ""
+                      }`}
+                      onClick={() => handleScrapClick(post.postCode)}
+                      disabled={scrappingPostCodes[post.postCode]}
+                    >
+                      {scrappingPostCodes[post.postCode]
+                        ? "반영 중..."
+                        : `${scrappedPostCodes[post.postCode] ? "스크랩됨" : "스크랩"} ${
+                            post.postScrap || 0
+                          }`}
+                    </button>
                   </div>
                   <time>{formatPostDate(post.postDate)}</time>
                 </article>

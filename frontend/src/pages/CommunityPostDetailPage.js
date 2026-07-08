@@ -5,7 +5,10 @@ import {
   getCommunityCategoryList,
   getCommunityPost,
   getCommunityPostLikeStatus,
+  getCommunityPostScrapStatus,
+  increaseCommunityPostView,
   likeCommunityPost,
+  scrapCommunityPost,
 } from "../springApi/communitySpringBootApi";
 import "./CommunityPostDetailPage.css";
 
@@ -47,6 +50,9 @@ function CommunityPostDetailPage() {
 
   // 로그인 사용자가 현재 게시물에 좋아요를 눌렀는지 관리
   const [isLiked, setIsLiked] = useState(false);
+  const [isScrapping, setIsScrapping] = useState(false);
+  const [scrapMessage, setScrapMessage] = useState("");
+  const [isScrapped, setIsScrapped] = useState(false);
 
   useEffect(() => {
     const fetchPostDetail = async () => {
@@ -58,14 +64,37 @@ function CommunityPostDetailPage() {
 
         if (loginUserId) {
           requests.push(getCommunityPostLikeStatus(postCode, loginUserId));
+          requests.push(getCommunityPostScrapStatus(postCode, loginUserId));
         }
 
-        const [categoryResponse, postResponse, likeStatusResponse] =
+        const [categoryResponse, postResponse, likeStatusResponse, scrapStatusResponse] =
           await Promise.all(requests);
+        const postData = postResponse.data;
 
         setCategories(categoryResponse.data);
-        setPost(postResponse.data);
         setIsLiked(Boolean(likeStatusResponse?.data));
+        setIsScrapped(Boolean(scrapStatusResponse?.data));
+
+        const viewSessionKey = `community:viewed:${postCode}:${loginUserId}`;
+        const shouldIncreaseView =
+          loginUserId &&
+          postData?.postUserId !== loginUserId &&
+          !sessionStorage.getItem(viewSessionKey);
+
+        if (shouldIncreaseView) {
+          sessionStorage.setItem(viewSessionKey, "true");
+
+          try {
+            const viewResponse = await increaseCommunityPostView(postCode, loginUserId);
+            setPost(viewResponse.data);
+          } catch (viewError) {
+            sessionStorage.removeItem(viewSessionKey);
+            console.error("而ㅻ??덊떚 寃뚯떆湲 議고쉶??利앷? ?ㅽ뙣:", viewError);
+            setPost(postData);
+          }
+        } else {
+          setPost(postData);
+        }
       } catch (error) {
         console.error("커뮤니티 게시글 상세 조회 실패:", error);
         setMessage("게시글을 불러오지 못했습니다.");
@@ -106,6 +135,29 @@ function CommunityPostDetailPage() {
       setLikeMessage("좋아요 반영에 실패했습니다.");
     } finally {
       setIsLiking(false);
+    }
+  };
+
+  const handleScrapClick = async () => {
+    if (!post || isScrapping) return;
+
+    if (!loginUserId) {
+      setScrapMessage("로그인 후 스크랩할 수 있습니다.");
+      return;
+    }
+
+    setIsScrapping(true);
+    setScrapMessage("");
+
+    try {
+      const response = await scrapCommunityPost(post.postCode, loginUserId);
+      setPost(response.data.post);
+      setIsScrapped(response.data.scrapped);
+    } catch (error) {
+      console.error("커뮤니티 게시글 스크랩 실패:", error.response?.data || error);
+      setScrapMessage("스크랩 반영에 실패했습니다.");
+    } finally {
+      setIsScrapping(false);
     }
   };
 
@@ -155,11 +207,25 @@ function CommunityPostDetailPage() {
                   ? "반영 중..."
                   : `${isLiked ? "🧡" : "♡"} ${post.postLike || 0}`}
               </button>
-              <span>스크랩 {post.postScrap || 0}</span>
+              <button
+                type="button"
+                className={`community_detail_scrap_button${
+                  isScrapped ? " is_scrapped" : ""
+                }`}
+                onClick={handleScrapClick}
+                disabled={isScrapping}
+              >
+                {isScrapping
+                  ? "반영 중..."
+                  : `${isScrapped ? "스크랩됨" : "스크랩"} ${post.postScrap || 0}`}
+              </button>
             </footer>
 
             {likeMessage && (
               <p className="community_detail_action_message">{likeMessage}</p>
+            )}
+            {scrapMessage && (
+              <p className="community_detail_action_message">{scrapMessage}</p>
             )}
           </article>
         )}

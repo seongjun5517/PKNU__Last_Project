@@ -149,6 +149,28 @@
   opacity: 0.68;
 }
 
+.community_detail_scrap_button {
+  border: 1px solid rgba(124, 155, 130, 0.32);
+  border-radius: 8px;
+  padding: 7px 12px;
+  background: #ffffff;
+  color: var(--sage, #7c9b82);
+  font: inherit;
+  font-weight: 900;
+  cursor: pointer;
+}
+
+.community_detail_scrap_button.is_scrapped {
+  border-color: var(--sage, #7c9b82);
+  background: var(--sage, #7c9b82);
+  color: #ffffff;
+}
+
+.community_detail_scrap_button:disabled {
+  cursor: wait;
+  opacity: 0.68;
+}
+
 .community_detail_action_message {
   margin: 0;
   padding: 12px 26px 16px;

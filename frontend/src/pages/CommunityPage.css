@@ -298,6 +298,30 @@
   font-weight: 700;
 }
 
+.post_scrap_button {
+  width: fit-content;
+  border: 1px solid rgba(124, 155, 130, 0.28);
+  border-radius: 8px;
+  padding: 4px 8px;
+  background: #ffffff;
+  color: var(--sage-dark);
+  font: inherit;
+  font-size: 12px;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.post_scrap_button.is_scrapped {
+  border-color: var(--sage);
+  background: var(--sage);
+  color: #ffffff;
+}
+
+.post_scrap_button:disabled {
+  cursor: wait;
+  opacity: 0.68;
+}
+
 .post_row time {
   color: var(--ink-faint);
   font-size: 12px;

@@ -4,11 +4,11 @@ import com.Skin_Predict_Platform.project.model.PostDetail;
 
 import lombok.AllArgsConstructor;
 import lombok.Getter;
-// 백엔드에서 프론트로 돌려주는 응답
-// 게시글이랑 좋아요 상태 전달
+// 스크랩 버튼을 눌렀을 때
+// 프론트에 “게시글 최신 정보 + 현재 스크랩 상태” 를 같이 돌려주려고 분리
 @Getter
 @AllArgsConstructor
-public class CommunityPostLikeResponse {
+public class CommunityPostScrapResponse {
     private PostDetail post;
-    private boolean liked;
+    private boolean scrapped;
 }
