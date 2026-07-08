@@ -121,4 +121,13 @@ public class SkinTypeResultService {
     private boolean isBlank(String value) {
         return value == null || value.trim().isEmpty();
     }
+
+    // 마이페이지 그래프 관련 함수
+    @Transactional(readOnly = true)
+    public List<SkinTypeResult> getAllResults(String userId) {
+        if (isBlank(userId)) {
+            return Collections.emptyList();
+        }
+        return skinTypeResultRepository.findAllByUserId(userId);
+    }
 }

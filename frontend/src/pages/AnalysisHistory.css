@@ -1,0 +1,46 @@
+.analysis_history_grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 20px;
+}
+
+.analysis_history_grid .card {
+  background: #fff;
+  border-radius: 16px;
+  padding: 20px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06);
+}
+
+.analysis_history_grid .card h3 {
+  margin: 0 0 12px;
+  font-size: 15px;
+  font-weight: 600;
+  color: #333;
+}
+
+.analysis_empty {
+  color: #999;
+  font-size: 14px;
+  padding: 40px 0;
+  text-align: center;
+}
+
+.chart_tooltip_box {
+  background: #fff;
+  border: 1px solid #eee;
+  border-radius: 8px;
+  padding: 8px 12px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+  font-size: 13px;
+}
+
+.chart_tooltip_date {
+  font-weight: 600;
+  margin-bottom: 2px;
+}
+
+@media (max-width: 900px) {
+  .analysis_history_grid {
+    grid-template-columns: 1fr;
+  }
+}

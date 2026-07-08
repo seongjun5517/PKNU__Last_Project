@@ -10,3 +10,7 @@ export const getTodaySkinTypeResult = (userId) =>
 
 export const deleteTodaySkinTypeResult = (userId) =>
   springApi.delete(`/skin-type/results/today/${userId}`);
+
+// GET /skin-type/results/history/{userId}  ← 백엔드에 아직 없음, 추가 필요
+export const getSkinTypeHistory = (userId) =>
+  springApi.get(`/skin-type/results/history/${userId}`);

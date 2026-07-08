@@ -23,4 +23,6 @@ public interface DeepRepository extends JpaRepository<Deepmodel, Long> {
     Optional<String> findTodayPredictByUserId(@Param("userId") String userId);
 
     List<Deepmodel> findByDtypeUserIdAndDtypeDateBetween(String userId, Date start, Date end);
+
+    List<Deepmodel> findByDtypeUserIdOrderByDtypeDateAsc(String userId);
 }
