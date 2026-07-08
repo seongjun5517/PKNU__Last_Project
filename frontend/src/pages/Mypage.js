@@ -179,6 +179,7 @@ export default function Mypage() {
   const [deleting, setDeleting] = useState(false);
 
   // 내 정보 조회
+  // 오류 날 수 있으니 일단 주석처리
   useEffect(() => {
     if (!userId) return;
     springApi
