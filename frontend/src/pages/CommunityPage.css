@@ -189,7 +189,7 @@
 .post_table_head,
 .post_row {
   display: grid;
-  grid-template-columns: 94px minmax(0, 1fr) 150px 86px;
+  grid-template-columns: 58px 94px minmax(0, 1fr) 150px 86px;
   gap: 14px;
   align-items: center;
 }
@@ -215,6 +215,12 @@
 
 .post_row:hover {
   background: rgba(241, 236, 244, 0.48);
+}
+
+.post_code {
+  color: var(--ink-faint);
+  font-size: 12px;
+  font-weight: 800;
 }
 
 .post_category {
@@ -384,6 +390,10 @@
   .post_metrics {
     flex-direction: row;
     flex-wrap: wrap;
+  }
+
+  .post_code::before {
+    content: "게시글 번호 ";
   }
 
   .post_row time {

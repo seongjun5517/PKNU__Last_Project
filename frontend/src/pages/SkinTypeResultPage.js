@@ -1,6 +1,9 @@
 import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { getLatestSkinTypeResult } from "../springApi/skinTypeSpringBootApi";
+import {
+  deleteTodaySkinTypeResult,
+  getTodaySkinTypeResult,
+} from "../springApi/skinTypeSpringBootApi";
 import "./SkinTypeResultPage.css";
 
 function getLoginUserId() {
@@ -11,20 +14,42 @@ function getFaceResult(results, faceName) {
   return results.find((result) => result.stypeFace === faceName);
 }
 
+function getFallbackFinalType(tZoneResult, uZoneResult) {
+  if (!tZoneResult || !uZoneResult) return "피부 타입 분석 결과";
+
+  if (
+    tZoneResult.stypeName === "지성" &&
+    (uZoneResult.stypeName === "건성" || uZoneResult.stypeName === "중성")
+  ) {
+    return "복합성 피부";
+  }
+
+  if (tZoneResult.stypeName === uZoneResult.stypeName) {
+    return `${tZoneResult.stypeName} 피부`;
+  }
+
+  return "복합성 피부";
+}
+
 function SkinTypeResultPage() {
   const navigate = useNavigate();
   const [results, setResults] = useState([]);
   const [loading, setLoading] = useState(true);
   const [message, setMessage] = useState("");
+  const [deleting, setDeleting] = useState(false);
 
   const tZoneResult = useMemo(() => getFaceResult(results, "T존"), [results]);
   const uZoneResult = useMemo(() => getFaceResult(results, "U존"), [results]);
+  const sensitiveResult = useMemo(() => getFaceResult(results, "민감도"), [results]);
+  const finalResult = useMemo(() => getFaceResult(results, "최종"), [results]);
+  const finalTypeName =
+    finalResult?.stypeName || getFallbackFinalType(tZoneResult, uZoneResult);
   const diagnosedAt = results[0]?.stypeDate
     ? new Date(results[0].stypeDate).toLocaleString("ko-KR")
     : "";
 
   useEffect(() => {
-    const fetchLatestResult = async () => {
+    const fetchTodayResult = async () => {
       const userId = getLoginUserId();
 
       if (!userId) {
@@ -34,18 +59,42 @@ function SkinTypeResultPage() {
       }
 
       try {
-        const response = await getLatestSkinTypeResult(userId);
+        const response = await getTodaySkinTypeResult(userId);
         setResults(response.data || []);
       } catch (error) {
         console.error("피부 타입 진단 결과 조회 실패:", error);
-        setMessage("진단 결과를 불러오지 못했습니다. 서버 상태를 확인해주세요.");
+        setMessage("오늘 진단 결과를 불러오지 못했습니다. 서버 상태를 확인해주세요.");
       } finally {
         setLoading(false);
       }
     };
 
-    fetchLatestResult();
+    fetchTodayResult();
   }, []);
+
+  const handleRetest = async () => {
+    const userId = getLoginUserId();
+
+    if (!userId) {
+      navigate("/login");
+      return;
+    }
+
+    if (!window.confirm("오늘 저장된 피부 타입 진단 결과를 삭제하고 다시 진단할까요?")) {
+      return;
+    }
+
+    try {
+      setDeleting(true);
+      await deleteTodaySkinTypeResult(userId);
+      navigate("/analysis");
+    } catch (error) {
+      console.error("오늘 피부 타입 진단 결과 삭제 실패:", error);
+      alert("재진단 준비에 실패했습니다. 서버 상태를 확인해주세요.");
+    } finally {
+      setDeleting(false);
+    }
+  };
 
   const renderZoneRow = (zoneLabel, result, chipClass, fillClass) => {
     const value = result?.stypeFig || 0;
@@ -82,6 +131,14 @@ function SkinTypeResultPage() {
           <h1>피부 타입 진단 결과</h1>
           {diagnosedAt && <p className="result_date">{diagnosedAt}</p>}
         </div>
+        <button
+          type="button"
+          className="result_retest_button"
+          onClick={handleRetest}
+          disabled={deleting || loading || results.length === 0}
+        >
+          {deleting ? "삭제 중" : "재진단하기"}
+        </button>
       </header>
 
       <main className="type_result_shell">
@@ -155,14 +212,31 @@ function SkinTypeResultPage() {
               </div>
 
               <div className="result_summary">
-                <p className="result_caption">최신 진단</p>
+                <p className="result_caption">오늘의 진단</p>
+                <div className="final_result_block">
+                  <span>당신의 피부 타입은 ~~ ?</span>
+                  <h2>{finalTypeName}</h2>
+                  {sensitiveResult && (
+                    <p>
+                      민감도 {sensitiveResult.stypeFig}% ·{" "}
+                      {sensitiveResult.stypeName}
+                    </p>
+                  )}
+                </div>
                 <div className="zone_result_list">
                   {renderZoneRow("T존", tZoneResult, "t_chip", "t_zone_fill")}
                   {renderZoneRow("U존", uZoneResult, "u_chip", "u_zone_fill")}
+                  {sensitiveResult &&
+                    renderZoneRow(
+                      "민감도",
+                      sensitiveResult,
+                      "sensitive_chip",
+                      "sensitive_fill"
+                    )}
                 </div>
                 <p>
-                  설문 답변 점수를 기준으로 T존과 U존의 우세 피부 타입을 계산해
-                  저장했습니다.
+                  T존과 U존의 건성·지성·중성 흐름을 먼저 보고, 민감도 점수가
+                  기준 이상이면 최종 타입 앞에 민감성을 함께 표시합니다.
                 </p>
               </div>
             </section>

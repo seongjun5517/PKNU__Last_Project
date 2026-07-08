@@ -87,6 +87,21 @@
   align-items: start;
 }
 
+.survey_check_panel {
+  max-width: 1180px;
+  min-height: 220px;
+  margin: 0 auto;
+  display: grid;
+  place-items: center;
+  background: var(--card-white);
+  border: 1px solid var(--line);
+  border-radius: 20px;
+  box-shadow: 0 18px 40px rgba(46, 36, 56, 0.06);
+  color: var(--ink-soft);
+  font-size: 15px;
+  font-weight: 700;
+}
+
 .survey_summary,
 .question_section,
 .question_card {

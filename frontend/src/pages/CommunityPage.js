@@ -168,6 +168,7 @@ function CommunityPage() {
 
           <section className="post_table" aria-label="게시글 목록">
             <div className="post_table_head">
+              <span>번호</span>
               <span>카테고리</span>
               <span>제목</span>
               <span>반응</span>
@@ -179,6 +180,7 @@ function CommunityPage() {
             ) : (
               filteredPosts.map((post) => (
                 <article className="post_row" key={post.postCode}>
+                  <span className="post_code">#{post.postCode}</span>
                   <span className="post_category">{getCategoryName(post.categoryCode)}</span>
                   <div className="post_summary">
                     <button

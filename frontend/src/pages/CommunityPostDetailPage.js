@@ -153,7 +153,7 @@ function CommunityPostDetailPage() {
               >
                 {isLiking
                   ? "반영 중..."
-                  : `${isLiked ? "좋아요 취소" : "좋아요"} ${post.postLike || 0}`}
+                  : `${isLiked ? "🧡" : "♡"} ${post.postLike || 0}`}
               </button>
               <span>스크랩 {post.postScrap || 0}</span>
             </footer>

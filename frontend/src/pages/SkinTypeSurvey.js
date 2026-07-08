@@ -1,7 +1,10 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import surveyData from "../data/triple_skin_type_questions_v1.json";
-import { saveSkinTypeResult } from "../springApi/skinTypeSpringBootApi";
+import {
+  getTodaySkinTypeResult,
+  saveSkinTypeResult,
+} from "../springApi/skinTypeSpringBootApi";
 import "./SkinTypeSurvey.css";
 
 const AREA_LABELS = {
@@ -19,6 +22,7 @@ const SCORE_KEYS = ["dry", "oily", "normal", "sensitive"];
 const ZONE_LABELS = {
   T_ZONE: "T존",
   U_ZONE: "U존",
+  SENSITIVE: "민감도",
 };
 
 // createEmptyScores: 각 피부 타입 점수를 0으로 초기화한 객체 생성
@@ -38,24 +42,69 @@ function addScores(targetScores, optionScores = {}) {
   });
 }
 
+function getScorePercent(scores, scoreKey) {
+  const totalScore = SCORE_KEYS.reduce((sum, key) => sum + scores[key], 0);
+  return totalScore ? Math.round((scores[scoreKey] / totalScore) * 100) : 0;
+}
+
 // getDominantType: 누적 점수 중 가장 높은 피부 타입과 퍼센트 계산
 function getDominantType(scores) {
-  const totalScore = SCORE_KEYS.reduce((sum, key) => sum + scores[key], 0);
   const dominantKey = SCORE_KEYS.reduce((bestKey, key) =>
     scores[key] > scores[bestKey] ? key : bestKey
   );
 
   return {
+    typeKey: dominantKey,
     stypeName: surveyData.scoreTypes[dominantKey] || dominantKey,
-    stypeFig: totalScore ? Math.round((scores[dominantKey] / totalScore) * 100) : 0,
+    stypeFig: getScorePercent(scores, dominantKey),
   };
 }
 
-// calculateSkinTypeResults: 설문 답변을 DB 저장용 T존/U존 결과 배열로 변환
+function getBaseSkinType(tZoneRatios, uZoneRatios, tZoneType, uZoneType) {
+  if (
+    tZoneRatios.oily >= 60 &&
+    (uZoneRatios.dry >= 40 || uZoneRatios.normal >= 40)
+  ) {
+    return "복합성 피부";
+  }
+
+  if (tZoneRatios.oily >= 60 && uZoneRatios.oily >= 50) {
+    return "지성 피부";
+  }
+
+  if (tZoneRatios.dry >= 50 && uZoneRatios.dry >= 50) {
+    return "건성 피부";
+  }
+
+  if (tZoneRatios.normal >= 50 && uZoneRatios.normal >= 50) {
+    return "중성 피부";
+  }
+
+  if (
+    tZoneType === "oily" &&
+    (uZoneType === "dry" || uZoneType === "normal")
+  ) {
+    return "복합성 피부";
+  }
+
+  if (tZoneType === uZoneType) {
+    return `${surveyData.scoreTypes[tZoneType]} 피부`;
+  }
+
+  return "복합성 피부";
+}
+
+function addSensitivePrefix(baseType, sensitivePercent) {
+  if (sensitivePercent < 50) return baseType;
+  return baseType.startsWith("민감성") ? baseType : `민감성 ${baseType}`;
+}
+
+// calculateSkinTypeResults: 설문 답변을 DB 저장용 T존/U존/민감도/최종 결과 배열로 변환
 function calculateSkinTypeResults(answers) {
   const zoneScores = {
     T_ZONE: createEmptyScores(),
     U_ZONE: createEmptyScores(),
+    SENSITIVE: createEmptyScores(),
   };
 
   surveyData.questions.forEach((question) => {
@@ -71,10 +120,47 @@ function calculateSkinTypeResults(answers) {
     }
   });
 
-  return Object.entries(zoneScores).map(([zone, scores]) => ({
-    stypeFace: ZONE_LABELS[zone],
-    ...getDominantType(scores),
-  }));
+  const tZoneResult = getDominantType(zoneScores.T_ZONE);
+  const uZoneResult = getDominantType(zoneScores.U_ZONE);
+  const sensitivePercent = getScorePercent(zoneScores.SENSITIVE, "sensitive");
+  const tZoneRatios = SCORE_KEYS.reduce(
+    (ratios, key) => ({ ...ratios, [key]: getScorePercent(zoneScores.T_ZONE, key) }),
+    {}
+  );
+  const uZoneRatios = SCORE_KEYS.reduce(
+    (ratios, key) => ({ ...ratios, [key]: getScorePercent(zoneScores.U_ZONE, key) }),
+    {}
+  );
+  const baseType = getBaseSkinType(
+    tZoneRatios,
+    uZoneRatios,
+    tZoneResult.typeKey,
+    uZoneResult.typeKey
+  );
+  const finalType = addSensitivePrefix(baseType, sensitivePercent);
+
+  return [
+    {
+      stypeFace: ZONE_LABELS.T_ZONE,
+      stypeName: tZoneResult.stypeName,
+      stypeFig: tZoneResult.stypeFig,
+    },
+    {
+      stypeFace: ZONE_LABELS.U_ZONE,
+      stypeName: uZoneResult.stypeName,
+      stypeFig: uZoneResult.stypeFig,
+    },
+    {
+      stypeFace: ZONE_LABELS.SENSITIVE,
+      stypeName: sensitivePercent >= 50 ? "민감성" : "일반",
+      stypeFig: sensitivePercent,
+    },
+    {
+      stypeFace: "최종",
+      stypeName: finalType,
+      stypeFig: sensitivePercent,
+    },
+  ];
 }
 
 // questions 배열을 section 값 기준으로 묶어 페이지 단위로 사용할 구조 만들기ㅣ
@@ -99,6 +185,7 @@ function SkinTypeSurvey() {
 
   // answers: 사용자가 선택한 답변 저장 객체 예) { Q001: "A2", Q002: "A4" }
   const [answers, setAnswers] = useState({});
+  const [checkingTodayResult, setCheckingTodayResult] = useState(true);
 
   // currentSectionIndex: 현재 화면에 보여줄 질문 섹션의 순번. 0이면 첫 번째 섹션
   const [currentSectionIndex, setCurrentSectionIndex] = useState(0);
@@ -108,6 +195,31 @@ function SkinTypeSurvey() {
     () => groupQuestionsBySection(surveyData.questions || []),
     []
   );
+
+  useEffect(() => {
+    const checkTodayResult = async () => {
+      const userId = getLoginUserId();
+
+      if (!userId) {
+        setCheckingTodayResult(false);
+        return;
+      }
+
+      try {
+        const response = await getTodaySkinTypeResult(userId);
+        if ((response.data || []).length > 0) {
+          navigate("/analysis/result");
+          return;
+        }
+      } catch (error) {
+        console.error("오늘 피부 타입 진단 결과 확인 실패:", error);
+      } finally {
+        setCheckingTodayResult(false);
+      }
+    };
+
+    checkTodayResult();
+  }, [navigate]);
 
   // currentGroup: 현재 페이지에서 보여줄 섹션 그룹
   const currentGroup = groupedQuestions[currentSectionIndex];
@@ -195,6 +307,11 @@ function SkinTypeSurvey() {
         </div>
       </header>
 
+      {checkingTodayResult ? (
+        <main className="survey_check_panel">
+          오늘 피부 타입 진단 결과를 확인하는 중입니다.
+        </main>
+      ) : (
       <main className="survey_layout">
         <aside className="survey_summary">
           <p className="summary_label">진행률</p>
@@ -334,6 +451,7 @@ function SkinTypeSurvey() {
           )}
         </section>
       </main>
+      )}
     </div>
   );
 }

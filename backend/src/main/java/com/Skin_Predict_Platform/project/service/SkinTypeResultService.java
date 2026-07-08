@@ -1,5 +1,6 @@
 package com.Skin_Predict_Platform.project.service;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.Collections;
 import java.util.List;
@@ -28,6 +29,11 @@ public class SkinTypeResultService {
             return Collections.emptyList();
         }
 
+        List<SkinTypeResult> todayResults = getTodayResults(request.getUserId());
+        if (!todayResults.isEmpty()) {
+            return todayResults;
+        }
+
         LocalDateTime diagnosedAt = LocalDateTime.now();
         List<SkinTypeResult> results = request.getResults().stream()
                 .map((item) -> toEntity(request.getUserId(), diagnosedAt, item))
@@ -46,6 +52,52 @@ public class SkinTypeResultService {
         List<SkinTypeResult> allResults =
                 skinTypeResultRepository.findByStypeUserIdOrderByStypeDateDescStypeCodeAsc(userId);
 
+        if (allResults.isEmpty()) {
+            return allResults;
+        }
+
+        LocalDateTime latestDate = allResults.get(0).getStypeDate();
+        return allResults.stream()
+                .filter((result) -> latestDate.equals(result.getStypeDate()))
+                .collect(Collectors.toList());
+    }
+
+    @Transactional(readOnly = true)
+    public List<SkinTypeResult> getTodayResults(String userId) {
+        if (isBlank(userId)) {
+            return Collections.emptyList();
+        }
+
+        LocalDateTime startDate = LocalDate.now().atStartOfDay();
+        LocalDateTime endDate = startDate.plusDays(1);
+        List<SkinTypeResult> allResults =
+                skinTypeResultRepository
+                        .findByStypeUserIdAndStypeDateGreaterThanEqualAndStypeDateLessThanOrderByStypeDateDescStypeCodeAsc(
+                                userId,
+                                startDate,
+                                endDate
+                        );
+
+        return getLatestGroup(allResults);
+    }
+
+    @Transactional
+    public long deleteTodayResults(String userId) {
+        if (isBlank(userId)) {
+            return 0;
+        }
+
+        LocalDateTime startDate = LocalDate.now().atStartOfDay();
+        LocalDateTime endDate = startDate.plusDays(1);
+        return skinTypeResultRepository
+                .deleteByStypeUserIdAndStypeDateGreaterThanEqualAndStypeDateLessThan(
+                        userId,
+                        startDate,
+                        endDate
+                );
+    }
+
+    private List<SkinTypeResult> getLatestGroup(List<SkinTypeResult> allResults) {
         if (allResults.isEmpty()) {
             return allResults;
         }
