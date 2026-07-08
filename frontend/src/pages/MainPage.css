@@ -1042,16 +1042,19 @@
   }
 
   .edit_title_input,
-  .edit_time_input,
-  .edit_category_select {
-    flex: 1 1 auto;
-    width: 100%;
-  }
+.edit_time_input,
+.edit_category_select {
+  flex: 1 1 auto;
+  width: 100%;
+  max-width: 100%;
+}
 
-  .edit_save_btn,
-  .edit_cancel_btn {
-    flex: 1;
-  }
+.edit_save_btn,
+.edit_cancel_btn {
+  flex: 1 1 auto;
+  width: 100%;
+  max-width: 100%;
+}
 }
 
 .input_with_overlay {
@@ -1085,4 +1088,24 @@
 .time_input.is_empty:focus::-webkit-datetime-edit,
 .repeat_end_input.is_empty:focus::-webkit-datetime-edit {
   color: var(--ink);
+}
+
+/* iOS Safari 네이티브 스타일 제거: 폼 요소가 박스 밖으로 삐져나오는 문제 방지 */
+.edit_time_input,
+.edit_category_select,
+.edit_save_btn,
+.edit_cancel_btn {
+  -webkit-appearance: none;
+  appearance: none;
+  margin: 0;
+  box-sizing: border-box;
+}
+
+/* select는 appearance: none을 주면 드롭다운 화살표가 사라지므로 직접 그려줌 */
+.edit_category_select {
+  background-image: url("data:image/svg+xml;charset=UTF-8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 8'%3E%3Cpath fill='%236E6478' d='M1 1l5 5 5-5'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 12px center;
+  background-size: 10px 7px;
+  padding-right: 32px; /* 화살표 아이콘과 텍스트 겹침 방지 */
 }
