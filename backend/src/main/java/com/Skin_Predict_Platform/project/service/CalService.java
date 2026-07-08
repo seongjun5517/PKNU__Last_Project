@@ -47,21 +47,28 @@ public class CalService {
     }
 
     // 캘린더 수정
-    public String setCalUpdate(Long calCode, String calDescription) {
-        log.info("calCode = [%s], 수정할 내용 = [%s]".formatted(calCode, calDescription));
+    public Calendar setCalUpdate(Long calCode, Calendar updated) {
+    log.info("calCode = [%s] 수정 요청".formatted(calCode));
 
-        Optional<Calendar> cal = this.calRepository.findById(calCode);
+    Optional<Calendar> cal = this.calRepository.findById(calCode);
 
-        if (cal.isPresent()) {
-            Calendar cal_update = cal.get();
-            // cal_update.setCalDescription(calDescription);
-            this.calRepository.save(cal_update);
+    if (cal.isPresent()) {
+        Calendar cal_update = cal.get();
 
-            return "회원 캘린더 정보가 수정되었습니다.";
+        cal_update.setCalTitle(updated.getCalTitle());
+        cal_update.setCalTaskDate(updated.getCalTaskDate());
+        cal_update.setCalCategory(updated.getCalCategory());
+        cal_update.setCalIsCompleted(updated.getCalIsCompleted());
+
+        if (updated.getCalImgPath() != null) {
+            cal_update.setCalImgPath(updated.getCalImgPath());
         }
 
-        return "회원 캘린더 정보가 존재하지 않습니다.";
+        return this.calRepository.save(cal_update);
     }
+
+    throw new RuntimeException("[%s]에 대한 캘린더 정보가 존재하지 않습니다.".formatted(calCode));
+}
 
     
     // 캘린더 정보 삭제
