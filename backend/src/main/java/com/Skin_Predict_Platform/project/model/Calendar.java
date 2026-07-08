@@ -41,8 +41,8 @@ public class Calendar {
     @Column(name = "cal_title")
     private String calTitle;
 
-    @Column(name = "cal_description")
-    private String calDescription;
+    // @Column(name = "cal_description")
+    // private String calDescription;
 
     @Column(name = "cal_is_completed")
     private Integer calIsCompleted;

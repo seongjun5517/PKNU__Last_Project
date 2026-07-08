@@ -9,6 +9,7 @@ DROP TABLE IF EXISTS ingredient;
 DROP TABLE IF EXISTS Notice;
 DROP TABLE IF EXISTS Scrap;
 DROP TABLE IF EXISTS comments;
+DROP TABLE IF EXISTS community_post_like;
 DROP TABLE IF EXISTS calendar_tasks;
 DROP TABLE IF EXISTS manager;
 DROP TABLE IF EXISTS deep;
@@ -56,6 +57,28 @@ CREATE TABLE posts_detail (
         REFERENCES Community_Category(category_code)
         ON DELETE RESTRICT
         ON UPDATE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+CREATE TABLE community_post_like (
+    like_code BIGINT AUTO_INCREMENT PRIMARY KEY,
+    like_post_code BIGINT NOT NULL,
+    like_user_id VARCHAR(255) NOT NULL,
+    like_created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+
+    CONSTRAINT fk_community_post_like_post
+        FOREIGN KEY (like_post_code)
+        REFERENCES posts_detail(post_code)
+        ON DELETE CASCADE
+        ON UPDATE CASCADE,
+
+    CONSTRAINT fk_community_post_like_user
+        FOREIGN KEY (like_user_id)
+        REFERENCES users(user_id)
+        ON DELETE CASCADE
+        ON UPDATE CASCADE,
+
+    CONSTRAINT uq_community_post_like_user_post
+        UNIQUE (like_user_id, like_post_code)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 CREATE TABLE comments (

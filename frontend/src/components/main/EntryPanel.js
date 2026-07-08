@@ -33,7 +33,12 @@ function EntryPanel({ selectedKey, selectedDateLabel, entries, getCategory, onAd
 
   const handleSubmit = async () => {
     if (!titleInput.trim()) return;
-    const ok = await onAddEntry({ selectedKey, titleInput, timeInput, selectedCategoryId });
+    const ok = await onAddEntry({
+      dateKey: selectedKey,
+      title: titleInput,
+      time: timeInput,
+      categoryId: selectedCategoryId,
+    });
     if (ok) {
       setTitleInput("");
       setTimeInput("");

@@ -196,7 +196,7 @@ function CommunityPage() {
                   </div>
                   <div className="post_metrics">
                     <span>조회 {post.postViews}</span>
-                    <span>추천 {post.postLike}</span>
+                    <span>조화효~ {post.postLike}</span>
                     <span>스크랩 {post.postScrap}</span>
                   </div>
                   <time>{formatPostDate(post.postDate)}</time>

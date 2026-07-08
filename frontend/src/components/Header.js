@@ -1,9 +1,10 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
+import { useAuth } from "../context/AuthContext";
 import "./Header.css";
 
 function getLoginUserId() {
-  return localStorage.getItem("loginUserId");
+  return localStorage.getItem("userId") || localStorage.getItem("loginUserId");
 }
 
 // ---- 알람 관련 부분 ----
@@ -35,6 +36,7 @@ function getNotificationText(notification) {
 
 function Header() {
   const navigate = useNavigate();
+  const { logout } = useAuth();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isNotifOpen, setIsNotifOpen] = useState(false);
   const [notifications, setNotifications] = useState([]);
@@ -54,7 +56,7 @@ function Header() {
   const unreadCount = notifications.filter((n) => !n.isRead).length;
 
   const handleLogout = () => {
-    localStorage.removeItem("loginUserId");
+    logout();
     navigate("/login");
   };
 

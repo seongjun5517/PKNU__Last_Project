@@ -139,7 +139,7 @@ function MainPage() {
   const handleAddEntry = async (...args) => {
     if (!userId) {
       alert("로그인이 필요합니다.");
-      return;
+      return false;
     }
 
     let entryData = {};
@@ -156,10 +156,10 @@ function MainPage() {
     const targetDateKey = entryData.dateKey || selectedKey;
     const title = String(entryData.title || entryData.calTitle || "").trim();
 
-    // if (!title) {
-    //   alert("일정 제목을 입력해주세요.");
-    //   return;
-    // }
+    if (!title) {
+      alert("일정 제목을 입력해주세요.");
+      return false;
+    }
 
     const rawTime = entryData.time || entryData.calTime || "09:00";
     const normalizedTime = rawTime.length === 5 ? `${rawTime}:00` : rawTime;
@@ -195,9 +195,11 @@ function MainPage() {
       }));
 
       alert("일정이 저장되었습니다.");
+      return true;
     } catch (error) {
       console.error("일정 저장 실패:", error);
       alert("저장에 실패했습니다. 서버 상태를 확인해주세요.");
+      return false;
     }
   };
 

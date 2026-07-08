@@ -25,6 +25,13 @@ public class CalService {
         return this.calRepository.findAll();
     }
 
+    // 사용자별 캘린더 목록 조회
+    public List<Calendar> getCalendarListByUserId(String userId) {
+        log.info("사용자별 캘린더 목록 조회 시작: userId = [%s]".formatted(userId));
+
+        return this.calRepository.findByCalUserId(userId);
+    }
+
 
     // 캘린더 한건 조회
     public Calendar getcalendarView(Long calCode) {
@@ -47,7 +54,7 @@ public class CalService {
 
         if (cal.isPresent()) {
             Calendar cal_update = cal.get();
-            cal_update.setCalDescription(calDescription);
+            // cal_update.setCalDescription(calDescription);
             this.calRepository.save(cal_update);
 
             return "회원 캘린더 정보가 수정되었습니다.";
@@ -70,13 +77,11 @@ public class CalService {
 
     
     // 캘린더 정보 삽입
-    public String setCalInsert(Calendar calendar) {
+    public Calendar setCalInsert(Calendar calendar) {
         log.info("캘린더 정보 삽입 시작: [%s]".formatted(calendar.getCalTitle()));
         
         // save 메서드는 해당 객체가 새로운 것이면 INSERT를, 
         // 이미 존재하는 ID라면 UPDATE를 수행합니다.
-        this.calRepository.save(calendar);
-        
-        return "캘린더 정보가 성공적으로 등록되었습니다.";
+        return this.calRepository.save(calendar);
     }
 }

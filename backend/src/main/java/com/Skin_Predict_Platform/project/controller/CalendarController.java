@@ -28,7 +28,11 @@ public class CalendarController {
 
     // 1. 전체 목록 조회 (GET /calendar)
     @GetMapping("")
-    public List<Calendar> getAllCalendarList() {
+    public List<Calendar> getAllCalendarList(@RequestParam(required = false) String userId) {
+        if (userId != null && !userId.trim().isEmpty()) {
+            return calService.getCalendarListByUserId(userId);
+        }
+
         return calService.getcalenderlist();
     }
 
@@ -40,7 +44,7 @@ public class CalendarController {
 
     // 3. 삽입 (POST /calendar)
     @PostMapping("")
-    public String insertCalendar(@RequestBody Calendar calendar) {
+    public Calendar insertCalendar(@RequestBody Calendar calendar) {
         return calService.setCalInsert(calendar);
     }
 

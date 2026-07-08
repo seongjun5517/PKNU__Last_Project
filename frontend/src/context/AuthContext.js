@@ -9,11 +9,13 @@ export const AuthProvider = ({ children }) => {
   // 로그인/로그아웃 시 상태를 갱신하는 함수
   const login = (id) => {
     localStorage.setItem("userId", id);
+    localStorage.setItem("loginUserId", id);
     setUserId(id);
   };
 
   const logout = () => {
     localStorage.removeItem("userId");
+    localStorage.removeItem("loginUserId");
     setUserId(null);
   };
 

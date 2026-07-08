@@ -4,10 +4,12 @@ import {
   getCommunityCategoryList,
   insertCommunityPost,
 } from "../springApi/communitySpringBootApi";
+import { useAuth } from "../context/AuthContext";
 import "./CommunityWritePage.css";
 
 function CommunityWritePage() {
   const navigate = useNavigate();
+  const { userId } = useAuth();
 
   // DB에서 조회한 커뮤니티 카테고리 목록
   const [categories, setCategories] = useState([]);
@@ -49,7 +51,8 @@ function CommunityWritePage() {
   const handleSubmit = async (event) => {
     event.preventDefault();
 
-    const postUserId = localStorage.getItem("loginUserId");
+    const postUserId =
+      userId || localStorage.getItem("userId") || localStorage.getItem("loginUserId");
     if (!postUserId) {
       setMessage("로그인 정보가 없습니다. 로그인 후 다시 작성해주세요.");
       return;
