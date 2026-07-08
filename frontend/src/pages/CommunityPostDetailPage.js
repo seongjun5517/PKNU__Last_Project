@@ -2,8 +2,11 @@ import { useEffect, useMemo, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import {
+  createCommunityPostComment,
+  deleteCommunityComment,
   getCommunityCategoryList,
   getCommunityPost,
+  getCommunityPostComments,
   getCommunityPostLikeStatus,
   getCommunityPostScrapStatus,
   increaseCommunityPostView,
@@ -53,6 +56,11 @@ function CommunityPostDetailPage() {
   const [isScrapping, setIsScrapping] = useState(false);
   const [scrapMessage, setScrapMessage] = useState("");
   const [isScrapped, setIsScrapped] = useState(false);
+  const [comments, setComments] = useState([]);
+  const [commentContent, setCommentContent] = useState("");
+  const [isCommentSaving, setIsCommentSaving] = useState(false);
+  const [deletingCommentCodes, setDeletingCommentCodes] = useState({});
+  const [commentMessage, setCommentMessage] = useState("");
 
   useEffect(() => {
     const fetchPostDetail = async () => {
@@ -60,6 +68,7 @@ function CommunityPostDetailPage() {
         const requests = [
           getCommunityCategoryList(),
           getCommunityPost(postCode),
+          getCommunityPostComments(postCode),
         ];
 
         if (loginUserId) {
@@ -67,11 +76,18 @@ function CommunityPostDetailPage() {
           requests.push(getCommunityPostScrapStatus(postCode, loginUserId));
         }
 
-        const [categoryResponse, postResponse, likeStatusResponse, scrapStatusResponse] =
+        const [
+          categoryResponse,
+          postResponse,
+          commentResponse,
+          likeStatusResponse,
+          scrapStatusResponse,
+        ] =
           await Promise.all(requests);
         const postData = postResponse.data;
 
         setCategories(categoryResponse.data);
+        setComments(commentResponse.data || []);
         setIsLiked(Boolean(likeStatusResponse?.data));
         setIsScrapped(Boolean(scrapStatusResponse?.data));
 
@@ -161,6 +177,55 @@ function CommunityPostDetailPage() {
     }
   };
 
+  const handleCommentSubmit = async (event) => {
+    event.preventDefault();
+
+    const trimmedContent = commentContent.trim();
+    if (!trimmedContent || isCommentSaving) return;
+
+    if (!loginUserId) {
+      setCommentMessage("로그인 후 댓글을 작성할 수 있습니다.");
+      return;
+    }
+
+    setIsCommentSaving(true);
+    setCommentMessage("");
+
+    try {
+      const response = await createCommunityPostComment(
+        post.postCode,
+        loginUserId,
+        trimmedContent
+      );
+      setComments((currentComments) => [...currentComments, response.data]);
+      setCommentContent("");
+    } catch (error) {
+      console.error("커뮤니티 댓글 작성 실패:", error.response?.data || error);
+      setCommentMessage("댓글 저장에 실패했습니다.");
+    } finally {
+      setIsCommentSaving(false);
+    }
+  };
+
+  const handleCommentDelete = async (commentCode) => {
+    if (!loginUserId || deletingCommentCodes[commentCode]) return;
+
+    setDeletingCommentCodes((current) => ({ ...current, [commentCode]: true }));
+    setCommentMessage("");
+
+    try {
+      await deleteCommunityComment(commentCode, loginUserId);
+      setComments((currentComments) =>
+        currentComments.filter((comment) => comment.cmtCode !== commentCode)
+      );
+    } catch (error) {
+      console.error("커뮤니티 댓글 삭제 실패:", error.response?.data || error);
+      setCommentMessage("댓글 삭제에 실패했습니다.");
+    } finally {
+      setDeletingCommentCodes((current) => ({ ...current, [commentCode]: false }));
+    }
+  };
+
   return (
     <main className="community_detail_page">
       <section className="community_detail_shell">
@@ -227,6 +292,60 @@ function CommunityPostDetailPage() {
             {scrapMessage && (
               <p className="community_detail_action_message">{scrapMessage}</p>
             )}
+
+            <section className="community_comment_section">
+              <div className="community_comment_header">
+                <h3>댓글</h3>
+                <span>{comments.length}</span>
+              </div>
+
+              {comments.length === 0 ? (
+                <p className="community_comment_empty">아직 댓글이 없습니다.</p>
+              ) : (
+                <ul className="community_comment_list">
+                  {comments.map((comment) => (
+                    <li key={comment.cmtCode}>
+                      <div className="community_comment_meta">
+                        <strong>{comment.cmtUserId}</strong>
+                        <div className="community_comment_meta_right">
+                          <time>{formatPostDate(comment.cmtCreatedAt)}</time>
+                          {comment.cmtUserId === loginUserId && (
+                            <button
+                              type="button"
+                              onClick={() => handleCommentDelete(comment.cmtCode)}
+                              disabled={deletingCommentCodes[comment.cmtCode]}
+                              aria-label="댓글 삭제"
+                            >
+                              x
+                            </button>
+                          )}
+                        </div>
+                      </div>
+                      <p>{comment.cmtContents}</p>
+                    </li>
+                  ))}
+                </ul>
+              )}
+
+              <form className="community_comment_form" onSubmit={handleCommentSubmit}>
+                <textarea
+                  value={commentContent}
+                  onChange={(event) => setCommentContent(event.target.value)}
+                  placeholder="댓글을 입력하세요."
+                  rows={3}
+                />
+                <button
+                  type="submit"
+                  disabled={isCommentSaving || !commentContent.trim()}
+                >
+                  {isCommentSaving ? "저장 중..." : "댓글 작성"}
+                </button>
+              </form>
+
+              {commentMessage && (
+                <p className="community_detail_action_message">{commentMessage}</p>
+              )}
+            </section>
           </article>
         )}
       </section>

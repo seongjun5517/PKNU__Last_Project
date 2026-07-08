@@ -531,6 +531,82 @@
   padding: 20px 0 4px;
 }
 
+.mypage_comments_card {
+  margin-top: 14px;
+}
+
+.mypage_comments_list {
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin: 18px 0 0;
+  padding: 0;
+}
+
+.mypage_comments_list li {
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  padding: 13px 15px;
+  background: var(--bg-cream);
+  cursor: pointer;
+  transition: border-color 160ms ease;
+}
+
+.mypage_comments_list li:hover {
+  border-color: var(--rose);
+}
+
+.mypage_comment_post {
+  min-width: 0;
+  color: var(--rose-dark);
+  font-size: 12px;
+  font-weight: 800;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.mypage_comment_top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.mypage_comment_top button {
+  width: 24px;
+  height: 24px;
+  flex-shrink: 0;
+  border: 1px solid var(--line);
+  border-radius: 50%;
+  background: #ffffff;
+  color: var(--rose-dark);
+  font-size: 13px;
+  font-weight: 900;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.mypage_comment_top button:disabled {
+  cursor: wait;
+  opacity: 0.55;
+}
+
+.mypage_comments_list p {
+  margin: 7px 0 6px;
+  color: var(--ink);
+  font-size: 13.5px;
+  line-height: 1.55;
+  white-space: pre-wrap;
+}
+
+.mypage_comments_list span {
+  color: var(--ink-faint);
+  font-size: 12px;
+  font-weight: 700;
+}
+
 /* ---------- 분석 기록 ---------- */
 .analysis_card_header {
   display: flex;
