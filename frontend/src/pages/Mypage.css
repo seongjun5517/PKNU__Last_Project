@@ -1,0 +1,652 @@
+@import url('https://fonts.googleapis.com/css2?family=Gowun+Batang:wght@400;700&display=swap');
+@import url('https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.css');
+
+.mypage_app {
+  --bg-cream: #FBF6F1;
+  --card-white: #FFFFFF;
+  --ink: #2E2438;
+  --ink-soft: #6E6478;
+  --ink-faint: #A79FB0;
+  --rose: #BD6F63;
+  --rose-dark: #A65A50;
+  --rose-tint: #F3E4DF;
+  --sage: #7C9B82;
+  --sage-dark: #5F7F66;
+  --lavender: #F1ECF4;
+  --gold: #D9A441;
+  --line: rgba(46, 36, 56, 0.09);
+
+  min-height: 100vh;
+  background: var(--bg-cream);
+  background-image:
+    radial-gradient(circle at 8% 0%, rgba(189, 111, 99, 0.07), transparent 40%),
+    radial-gradient(circle at 100% 10%, rgba(124, 155, 130, 0.08), transparent 45%);
+  box-sizing: border-box;
+  font-family: 'Pretendard', -apple-system, BlinkMacSystemFont, sans-serif;
+  color: var(--ink);
+  padding: 26px 40px 56px;
+}
+
+.mypage_app * {
+  box-sizing: border-box;
+}
+
+/* ---------- 헤더 ---------- */
+.mypage_header {
+  max-width: 960px;
+  margin: 0 auto 22px;
+}
+
+.mypage_eyebrow {
+  margin: 0 0 4px;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.18em;
+  color: var(--sage-dark);
+}
+
+.mypage_title {
+  margin: 0;
+  font-family: 'Gowun Batang', serif;
+  font-size: 26px;
+  font-weight: 700;
+  color: var(--ink);
+}
+
+.mypage_subtitle {
+  margin: 6px 0 0;
+  font-size: 13.5px;
+  color: var(--ink-soft);
+}
+
+/* ---------- 좌측 사이드바 + 우측 콘텐츠 레이아웃 ---------- */
+.mypage_layout {
+  display: flex;
+  align-items: flex-start;
+  gap: 22px;
+  max-width: 960px;
+  margin: 0 auto;
+}
+
+.mypage_sidebar {
+  width: 190px;
+  flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  background: var(--card-white);
+  border: 1px solid var(--line);
+  border-radius: 20px;
+  padding: 10px;
+  box-shadow: 0 18px 40px rgba(46, 36, 56, 0.06);
+  position: sticky;
+  top: 26px;
+}
+
+.mypage_nav_item {
+  text-align: left;
+  border: none;
+  background: none;
+  padding: 13px 16px;
+  border-radius: 13px;
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--ink-soft);
+  cursor: pointer;
+  transition: background 160ms ease, color 160ms ease;
+}
+
+.mypage_nav_item:hover {
+  background: var(--bg-cream);
+  color: var(--ink);
+}
+
+.mypage_nav_item.active {
+  background: var(--rose-tint);
+  color: var(--rose-dark);
+}
+
+.mypage_nav_item_expandable {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.mypage_nav_chevron {
+  width: 22px;
+  height: 22px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--ink-faint);
+  transition: transform 220ms ease, color 160ms ease;
+  flex-shrink: 0;
+}
+
+.mypage_nav_item_expandable.active .mypage_nav_chevron {
+  color: var(--rose-dark);
+}
+
+.mypage_nav_chevron.open {
+  transform: rotate(180deg);
+}
+
+.mypage_nav_chevron svg {
+  width: 12px;
+  height: 12px;
+}
+
+.mypage_submenu {
+  display: grid;
+  grid-template-rows: 0fr;
+  opacity: 0;
+  transition: grid-template-rows 240ms ease, opacity 200ms ease;
+}
+
+.mypage_submenu.open {
+  grid-template-rows: 1fr;
+  opacity: 1;
+}
+
+.mypage_submenu_inner {
+  overflow: hidden;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding-left: 10px;
+}
+
+.mypage_submenu_item {
+  text-align: left;
+  border: none;
+  background: none;
+  padding: 10px 16px;
+  border-radius: 11px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--ink-faint);
+  cursor: pointer;
+  position: relative;
+  transition: background 160ms ease, color 160ms ease;
+}
+
+.mypage_submenu_item::before {
+  content: "";
+  position: absolute;
+  left: 4px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 4px;
+  height: 4px;
+  border-radius: 50%;
+  background: var(--ink-faint);
+}
+
+.mypage_submenu_item:hover {
+  background: var(--bg-cream);
+  color: var(--ink);
+}
+
+.mypage_submenu_item.active {
+  background: var(--rose-tint);
+  color: var(--rose-dark);
+}
+
+.mypage_submenu_item.active::before {
+  background: var(--rose);
+}
+
+.mypage_submenu_item.danger {
+  color: var(--rose-dark);
+  opacity: 0.75;
+}
+
+.mypage_submenu_item.danger:hover {
+  background: var(--rose-tint);
+  opacity: 1;
+}
+
+.mypage_submenu_item.danger.active {
+  background: var(--rose-dark);
+  color: #fff;
+  opacity: 1;
+}
+
+.mypage_submenu_item.danger.active::before {
+  background: #fff;
+}
+
+.mypage_content {
+  flex: 1;
+  min-width: 0;
+}
+
+/* ---------- 정보 수정 / 비밀번호 변경 폼 ---------- */
+.mypage_form {
+  margin-top: 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  max-width: 380px;
+}
+
+.form_avatar_row {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.form_file_label {
+  font-size: 12.5px;
+  font-weight: 700;
+  color: var(--rose-dark);
+  background: var(--rose-tint);
+  padding: 8px 16px;
+  border-radius: 999px;
+  cursor: pointer;
+  transition: background 160ms ease;
+}
+
+.form_file_label:hover {
+  background: color-mix(in srgb, var(--rose) 30%, white);
+}
+
+.form_group {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.form_label {
+  font-size: 12.5px;
+  font-weight: 700;
+  color: var(--ink-soft);
+}
+
+.form_input {
+  border: 1px solid var(--line);
+  background: var(--bg-cream);
+  border-radius: 12px;
+  padding: 12px 14px;
+  font-size: 13.5px;
+  font-family: 'Pretendard', sans-serif;
+  color: var(--ink);
+  outline: none;
+  transition: border-color 160ms ease, background 160ms ease;
+}
+
+.form_input:focus {
+  border-color: var(--rose);
+  background: var(--card-white);
+}
+
+.form_message {
+  margin: 0;
+  font-size: 12.5px;
+  font-weight: 600;
+}
+
+.form_message.success {
+  color: var(--sage-dark);
+}
+
+.form_message.error {
+  color: var(--rose-dark);
+}
+
+.form_actions {
+  margin-top: 4px;
+}
+
+.btn_primary {
+  border: none;
+  background: var(--ink);
+  color: #fff;
+  font-weight: 700;
+  font-size: 13.5px;
+  padding: 12px 24px;
+  border-radius: 12px;
+  cursor: pointer;
+  transition: background 160ms ease;
+}
+
+.btn_primary:hover:not(:disabled) {
+  background: var(--rose-dark);
+}
+
+.btn_primary:disabled {
+  background: var(--ink-faint);
+  cursor: not-allowed;
+}
+
+.btn_danger {
+  border: none;
+  background: var(--rose-dark);
+  color: #fff;
+  font-weight: 700;
+  font-size: 13.5px;
+  padding: 12px 24px;
+  border-radius: 12px;
+  cursor: pointer;
+  transition: background 160ms ease, opacity 160ms ease;
+}
+
+.btn_danger:hover:not(:disabled) {
+  background: #8f4a41;
+}
+
+.btn_danger:disabled {
+  background: var(--ink-faint);
+  cursor: not-allowed;
+}
+
+/* ---------- 회원 탈퇴 경고 영역 ---------- */
+.danger_box {
+  margin-top: 18px;
+  background: var(--rose-tint);
+  border: 1px solid color-mix(in srgb, var(--rose) 35%, transparent);
+  border-radius: 16px;
+  padding: 18px 20px;
+  max-width: 480px;
+}
+
+.danger_title {
+  margin: 0 0 10px;
+  font-weight: 700;
+  font-size: 13.5px;
+  color: var(--rose-dark);
+}
+
+.danger_list {
+  margin: 0;
+  padding-left: 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  font-size: 12.5px;
+  color: var(--ink-soft);
+  line-height: 1.6;
+}
+
+.danger_checkbox {
+  margin-top: 16px;
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--ink-soft);
+  cursor: pointer;
+  max-width: 480px;
+}
+
+.danger_checkbox input {
+  width: 16px;
+  height: 16px;
+  accent-color: var(--rose-dark);
+  cursor: pointer;
+}
+
+/* ---------- 공통 카드 ---------- */
+.card {
+  background: var(--card-white);
+  border-radius: 20px;
+  border: 1px solid var(--line);
+  box-shadow: 0 18px 40px rgba(46, 36, 56, 0.06);
+  padding: 24px 26px;
+}
+
+.card h2 {
+  margin: 0;
+  font-family: 'Gowun Batang', serif;
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--ink);
+}
+
+/* ---------- 내 정보 ---------- */
+.info_card_body {
+  display: flex;
+  align-items: center;
+  gap: 22px;
+  margin-top: 18px;
+}
+
+.info_avatar {
+  width: 84px;
+  height: 84px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 3px solid var(--rose-tint);
+  background: var(--lavender);
+  flex-shrink: 0;
+}
+
+.info_avatar_fallback {
+  width: 84px;
+  height: 84px;
+  border-radius: 50%;
+  border: 3px solid var(--rose-tint);
+  background: var(--lavender);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: 'Gowun Batang', serif;
+  font-size: 26px;
+  font-weight: 700;
+  color: var(--rose-dark);
+  flex-shrink: 0;
+}
+
+.info_text {
+  min-width: 0;
+}
+
+.info_id {
+  font-size: 16.5px;
+  font-weight: 700;
+  color: var(--ink);
+}
+
+.info_meta {
+  margin-top: 6px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.info_meta_pill {
+  font-size: 11.5px;
+  font-weight: 700;
+  color: var(--sage-dark);
+  background: color-mix(in srgb, var(--sage) 16%, white);
+  padding: 5px 12px;
+  border-radius: 999px;
+}
+
+.info_meta_pill.rose {
+  color: var(--rose-dark);
+  background: var(--rose-tint);
+}
+
+/* ---------- 게시물 리스트 ---------- */
+.posts_list {
+  list-style: none;
+  margin: 18px 0 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.posts_list li {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 13px 15px;
+  border-radius: 12px;
+  background: var(--bg-cream);
+  border: 1px solid var(--line);
+  cursor: pointer;
+  transition: border-color 160ms ease;
+}
+
+.posts_list li:hover {
+  border-color: var(--rose);
+}
+
+.posts_list_dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--gold);
+  flex-shrink: 0;
+}
+
+.posts_list_text {
+  min-width: 0;
+  flex: 1;
+}
+
+.posts_list_title {
+  font-weight: 700;
+  font-size: 13.5px;
+  color: var(--ink);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.posts_list_meta {
+  color: var(--ink-faint);
+  font-size: 12px;
+  margin-top: 2px;
+}
+
+.posts_empty,
+.posts_loading {
+  color: var(--ink-faint);
+  font-size: 13px;
+  padding: 20px 0 4px;
+}
+
+/* ---------- 분석 기록 ---------- */
+.analysis_card_header {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  margin-bottom: 6px;
+}
+
+.analysis_card_sub {
+  font-size: 12px;
+  color: var(--ink-faint);
+}
+
+.analysis_chart_wrap {
+  margin-top: 14px;
+}
+
+.analysis_chart_wrap svg {
+  width: 100%;
+  height: auto;
+  display: block;
+  overflow: visible;
+}
+
+.chart_grid_line {
+  stroke: var(--line);
+  stroke-width: 1;
+}
+
+.chart_axis_label {
+  fill: var(--ink-faint);
+  font-size: 10.5px;
+  font-family: 'Pretendard', sans-serif;
+}
+
+.chart_area_path {
+  fill: url(#mypage_chart_gradient);
+  opacity: 0.55;
+}
+
+.chart_line_path {
+  fill: none;
+  stroke: var(--rose);
+  stroke-width: 2.5;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.chart_point {
+  fill: var(--card-white);
+  stroke: var(--rose);
+  stroke-width: 2.5;
+  cursor: pointer;
+  transition: r 140ms ease;
+}
+
+.chart_point.hovered {
+  r: 6;
+  fill: var(--rose);
+}
+
+.chart_tooltip {
+  position: absolute;
+  pointer-events: none;
+  background: var(--ink);
+  color: #fff;
+  font-size: 11.5px;
+  font-weight: 600;
+  padding: 7px 11px;
+  border-radius: 10px;
+  transform: translate(-50%, -120%);
+  white-space: nowrap;
+  box-shadow: 0 10px 24px rgba(46, 36, 56, 0.22);
+}
+
+.chart_tooltip_date {
+  color: var(--rose-tint);
+  font-weight: 700;
+  margin-right: 6px;
+}
+
+.analysis_chart_pos {
+  position: relative;
+}
+
+.analysis_empty {
+  color: var(--ink-faint);
+  font-size: 13.5px;
+  text-align: center;
+  padding: 40px 0;
+}
+
+/* ---------- 반응형 ---------- */
+@media (max-width: 720px) {
+  .mypage_app {
+    padding: 22px 16px 40px;
+  }
+
+  .mypage_layout {
+    flex-direction: column;
+  }
+
+  .mypage_sidebar {
+    width: 100%;
+    flex-direction: row;
+    overflow-x: auto;
+    position: static;
+  }
+
+  .mypage_nav_item {
+    white-space: nowrap;
+  }
+
+  .info_card_body {
+    flex-direction: column;
+    align-items: flex-start;
+    text-align: left;
+  }
+}

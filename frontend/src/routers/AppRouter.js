@@ -10,6 +10,7 @@ import Analysis1 from "../pages/Analysis1";
 import CommunityPage from "../pages/CommunityPage";
 import CommunityWritePage from "../pages/CommunityWritePage";
 import CommunityPostDetailPage from "../pages/CommunityPostDetailPage";
+import Mypage from "../pages/Mypage";
 
 export default function AppRouter() {
   return (
@@ -27,6 +28,7 @@ export default function AppRouter() {
           <Route path="/analysis" element={<SkinTypeSurvey />} />
           <Route path="/analysis/result" element={<SkinTypeResultPage />} />
           <Route path="/analysis1" element={<Analysis1 />} />
+          <Route path="/mypage" element={<Mypage />} />
         </Routes>
       </Layout>
     </BrowserRouter>
