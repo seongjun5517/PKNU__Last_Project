@@ -170,6 +170,7 @@ function Analysis1() {
   };
 
   const skinInfo = result ? getSkinInfo(result.detections) : null;
+  
 
   return (
     <div className="analysis1_app">
