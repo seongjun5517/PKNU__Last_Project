@@ -24,5 +24,7 @@ public interface DeepRepository extends JpaRepository<Deepmodel, Long> {
 
     List<Deepmodel> findByDtypeUserIdAndDtypeDateBetween(String userId, Date start, Date end);
 
+    List<Deepmodel> findByDtypeUserIdOrderByDtypeDateDescDtypeCodeAsc(String userId);
+
     List<Deepmodel> findByDtypeUserIdOrderByDtypeDateAsc(String userId);
 }

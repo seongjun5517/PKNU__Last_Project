@@ -9,14 +9,27 @@ import {
   setCalUpdate, // (calCode, data)
   setCaldel,    // (calCode)
 } from "../springApi/CalendarSpringBootApi";
+import {
+  deleteDeepHistoryByDate,
+  getDeepHistory,
+} from "../springApi/deepSpringBootApi";
 import { useAuth } from "../context/AuthContext";
 
 import CalendarCard from "../components/main/CalendarCard";
 import EntryPanel from "../components/main/EntryPanel";
+import SkinRecordPanel from "../components/main/SkinRecordPanel";
 import CommunityList from "../components/main/CommunityList";
 import TodoList from "../components/main/TodoList";
 import UpcomingList from "../components/main/UpcomingList";
 import AnalysisButtons from "../components/main/AnalysisButtons";
+
+const FLASK_BASE_URL = "http://localhost:5000";
+
+function getDiagnosisImageUrl(imgPath) {
+  if (!imgPath) return "";
+  if (imgPath.startsWith("data:") || imgPath.startsWith("http")) return imgPath;
+  return `${FLASK_BASE_URL}${imgPath.startsWith("/") ? imgPath : `/${imgPath}`}`;
+}
 
 function MainPage() {
   const { userId } = useAuth();
@@ -31,6 +44,8 @@ function MainPage() {
   const [selectedKey, setSelectedKey] = useState(todayKey);
 
   const [entries, setEntries] = useState({});
+  const [deepRecords, setDeepRecords] = useState([]);
+  const [isDeletingDiagnosis, setIsDeletingDiagnosis] = useState(false);
 
   const [categories] = useState([
     { id: "pack", name: "팩", color: "#BD6F63" },
@@ -85,6 +100,25 @@ function MainPage() {
     };
 
     fetchEntries();
+  }, [userId]);
+
+  useEffect(() => {
+    const fetchDeepHistory = async () => {
+      if (!userId) {
+        setDeepRecords([]);
+        return;
+      }
+
+      try {
+        const response = await getDeepHistory(userId);
+        setDeepRecords(Array.isArray(response.data) ? response.data : []);
+      } catch (error) {
+        console.error("피부 상태 진단 기록 로딩 실패:", error);
+        setDeepRecords([]);
+      }
+    };
+
+    fetchDeepHistory();
   }, [userId]);
 
   const streakCount = useMemo(() => {
@@ -303,6 +337,51 @@ function MainPage() {
     }));
   };
 
+  const selectedDiagnosisRecord = useMemo(
+    () => deepRecords.find((record) => record.date === selectedKey) || null,
+    [deepRecords, selectedKey]
+  );
+
+  const selectedDiagnosisImageUrl = useMemo(
+    () => getDiagnosisImageUrl(selectedDiagnosisRecord?.imgPath),
+    [selectedDiagnosisRecord]
+  );
+
+  const diagnosisDateKeys = useMemo(
+    () => new Set(deepRecords.map((record) => record.date)),
+    [deepRecords]
+  );
+
+  const handleDeleteDiagnosisRecord = async () => {
+    if (!userId) {
+      alert("로그인이 필요합니다.");
+      return false;
+    }
+
+    if (!selectedDiagnosisRecord) {
+      alert("삭제할 피부 상태 진단 기록이 없습니다.");
+      return false;
+    }
+
+    if (!window.confirm("삭제하면 해당 날짜의 피부 상태 진단 사진과 진단 기록이 함께 사라집니다. 삭제할까요?")) {
+      return false;
+    }
+
+    try {
+      setIsDeletingDiagnosis(true);
+      await deleteDeepHistoryByDate(userId, selectedKey);
+      setDeepRecords((prev) => prev.filter((record) => record.date !== selectedKey));
+      alert("피부 상태 진단 기록이 삭제되었습니다.");
+      return true;
+    } catch (error) {
+      console.error("피부 상태 진단 기록 삭제 실패:", error);
+      alert("삭제에 실패했습니다. 서버 상태를 확인해주세요.");
+      return false;
+    } finally {
+      setIsDeletingDiagnosis(false);
+    }
+  };
+
   const selectedDateLabel = useMemo(() => {
     const [, month, day] = selectedKey.split("-");
     return `${month}월 ${day}일`;
@@ -315,16 +394,29 @@ function MainPage() {
       <div className="main_grid">
         <div className="main_col main_col_left">
           <section className="card calendar_card">
-            <CalendarCard
-              viewMonth={viewMonth}
-              onChangeMonth={changeMonth}
-              todayKey={todayKey}
-              selectedKey={selectedKey}
-              onSelectDate={setSelectedKey}
-              entries={entries}
-              getCategory={getCategory}
-              streakCount={streakCount}
-            />
+            <div className="calendar_content">
+              <div className="calendar_month_area">
+                <CalendarCard
+                  viewMonth={viewMonth}
+                  onChangeMonth={changeMonth}
+                  todayKey={todayKey}
+                  selectedKey={selectedKey}
+                  onSelectDate={setSelectedKey}
+                  entries={entries}
+                  getCategory={getCategory}
+                  streakCount={streakCount}
+                  diagnosisDateKeys={diagnosisDateKeys}
+                />
+              </div>
+
+              <SkinRecordPanel
+                selectedDateLabel={selectedDateLabel}
+                diagnosisRecord={selectedDiagnosisRecord}
+                diagnosisImageUrl={selectedDiagnosisImageUrl}
+                onDeleteDiagnosisRecord={handleDeleteDiagnosisRecord}
+                isDeletingDiagnosisRecord={isDeletingDiagnosis}
+              />
+            </div>
 
             <EntryPanel
               selectedKey={selectedKey}

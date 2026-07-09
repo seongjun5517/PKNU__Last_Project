@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import surveyData from "../data/triple_skin_type_questions_v1.json";
 import {
-  getTodaySkinTypeResult,
+  getLatestSkinTypeResult,
   saveSkinTypeResult,
 } from "../springApi/skinTypeSpringBootApi";
 import "./SkinTypeSurvey.css";
@@ -185,7 +185,7 @@ function SkinTypeSurvey() {
 
   // answers: 사용자가 선택한 답변 저장 객체 예) { Q001: "A2", Q002: "A4" }
   const [answers, setAnswers] = useState({});
-  const [checkingTodayResult, setCheckingTodayResult] = useState(true);
+  const [checkingSavedResult, setCheckingSavedResult] = useState(true);
 
   // currentSectionIndex: 현재 화면에 보여줄 질문 섹션의 순번. 0이면 첫 번째 섹션
   const [currentSectionIndex, setCurrentSectionIndex] = useState(0);
@@ -197,28 +197,34 @@ function SkinTypeSurvey() {
   );
 
   useEffect(() => {
-    const checkTodayResult = async () => {
+    const checkSavedResult = async () => {
+      if (sessionStorage.getItem("skipSkinTypeSavedResultCheck") === "true") {
+        sessionStorage.removeItem("skipSkinTypeSavedResultCheck");
+        setCheckingSavedResult(false);
+        return;
+      }
+
       const userId = getLoginUserId();
 
       if (!userId) {
-        setCheckingTodayResult(false);
+        setCheckingSavedResult(false);
         return;
       }
 
       try {
-        const response = await getTodaySkinTypeResult(userId);
+        const response = await getLatestSkinTypeResult(userId);
         if ((response.data || []).length > 0) {
           navigate("/analysis/result");
           return;
         }
       } catch (error) {
-        console.error("오늘 피부 타입 진단 결과 확인 실패:", error);
+        console.error("저장된 피부 타입 진단 결과 확인 실패:", error);
       } finally {
-        setCheckingTodayResult(false);
+        setCheckingSavedResult(false);
       }
     };
 
-    checkTodayResult();
+    checkSavedResult();
   }, [navigate]);
 
   // currentGroup: 현재 페이지에서 보여줄 섹션 그룹
@@ -293,13 +299,6 @@ function SkinTypeSurvey() {
   return (
     <div className="survey_app">
       <header className="survey_header">
-        <button
-          type="button"
-          className="survey_back_button"
-          onClick={() => navigate("/main")}
-        >
-          ← 메인으로
-        </button>
         <div>
           <p className="survey_eyebrow">SKIN TYPE SURVEY</p>
           <h1>{surveyData.title}</h1>
@@ -307,9 +306,9 @@ function SkinTypeSurvey() {
         </div>
       </header>
 
-      {checkingTodayResult ? (
+      {checkingSavedResult ? (
         <main className="survey_check_panel">
-          오늘 피부 타입 진단 결과를 확인하는 중입니다.
+          저장된 피부 타입 진단 결과를 확인하는 중입니다.
         </main>
       ) : (
       <main className="survey_layout">

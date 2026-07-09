@@ -29,11 +29,6 @@ public class SkinTypeResultService {
             return Collections.emptyList();
         }
 
-        List<SkinTypeResult> todayResults = getTodayResults(request.getUserId());
-        if (!todayResults.isEmpty()) {
-            return todayResults;
-        }
-
         LocalDateTime diagnosedAt = LocalDateTime.now();
         List<SkinTypeResult> results = request.getResults().stream()
                 .map((item) -> toEntity(request.getUserId(), diagnosedAt, item))
@@ -95,6 +90,22 @@ public class SkinTypeResultService {
                         startDate,
                         endDate
                 );
+    }
+
+    @Transactional
+    public long deleteLatestResults(String userId) {
+        if (isBlank(userId)) {
+            return 0;
+        }
+
+        List<SkinTypeResult> latestResults = getLatestResults(userId);
+
+        if (latestResults.isEmpty()) {
+            return 0;
+        }
+
+        skinTypeResultRepository.deleteAll(latestResults);
+        return latestResults.size();
     }
 
     private List<SkinTypeResult> getLatestGroup(List<SkinTypeResult> allResults) {

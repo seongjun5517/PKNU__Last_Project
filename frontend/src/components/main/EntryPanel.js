@@ -350,6 +350,7 @@ function EntryPanel({
           })}
         </ul>
       )}
+
     </div>
   );
 }

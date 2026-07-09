@@ -54,6 +54,11 @@ public class SkinTypeResultController {
         return ResponseEntity.ok(skinTypeResultService.deleteTodayResults(userId));
     }
 
+    @DeleteMapping("/results/latest/{userId}")
+    public ResponseEntity<Long> deleteLatestResults(@PathVariable String userId) {
+        return ResponseEntity.ok(skinTypeResultService.deleteLatestResults(userId));
+    }
+
 
     // 마이페이지 그래프 관련 함수
     @GetMapping("/results/history/{userId}")

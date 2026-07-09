@@ -1,6 +1,9 @@
 import { Link, useNavigate } from "react-router-dom";
 import { useEffect, useState } from "react";
-import { insertMember } from "../springApi/memberSpringBootApi";
+import {
+  insertMember,
+  uploadMemberProfileImage,
+} from "../springApi/memberSpringBootApi";
 import "./SignUp.css";
 
 function SignUp() {
@@ -64,11 +67,19 @@ function SignUp() {
       user_pwd: form.user_pwd,
       user_nickname: form.user_nickname.trim(),
       user_birthday: form.user_birthday || null,
-      user_profile_image: form.user_profile_image ? form.user_profile_image.name : null,
+      user_profile_image: null,
     };
 
     try {
       await insertMember(signupPayload);
+
+      if (form.user_profile_image) {
+        await uploadMemberProfileImage(
+          signupPayload.user_id,
+          form.user_profile_image
+        );
+      }
+
       setMessage("회원가입이 완료되었습니다.");
       navigate("/login");
     } catch (error) {
