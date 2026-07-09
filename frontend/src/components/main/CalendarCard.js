@@ -10,6 +10,7 @@ function CalendarCard({
   entries,
   getCategory,
   streakCount,
+  diagnosisDateKeys,
 }) {
   const calendarCells = useMemo(() => {
     const year = viewMonth.getFullYear();
@@ -54,15 +55,17 @@ function CalendarCard({
           const dayEntries = sortByTime(entries[key] || []);
           const isSelected = key === selectedKey;
           const isToday = key === todayKey;
+          const hasDiagnosis = diagnosisDateKeys?.has(key);
 
           return (
             <button
               type="button"
               key={key}
-              className={`calendar_cell${isSelected ? " selected" : ""}${isToday ? " today" : ""}`}
+              className={`calendar_cell${isSelected ? " selected" : ""}${isToday ? " today" : ""}${hasDiagnosis ? " has_diagnosis" : ""}`}
               onClick={() => onSelectDate(key)}
             >
               <span className="cell_day">{date.getDate()}</span>
+              {hasDiagnosis && <span className="diagnosis_marker" aria-label="피부 상태 진단 기록" />}
               {dayEntries.length > 0 && (
                 <ul className="cell_entries">
                   {dayEntries.slice(0, 2).map((entry) => {

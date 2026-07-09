@@ -79,9 +79,9 @@
 /* ---------- 전체 그리드 ---------- */
 .main_grid {
   display: grid;
-  grid-template-columns: 1.5fr 1fr;
-  gap: 22px;
-  padding: 15px 40px 56px;
+  grid-template-columns: minmax(760px, 2.35fr) minmax(280px, 0.75fr);
+  gap: 18px;
+  padding: 15px 28px 48px;
   align-items: stretch;
 }
 
@@ -89,6 +89,10 @@
   display: flex;
   flex-direction: column;
   gap: 20px;
+}
+
+.main_col_right {
+  gap: 14px;
 }
 
 .card {
@@ -105,6 +109,16 @@
   font-size: 18px;
   font-weight: 700;
   color: var(--ink);
+}
+
+.main_col_right .card {
+  padding: 18px 18px;
+  border-radius: 16px;
+}
+
+.main_col_right .card h2 {
+  margin-bottom: 12px;
+  font-size: 17px;
 }
 
 /* ---------- 카드 헤더 (제목 + 우측 링크 버튼) ---------- */
@@ -136,8 +150,19 @@
 
 /* ---------- 달력 ---------- */
 .calendar_card {
-  padding: 22px 24px 26px;
+  padding: 16px 18px;
   flex: 1;
+}
+
+.calendar_content {
+  display: grid;
+  grid-template-columns: minmax(440px, 1fr) minmax(280px, 310px);
+  gap: 16px;
+  align-items: stretch;
+}
+
+.calendar_month_area {
+  min-width: 0;
   display: flex;
   flex-direction: column;
 }
@@ -267,6 +292,17 @@
   border-color: var(--plum);
 }
 
+.diagnosis_marker {
+  position: absolute;
+  top: 7px;
+  right: 7px;
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--rose);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--rose) 15%, transparent);
+}
+
 .cell_entries {
   list-style: none;
   margin: 0;
@@ -313,6 +349,93 @@
 .cell_entries li.cell_more {
   color: var(--ink-faint);
   font-weight: 700;
+}
+
+.skin_record_panel {
+  margin: 0;
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  background: rgba(251, 246, 241, 0.54);
+  padding: 12px;
+  min-width: 0;
+}
+
+.skin_record_header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 8px;
+}
+
+.skin_record_header h3 {
+  margin: 0;
+  font-family: 'Gowun Batang', serif;
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--ink);
+}
+
+.skin_record_delete {
+  border: none;
+  background: var(--rose-tint);
+  color: var(--rose-dark);
+  font-size: 12px;
+  font-weight: 800;
+  padding: 8px 13px;
+  border-radius: 999px;
+  cursor: pointer;
+  transition: background 160ms ease, color 160ms ease;
+}
+
+.skin_record_delete:hover:not(:disabled) {
+  background: var(--rose);
+  color: #ffffff;
+}
+
+.skin_record_delete:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+.skin_record_notice {
+  margin: 0 0 8px;
+  color: var(--rose-dark);
+  font-size: 12.5px;
+  font-weight: 700;
+  line-height: 1.55;
+}
+
+.skin_record_preview {
+  width: 100%;
+  aspect-ratio: 4 / 3;
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  background: var(--bg-cream);
+  overflow: hidden;
+  display: flex;
+}
+
+.skin_record_preview img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  display: block;
+}
+
+.skin_record_empty {
+  min-height: 92px;
+  border: 1px dashed color-mix(in srgb, var(--rose) 35%, white);
+  border-radius: 14px;
+  background: rgba(251, 246, 241, 0.72);
+  color: var(--ink-faint);
+  font-size: 13px;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: 16px;
 }
 
 /* ---------- 선택 날짜 일정 추가 패널 ---------- */
@@ -629,7 +752,7 @@
   flex-direction: column;
   gap: 8px;
   /* 더 안늘어나고 스크롤 */
-  max-height: 100px;
+  max-height: 86px;
   overflow-y: auto;
 }
 
@@ -654,7 +777,7 @@
   align-items: center;
   justify-content: space-between;
   gap: 10px;
-  padding: 12px 14px;
+  padding: 10px 12px;
   background: var(--bg-cream);
   border-radius: 12px;
 }
@@ -700,13 +823,19 @@
   display: flex;
   align-items: baseline;
   gap: 10px;
-  padding: 13px 0;
+  padding: 10px 0;
   border-bottom: 1px solid var(--line);
 }
 
 .community_list li:last-child {
   border-bottom: none;
   padding-bottom: 2px;
+}
+
+.community_list .community_empty {
+  color: var(--ink-faint);
+  font-size: 13px;
+  font-weight: 600;
 }
 
 .post_rank {
@@ -745,7 +874,7 @@
   display: flex;
   flex-direction: column;
   gap: 10px;
-  max-height: 76px;
+  max-height: 62px;
   overflow-y: auto;
 }
 
@@ -788,9 +917,9 @@
   position: relative;
   flex: 1;
   min-width: 0;
-  min-height: 108px;
+  min-height: 86px;
   border: none;
-  border-radius: 20px;
+  border-radius: 16px;
   background: linear-gradient(160deg, var(--plum) 0%, #3D2B3F 100%);
   color: #ffffff;
   cursor: pointer;
@@ -798,7 +927,7 @@
   display: flex;
   align-items: center;
   justify-content: flex-start;
-  padding: 0 26px;
+  padding: 0 20px;
   transition: transform 180ms ease;
   margin-top: auto;
 }
@@ -809,7 +938,7 @@
 
 .button-container {
   display: flex;         /* 가로 정렬 */
-  gap: 12px;             /* 버튼 사이의 간격 */
+  gap: 10px;             /* 버튼 사이의 간격 */
   justify-content: center; /* 필요 시 가운데 정렬 */
   align-items: stretch;    /* 세로 기준 맞춤 */
 }
@@ -822,7 +951,7 @@
   align-items: flex-start;
   gap: 5px;
   font-family: 'Gowun Batang', serif;
-  font-size: 17px;
+  font-size: 15px;
   font-weight: 700;
   text-align: left;
 }
@@ -835,10 +964,40 @@
 }
 
 /* ---------- 반응형 ---------- */
+@media (max-width: 1180px) {
+  .main_grid {
+    grid-template-columns: 1fr;
+  }
+
+  .main_col_right {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    align-items: stretch;
+  }
+
+  .button-container {
+    grid-column: 1 / -1;
+  }
+}
+
 @media (max-width: 900px) {
   .main_grid {
     grid-template-columns: 1fr;
     padding: 6px 20px 40px;
+  }
+
+  .calendar_content {
+    grid-template-columns: 1fr;
+  }
+
+  .entry_panel {
+    border-left: none;
+    border-top: 1px dashed var(--line);
+    padding: 18px 0 0;
+  }
+
+  .main_col_right {
+    display: flex;
   }
 
   .main_header {

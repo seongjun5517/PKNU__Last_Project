@@ -538,9 +538,32 @@
 
 .posts_list_item:hover {
   background-color: var(--gray-50, #f8f8f8);
+}
+
+.posts_list_delete {
+  min-height: 30px;
+  flex-shrink: 0;
+  border: 1px solid var(--rose-tint);
+  border-radius: 8px;
+  padding: 0 10px;
+  background: #ffffff;
+  color: var(--rose-dark);
+  font-size: 12px;
+  font-weight: 900;
+  cursor: pointer;
+}
+
+.posts_list_delete:hover:not(:disabled) {
+  background: var(--rose-tint);
+}
+
+.posts_list_delete:disabled {
+  cursor: wait;
+  opacity: 0.62;
+}
+
 .mypage_comments_card {
   margin-top: 14px;
-}
 }
 
 .mypage_comments_list {

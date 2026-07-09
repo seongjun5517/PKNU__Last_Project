@@ -5,6 +5,7 @@ import "./Mypage.css";
 // (프로젝트에서 쓰던 springApi 를 그대로 재사용합니다)
 import { springApi } from "../config/axiosInstance";
 import AnalysisHistory from "./AnalysisHistory";
+import { getProfileImageSrc } from "../utils/profileImage";
 
 
 const INFO_MENU = [
@@ -20,6 +21,8 @@ const POST_MENU = [
   { key: "scrapped", label: "스크랩한 게시물" },
   { key: "comments", label: "내가 작성한 댓글" },
 ];
+
+const MAX_PROFILE_IMAGE_SIZE = 10 * 1024 * 1024;
 
 /* ---------------- 분석 기록 라인 차트 (외부 라이브러리 없이 순수 SVG) ---------------- */
 /* 백엔드 연결 전까지는 사용하지 않지만, 나중에 다시 쓸 수 있도록 컴포넌트는 그대로 둡니다. */
@@ -166,6 +169,7 @@ export default function Mypage() {
   const [myComments, setMyComments] = useState(null);
   const [commentsLoading, setCommentsLoading] = useState(false);
   const [deletingCommentCodes, setDeletingCommentCodes] = useState({});
+  const [deletingPostCodes, setDeletingPostCodes] = useState({});
 
   // 분석 기록은 백엔드 연결 전까지 보류 (state만 남겨둠)
   const [analysisHistory] = useState(null);
@@ -303,9 +307,54 @@ export default function Mypage() {
     }
   };
 
+  const handleDeletePost = async (event, postCode) => {
+    event.stopPropagation();
+
+    if (!userId || deletingPostCodes[postCode]) return;
+    if (!window.confirm("게시글을 삭제할까요? 삭제 후에는 복구할 수 없습니다.")) {
+      return;
+    }
+
+    setDeletingPostCodes((prev) => ({ ...prev, [postCode]: true }));
+
+    try {
+      await springApi.delete(`/community/posts/${postCode}`, {
+        params: { userId },
+      });
+      setPostsByTab((prev) => ({
+        mine: prev.mine ? prev.mine.filter((post) => post.postCode !== postCode) : prev.mine,
+        liked: prev.liked ? prev.liked.filter((post) => post.postCode !== postCode) : prev.liked,
+        scrapped: prev.scrapped
+          ? prev.scrapped.filter((post) => post.postCode !== postCode)
+          : prev.scrapped,
+      }));
+      setMyComments((prev) =>
+        prev ? prev.filter((comment) => comment.postCode !== postCode) : prev
+      );
+    } catch (err) {
+      console.error("게시글 삭제 실패:", err);
+      alert("게시글 삭제에 실패했습니다.");
+    } finally {
+      setDeletingPostCodes((prev) => ({ ...prev, [postCode]: false }));
+    }
+  };
+
   const handleImageChange = (e) => {
     const file = e.target.files?.[0];
     if (!file) return;
+
+    if (file.size > MAX_PROFILE_IMAGE_SIZE) {
+      setEditImageFile(null);
+      setEditPreview(null);
+      setEditMessage({
+        type: "error",
+        text: "이미지 파일이 너무 커요. 10MB 이하 이미지로 다시 선택해주세요.",
+      });
+      e.target.value = "";
+      return;
+    }
+
+    setEditMessage(null);
     setEditImageFile(file);
     setEditPreview(URL.createObjectURL(file));
   };
@@ -336,18 +385,31 @@ export default function Mypage() {
       const res = await springApi.put(`/user/update`, {
         user_id: userId,
         user_nickname: editNickname,
+        ...(uploadedImagePath ? { user_profile_image: uploadedImagePath } : {}),
       });
 
-      setProfile((prev) => ({
-        ...prev,
+      const nextProfile = {
+        ...profile,
         ...res.data,
         ...(uploadedImagePath ? { userProfileImage: uploadedImagePath } : {}),
-      }));
+      };
+
+      setProfile(nextProfile);
       setEditImageFile(null);
+      setEditPreview(null);
+      window.dispatchEvent(
+        new CustomEvent("profile-updated", {
+          detail: { userId, profile: nextProfile },
+        })
+      );
       setEditMessage({ type: "success", text: "정보가 수정됐어요." });
     } catch (err) {
       console.error("정보 수정 실패:", err);
-      setEditMessage({ type: "error", text: "수정 중 문제가 발생했어요. 다시 시도해주세요." });
+      const message =
+        err.response?.status === 413
+          ? "이미지 파일이 너무 커요. 10MB 이하 이미지로 다시 선택해주세요."
+          : "수정 중 문제가 발생했어요. 다시 시도해주세요.";
+      setEditMessage({ type: "error", text: message });
     } finally {
       setEditSaving(false);
     }
@@ -488,7 +550,7 @@ export default function Mypage() {
               <div className="info_card_body">
                 {profile?.userProfileImage ? (
                   <img
-                    src={profile.userProfileImage}
+                    src={getProfileImageSrc(profile.userProfileImage)}
                     alt="프로필 사진"
                     className="info_avatar"
                   />
@@ -524,7 +586,7 @@ export default function Mypage() {
                 <div className="form_avatar_row">
                   {editPreview || profile?.userProfileImage ? (
                     <img
-                      src={editPreview || profile.userProfileImage}
+                      src={editPreview || getProfileImageSrc(profile.userProfileImage)}
                       alt="프로필 미리보기"
                       className="info_avatar"
                     />
@@ -691,21 +753,31 @@ export default function Mypage() {
                     return (
                       <ul className="posts_list">
                         {list.map((post) => (
-                            <li
+                          <li
                             key={post.postCode}
                             onClick={() => navigate(`/community/posts/${post.postCode}`)}
                             style={{ cursor: "pointer" }}
-                            >
+                          >
                             <span className="posts_list_dot" />
                             <div className="posts_list_text">
-                                <div className="posts_list_title">{post.postTitle}</div>
-                                <div className="posts_list_meta">
+                              <div className="posts_list_title">{post.postTitle}</div>
+                              <div className="posts_list_meta">
                                 {post.postDate ? post.postDate.slice(0, 10) : ""}
-                                </div>
+                              </div>
                             </div>
-                            </li>
+                            {activePostTab === "mine" && (
+                              <button
+                                type="button"
+                                className="posts_list_delete"
+                                onClick={(event) => handleDeletePost(event, post.postCode)}
+                                disabled={deletingPostCodes[post.postCode]}
+                              >
+                                {deletingPostCodes[post.postCode] ? "삭제 중" : "삭제"}
+                              </button>
+                            )}
+                          </li>
                         ))}
-                        </ul>
+                      </ul>
                     );
                   }
                   if (list !== null) {

@@ -32,25 +32,9 @@
   max-width: 980px;
   margin: 0 auto 24px;
   display: grid;
-  grid-template-columns: auto 1fr auto;
+  grid-template-columns: 1fr auto;
   gap: 24px;
   align-items: start;
-}
-
-.result_back_button {
-  border: 1px solid var(--line);
-  background: var(--card-white);
-  color: var(--ink-soft);
-  font-size: 13px;
-  font-weight: 700;
-  padding: 10px 16px;
-  border-radius: 999px;
-  cursor: pointer;
-}
-
-.result_back_button:hover {
-  border-color: var(--rose);
-  color: var(--rose-dark);
 }
 
 .result_retest_button {
@@ -132,12 +116,19 @@
   min-height: 310px;
   width: 100%;
   border-radius: 18px;
-  background: linear-gradient(180deg, #ffffff 0%, var(--bg-cream) 100%);
+  background: #ffffff;
+  overflow: hidden;
 }
 
 .face_diagram svg {
-  width: min(100%, 250px);
-  height: auto;
+  display: none;
+}
+
+.face_diagram_image {
+  display: block;
+  width: min(100%, 330px);
+  aspect-ratio: 1 / 1;
+  object-fit: contain;
 }
 
 .face_outline {

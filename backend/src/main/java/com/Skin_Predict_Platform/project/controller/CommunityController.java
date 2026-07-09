@@ -10,6 +10,7 @@ import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -133,6 +134,45 @@ public class CommunityController {
     @PostMapping("/posts")
     public PostDetail createPost(@RequestBody CommunityPostCreateRequest request) {
         return communityService.createPost(request);
+    }
+
+    @PutMapping("/posts/{postCode}")
+    public ResponseEntity<PostDetail> updatePost(
+            @PathVariable Long postCode,
+            @RequestBody CommunityPostCreateRequest request) {
+        try {
+            PostDetail updated = communityService.updatePost(postCode, request);
+
+            if (updated == null) {
+                return ResponseEntity.notFound().build();
+            }
+
+            return ResponseEntity.ok(updated);
+        } catch (SecurityException error) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+        } catch (IllegalArgumentException error) {
+            return ResponseEntity.badRequest().build();
+        }
+    }
+
+    @DeleteMapping("/posts/{postCode}")
+    public ResponseEntity<Void> deletePost(
+            @PathVariable Long postCode,
+            @RequestParam String userId) {
+        if (!StringUtils.hasText(userId)) {
+            return ResponseEntity.badRequest().build();
+        }
+
+        Boolean deleted = communityService.deletePost(postCode, userId);
+
+        if (deleted == null) {
+            return ResponseEntity.notFound().build();
+        }
+        if (!deleted) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+        }
+
+        return ResponseEntity.noContent().build();
     }
 
     @GetMapping("/posts/{postCode}/comments")

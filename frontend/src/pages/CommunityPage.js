@@ -9,8 +9,6 @@ import {
 } from "../springApi/communitySpringBootApi";
 import "./CommunityPage.css";
 
-const boardTabs = ["전체", "HOT", "정보/소식", "팁/자료", "기타", "댓글없는글"];
-
 // "2026-07-07 15:30:00" 이 데이터를 >> 7.7 15:30 이렇게 보여주는 함수
 function formatPostDate(value) {
   if (!value) return "";
@@ -30,9 +28,6 @@ function CommunityPage() {
 
   // 현재 선택된 게시판 카테고리. "all"이면 전체 카테고리
   const [selectedCategoryCode, setSelectedCategoryCode] = useState("all");
-
-  // 게시글 목록 상단- 탭 필터 상태
-  const [activeTab, setActiveTab] = useState("전체");
 
   // 입력된 검색어
   const [keyword, setKeyword] = useState("");
@@ -90,10 +85,6 @@ function CommunityPage() {
     const list = posts.filter((post) => {
       const categoryMatched =
         selectedCategoryCode === "all" || post.categoryCode === selectedCategoryCode;
-      const tabMatched =
-        activeTab === "전체" ||
-        post.tag === activeTab ||
-        (activeTab === "댓글없는글" && (post.commentCount || 0) === 0);
 
       // 검색기능 비어있으면 전체 보여줌.
       const keywordMatched =
@@ -102,7 +93,7 @@ function CommunityPage() {
         (post.postContent || "").toLowerCase().includes(searchKeyword) ||
         getCategoryName(post.categoryCode).toLowerCase().includes(searchKeyword);
 
-      return categoryMatched && tabMatched && keywordMatched;
+      return categoryMatched && keywordMatched;
     });
 
     return [...list].sort((a, b) => {
@@ -110,7 +101,7 @@ function CommunityPage() {
       if (sortType === "views") return (b.postViews || 0) - (a.postViews || 0);
       return (b.postCode || 0) - (a.postCode || 0);
     });
-  }, [activeTab, categories, keyword, posts, selectedCategoryCode, sortType]);
+  }, [categories, keyword, posts, selectedCategoryCode, sortType]);
 
   const getCategoryName = (categoryCode) =>
     categories.find((category) => category.categoryCode === categoryCode)
@@ -185,21 +176,6 @@ function CommunityPage() {
 
         <div className="community_board">
           <div className="community_board_toolbar">
-            <div className="community_tabs" role="tablist" aria-label="게시글 필터">
-              {boardTabs.map((tab) => (
-                <button
-                  type="button"
-                  role="tab"
-                  aria-selected={activeTab === tab}
-                  key={tab}
-                  className={activeTab === tab ? "active" : ""}
-                  onClick={() => setActiveTab(tab)}
-                >
-                  {tab}
-                </button>
-              ))}
-            </div>
-
             <div className="community_search_group">
               <select
                 value={sortType}

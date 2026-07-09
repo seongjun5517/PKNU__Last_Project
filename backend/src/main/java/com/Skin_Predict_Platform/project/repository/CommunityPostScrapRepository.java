@@ -13,4 +13,6 @@ public interface CommunityPostScrapRepository extends JpaRepository<CommunityPos
 
     boolean existsByScrapPostCodeAndScrapUserId(Long scrapPostCode, String scrapUserId);
     List<CommunityPostScrap> findByScrapUserId(String scrapUserId);
+
+    void deleteByScrapPostCode(Long scrapPostCode);
 }

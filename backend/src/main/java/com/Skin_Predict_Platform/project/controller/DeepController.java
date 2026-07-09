@@ -49,7 +49,7 @@ public class DeepController {
 
         if (!saved) {
             return ResponseEntity.status(HttpStatus.CONFLICT)
-                    .body(Map.of("message", "오늘은 이미 예측을 완료했습니다."));
+                    .body(Map.of("message", "예측 결과 저장에 실패했습니다."));
         }
 
         return ResponseEntity.ok(Map.of("message", "저장 완료"));
@@ -69,6 +69,61 @@ public class DeepController {
         }
 
         return ResponseEntity.ok(todayResult);
+    }
+
+    @GetMapping("/latest")
+    public ResponseEntity<?> getLatestPredict(@RequestParam String userId) {
+        DeepService.TodayPredictResult latestResult = deepService.getLatestPredictDetail(userId);
+
+        if (latestResult == null) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                    .body(Map.of("message", "최신 예측 결과 없음"));
+        }
+
+        return ResponseEntity.ok(latestResult);
+    }
+
+    @DeleteMapping("/today")
+    public ResponseEntity<Map<String, Object>> deleteTodayPredict(@RequestParam String userId) {
+        int deletedCount = deepService.deleteTodayDeepmodels(userId);
+
+        if (deletedCount <= 0) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                    .body(Map.of("message", "삭제할 오늘 예측 결과 없음", "deletedCount", deletedCount));
+        }
+
+        return ResponseEntity.ok(Map.of("message", "오늘 예측 결과 삭제 완료", "deletedCount", deletedCount));
+    }
+
+    @DeleteMapping("/latest")
+    public ResponseEntity<Map<String, Object>> deleteLatestPredict(@RequestParam String userId) {
+        int deletedCount = deepService.deleteLatestDeepmodels(userId);
+
+        if (deletedCount <= 0) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                    .body(Map.of("message", "삭제할 최신 예측 결과 없음", "deletedCount", deletedCount));
+        }
+
+        return ResponseEntity.ok(Map.of("message", "최신 예측 결과 삭제 완료", "deletedCount", deletedCount));
+    }
+
+    @DeleteMapping("/date")
+    public ResponseEntity<Map<String, Object>> deletePredictByDate(
+            @RequestParam String userId,
+            @RequestParam String date) {
+        int deletedCount = deepService.deleteDeepmodelsByDate(userId, date);
+
+        if (deletedCount < 0) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                    .body(Map.of("message", "날짜 형식이 올바르지 않습니다.", "deletedCount", deletedCount));
+        }
+
+        if (deletedCount == 0) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                    .body(Map.of("message", "삭제할 예측 결과 없음", "deletedCount", deletedCount));
+        }
+
+        return ResponseEntity.ok(Map.of("message", "예측 결과 삭제 완료", "deletedCount", deletedCount));
     }
 
     @DeleteMapping("/{dtypeCode}")

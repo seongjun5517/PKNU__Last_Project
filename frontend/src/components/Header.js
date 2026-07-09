@@ -1,26 +1,33 @@
-import { useState, useEffect } from "react";
+import { useCallback, useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
+import { springApi } from "../config/axiosInstance";
+import {
+  deleteNotification,
+  deleteReadNotifications,
+  getNotifications,
+  markAllNotificationsRead,
+  markNotificationRead,
+} from "../springApi/notificationSpringBootApi";
+import { getProfileImageSrc } from "../utils/profileImage";
 import "./Header.css";
 
 function getLoginUserId() {
   return localStorage.getItem("userId") || localStorage.getItem("loginUserId");
 }
 
-// ---- 알람 관련 부분 ----
-// 나중에 DB 연동할 때는 이 함수 내부만 실제 API 호출로 바꾸면 됨.
-// 예: const res = await fetch(`/api/notifications?userId=${userId}`);
-//     const data = await res.json();
-//     return data;
-async function fetchNotifications(userId) {
-  // TODO: 실제 API 연결 시 아래 목업 데이터 대신 fetch 결과 리턴
-  // 알람 데이터 형태 예시:
-  // { id, type: "comment" | "like", message, isRead, createdAt }
-  return [
-    // 목업 데이터 예시 (실제 연동 전까지 테스트용)
-    { id: 1, type: "comment", message: "내 게시글에 댓글이 달렸습니다.", isRead: false, createdAt: "2026-07-07T10:00:00" },
-    { id: 2, type: "like", message: "내 게시글에 좋아요가 달렸습니다.", isRead: false, createdAt: "2026-07-07T09:00:00" },
-  ];
+const NOTIFICATION_POLLING_INTERVAL = 15000;
+
+function normalizeNotification(notification) {
+  return {
+    id: notification.notiCode,
+    type: String(notification.notiType || "").toLowerCase(),
+    message: notification.message,
+    isRead: Boolean(notification.notiIsRead),
+    createdAt: notification.notiCreatedAt,
+    postCode: notification.notiPostCode,
+    cmtCode: notification.notiCmtCode,
+  };
 }
 
 function getNotificationText(notification) {
@@ -34,28 +41,98 @@ function getNotificationText(notification) {
   }
 }
 
+function formatNotificationTime(createdAt) {
+  if (!createdAt) {
+    return "";
+  }
+
+  return new Date(createdAt).toLocaleString("ko-KR", {
+    month: "2-digit",
+    day: "2-digit",
+    hour: "2-digit",
+    minute: "2-digit",
+  });
+}
+
 function Header() {
   const navigate = useNavigate();
-  const { logout } = useAuth();
+  const { userId: authUserId, logout } = useAuth();
+  const currentUserId = authUserId || getLoginUserId();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isNotifOpen, setIsNotifOpen] = useState(false);
+  const [isProfileOpen, setIsProfileOpen] = useState(false);
+  const [profile, setProfile] = useState(null);
+  const [profileImageError, setProfileImageError] = useState(false);
   const [notifications, setNotifications] = useState([]);
 
+  const loadNotifications = useCallback(async () => {
+    if (!currentUserId) {
+      setNotifications([]);
+      return;
+    }
+
+    try {
+      const res = await getNotifications(currentUserId);
+      setNotifications((res.data || []).map(normalizeNotification));
+    } catch (err) {
+      console.error("알림 조회 실패:", err);
+    }
+  }, [currentUserId]);
+
   useEffect(() => {
-    const userId = getLoginUserId();
-    if (!userId) return;
+    loadNotifications();
 
-    fetchNotifications(userId).then((data) => {
-      setNotifications(data);
-    });
+    if (!currentUserId) {
+      return undefined;
+    }
 
-    // 나중에 실시간성이 필요하면 여기서 polling(setInterval)이나
-    // websocket 구독을 붙이면 됨.
-  }, []);
+    const pollingId = window.setInterval(
+      loadNotifications,
+      NOTIFICATION_POLLING_INTERVAL
+    );
+
+    return () => window.clearInterval(pollingId);
+  }, [currentUserId, loadNotifications]);
+
+  useEffect(() => {
+    if (!currentUserId) {
+      setProfile(null);
+      return;
+    }
+
+    let isMounted = true;
+    const loadProfile = () => {
+      setProfileImageError(false);
+
+      springApi
+        .get(`/user/${currentUserId}`)
+        .then((res) => {
+          if (isMounted) {
+            setProfile(res.data);
+          }
+        })
+        .catch((err) => console.error("헤더 프로필 조회 실패:", err));
+    };
+
+    loadProfile();
+    window.addEventListener("profile-updated", loadProfile);
+
+    return () => {
+      isMounted = false;
+      window.removeEventListener("profile-updated", loadProfile);
+    };
+  }, [currentUserId]);
 
   const unreadCount = notifications.filter((n) => !n.isRead).length;
+  const profileImage = !profileImageError
+    ? getProfileImageSrc(profile?.userProfileImage)
+    : null;
+  const profileInitial = (profile?.userNickname || currentUserId || "?")
+    .slice(0, 1)
+    .toUpperCase();
 
   const handleLogout = () => {
+    setIsProfileOpen(false);
     logout();
     navigate("/login");
   };
@@ -64,16 +141,91 @@ function Header() {
     navigate(path);
     setIsMenuOpen(false);
     setIsNotifOpen(false);
+    setIsProfileOpen(false);
   };
 
   const toggleNotif = () => {
     setIsNotifOpen((prev) => !prev);
     setIsMenuOpen(false); // 알람 열 때 모바일 메뉴는 닫기
+    setIsProfileOpen(false);
   };
 
   const toggleMenu = () => {
     setIsMenuOpen((prev) => !prev);
     setIsNotifOpen(false); // 메뉴 열 때 알람창은 닫기
+    setIsProfileOpen(false);
+  };
+
+  const toggleProfile = () => {
+    setIsProfileOpen((prev) => !prev);
+    setIsNotifOpen(false);
+    setIsMenuOpen(false);
+  };
+
+  const handleNotificationClick = async (notification) => {
+    if (!currentUserId) {
+      return;
+    }
+
+    if (!notification.isRead) {
+      try {
+        await markNotificationRead(notification.id, currentUserId);
+        setNotifications((prev) =>
+          prev.map((item) =>
+            item.id === notification.id ? { ...item, isRead: true } : item
+          )
+        );
+      } catch (err) {
+        console.error("알림 읽음 처리 실패:", err);
+      }
+    }
+
+    if (notification.postCode) {
+      handleNavigate(`/community/posts/${notification.postCode}`);
+    }
+  };
+
+  const handleDeleteNotification = async (event, notiCode) => {
+    event.stopPropagation();
+
+    if (!currentUserId) {
+      return;
+    }
+
+    try {
+      await deleteNotification(notiCode, currentUserId);
+      setNotifications((prev) => prev.filter((item) => item.id !== notiCode));
+    } catch (err) {
+      console.error("알림 삭제 실패:", err);
+    }
+  };
+
+  const handleMarkAllAsRead = async () => {
+    if (!currentUserId || unreadCount === 0) {
+      return;
+    }
+
+    try {
+      await markAllNotificationsRead(currentUserId);
+      setNotifications((prev) =>
+        prev.map((item) => ({ ...item, isRead: true }))
+      );
+    } catch (err) {
+      console.error("전체 알림 읽음 처리 실패:", err);
+    }
+  };
+
+  const handleDeleteReadNotifications = async () => {
+    if (!currentUserId || !notifications.some((item) => item.isRead)) {
+      return;
+    }
+
+    try {
+      await deleteReadNotifications(currentUserId);
+      setNotifications((prev) => prev.filter((item) => !item.isRead));
+    } catch (err) {
+      console.error("읽은 알림 삭제 실패:", err);
+    }
   };
 
   return (
@@ -88,67 +240,6 @@ function Header() {
           <p className="site_header_eyebrow">SKIN DIARY</p>
           <p className="site_header_title">Triple Skin</p>
         </div>
-
-        <div className="site_header_actions">
-          {/* 알람 버튼 */}
-          <div className="site_header_notification">
-            <button
-              type="button"
-              className="site_header_notification_btn"
-              onClick={toggleNotif}
-              aria-label="알람 열기"
-              aria-expanded={isNotifOpen}
-            >
-              🔔
-              {unreadCount > 0 && (
-                <span className="site_header_notification_badge">
-                  {unreadCount}
-                </span>
-              )}
-            </button>
-
-            {isNotifOpen && (
-              <div className="site_header_notification_dropdown">
-                {notifications.length === 0 ? (
-                  <p className="site_header_notification_empty">
-                    온 알람이 없습니다.
-                  </p>
-                ) : (
-                  <ul className="site_header_notification_list">
-                    {notifications.map((notif) => (
-                      <li
-                        key={notif.id}
-                        className={`site_header_notification_item ${
-                          notif.isRead ? "is_read" : ""
-                        }`}
-                      >
-                        <span className="site_header_notification_type">
-                          {notif.type === "comment" ? "💬" : "❤️"}
-                        </span>
-                        <span className="site_header_notification_text">
-                          {getNotificationText(notif)}
-                        </span>
-                      </li>
-                    ))}
-                  </ul>
-                )}
-              </div>
-            )}
-          </div>
-
-          {/* 모바일 토글 버튼 */}
-          <button
-            type="button"
-            className={`site_header_toggle ${isMenuOpen ? "is_open" : ""}`}
-            onClick={toggleMenu}
-            aria-label="메뉴 열기"
-            aria-expanded={isMenuOpen}
-          >
-            <span></span>
-            <span></span>
-            <span></span>
-          </button>
-        </div>
       </div>
 
       <nav className={`site_header_nav ${isMenuOpen ? "is_open" : ""}`}>
@@ -161,13 +252,141 @@ function Header() {
         <button type="button" onClick={() => handleNavigate("/analysis1")}>
           피부 상태 분석하러 가기
         </button>
-        <button type="button" onClick={() => handleNavigate("/mypage")}>
-          마이페이지
-        </button>
-        <button type="button" className="logout_button" onClick={handleLogout}>
-          로그아웃
-        </button>
       </nav>
+
+      <div className="site_header_actions">
+        {/* 알람 버튼 */}
+        <div className="site_header_notification">
+          <button
+            type="button"
+            className="site_header_notification_btn"
+            onClick={toggleNotif}
+            aria-label="알람 열기"
+            aria-expanded={isNotifOpen}
+          >
+            🔔
+            {unreadCount > 0 && (
+              <span className="site_header_notification_badge">
+                {unreadCount}
+              </span>
+            )}
+          </button>
+
+          {isNotifOpen && (
+            <div className="site_header_notification_dropdown">
+              <div className="site_header_notification_head">
+                <strong>알림</strong>
+                <div className="site_header_notification_actions">
+                  <button
+                    type="button"
+                    onClick={handleMarkAllAsRead}
+                    disabled={unreadCount === 0}
+                  >
+                    모두 읽음
+                  </button>
+                  <button
+                    type="button"
+                    onClick={handleDeleteReadNotifications}
+                    disabled={!notifications.some((item) => item.isRead)}
+                  >
+                    읽은 알림 삭제
+                  </button>
+                </div>
+              </div>
+              {notifications.length === 0 ? (
+                <p className="site_header_notification_empty">
+                  온 알람이 없습니다.
+                </p>
+              ) : (
+                <ul className="site_header_notification_list">
+                  {notifications.map((notif) => (
+                    <li
+                      key={notif.id}
+                      className={`site_header_notification_item ${
+                        notif.isRead ? "is_read" : ""
+                      }`}
+                      onClick={() => handleNotificationClick(notif)}
+                    >
+                      <span className="site_header_notification_type">
+                        {notif.type === "comment" ? "💬" : "❤️"}
+                      </span>
+                      <span className="site_header_notification_content">
+                        <span className="site_header_notification_text">
+                          {getNotificationText(notif)}
+                        </span>
+                        <span className="site_header_notification_time">
+                          {formatNotificationTime(notif.createdAt)}
+                        </span>
+                      </span>
+                      <button
+                        type="button"
+                        className="site_header_notification_delete"
+                        onClick={(event) =>
+                          handleDeleteNotification(event, notif.id)
+                        }
+                        aria-label="알림 삭제"
+                      >
+                        ×
+                      </button>
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </div>
+          )}
+        </div>
+
+        <div className="site_header_profile">
+          <button
+            type="button"
+            className="site_header_profile_btn"
+            onClick={toggleProfile}
+            aria-label="프로필 메뉴 열기"
+            aria-expanded={isProfileOpen}
+          >
+            {profileImage ? (
+              <img
+                src={profileImage}
+                alt="프로필"
+                className="site_header_profile_img"
+                onError={() => setProfileImageError(true)}
+              />
+            ) : (
+              <span className="site_header_profile_fallback">
+                {profileInitial}
+              </span>
+            )}
+          </button>
+
+          {isProfileOpen && (
+            <div className="site_header_profile_dropdown">
+              <button type="button" onClick={() => handleNavigate("/mypage")}>
+                마이페이지
+              </button>
+              <button
+                type="button"
+                className="site_header_profile_logout"
+                onClick={handleLogout}
+              >
+                로그아웃
+              </button>
+            </div>
+          )}
+        </div>
+
+        {/* 모바일 토글 버튼 */}
+        <button
+          type="button"
+          className={`site_header_toggle ${isMenuOpen ? "is_open" : ""}`}
+          onClick={toggleMenu}
+          aria-label="메뉴 열기"
+          aria-expanded={isMenuOpen}
+        >
+          <span></span>
+          <span></span>
+          <span></span>
+        </button>
+      </div>
     </header>
   );
 }

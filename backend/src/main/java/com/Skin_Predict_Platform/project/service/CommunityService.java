@@ -33,6 +33,7 @@ public class CommunityService {
     private final CommunityPostLikeRepository communityPostLikeRepository;
     private final CommunityPostScrapRepository communityPostScrapRepository;
     private final CommunityCommentRepository communityCommentRepository;
+    private final NoticeService noticeService;
 
     public List<PostDetail> getPostList() {
         return postDetailRepository.findAllByOrderByPostCodeDesc();
@@ -83,7 +84,9 @@ public class CommunityService {
                     .likeUserId(userId)
                     .build());
             post.setPostLike(currentLikeCount + 1);
-            return new CommunityPostLikeResponse(postDetailRepository.save(post), true);
+            PostDetail savedPost = postDetailRepository.save(post);
+            noticeService.createLikeNotification(savedPost, userId);
+            return new CommunityPostLikeResponse(savedPost, true);
         }
 
         communityPostLikeRepository.delete(existingLike);
@@ -152,6 +155,53 @@ public class CommunityService {
         return postDetailRepository.save(post);
     }
 
+    @Transactional
+    public PostDetail updatePost(Long postCode, CommunityPostCreateRequest request) {
+        PostDetail post = postDetailRepository.findById(postCode).orElse(null);
+
+        if (post == null) {
+            return null;
+        }
+        if (request == null || !StringUtils.hasText(request.getPostUserId())
+                || !post.getPostUserId().equals(request.getPostUserId())) {
+            throw new SecurityException("게시글 작성자만 수정할 수 있습니다.");
+        }
+        if (request.getCategoryCode() == null) {
+            throw new IllegalArgumentException("카테고리를 선택해주세요.");
+        }
+        if (!communityCategoryRepository.existsById(request.getCategoryCode())) {
+            throw new IllegalArgumentException("존재하지 않는 카테고리입니다.");
+        }
+        if (!StringUtils.hasText(request.getPostTitle())) {
+            throw new IllegalArgumentException("게시글 제목을 입력해주세요.");
+        }
+
+        post.setCategoryCode(request.getCategoryCode());
+        post.setPostTitle(request.getPostTitle().trim());
+        post.setPostContent(request.getPostContent());
+
+        return postDetailRepository.save(post);
+    }
+
+    @Transactional
+    public Boolean deletePost(Long postCode, String userId) {
+        PostDetail post = postDetailRepository.findById(postCode).orElse(null);
+
+        if (post == null) {
+            return null;
+        }
+        if (!post.getPostUserId().equals(userId)) {
+            return false;
+        }
+
+        communityCommentRepository.deleteByCmtPostCode(postCode);
+        communityPostLikeRepository.deleteByLikePostCode(postCode);
+        communityPostScrapRepository.deleteByScrapPostCode(postCode);
+        noticeService.deleteByPostCode(postCode);
+        postDetailRepository.delete(post);
+        return true;
+    }
+
     public List<CommunityComment> getPostComments(Long postCode) {
         return communityCommentRepository.findByPostCode(postCode);
     }
@@ -162,7 +212,9 @@ public class CommunityService {
                 || !StringUtils.hasText(request.getContents())) {
             throw new IllegalArgumentException("댓글 작성 정보가 필요합니다.");
         }
-        if (!postDetailRepository.existsById(postCode)) {
+        PostDetail post = postDetailRepository.findById(postCode).orElse(null);
+
+        if (post == null) {
             return null;
         }
 
@@ -172,7 +224,10 @@ public class CommunityService {
                 .cmtContents(request.getContents().trim())
                 .build();
 
-        return communityCommentRepository.save(comment);
+        CommunityComment savedComment = communityCommentRepository.save(comment);
+        noticeService.createCommentNotification(post, savedComment);
+
+        return savedComment;
     }
 
     public List<CommunityMyCommentResponse> getMyComments(String userId) {
@@ -200,7 +255,7 @@ public class CommunityService {
         if (!comment.getCmtUserId().equals(userId)) {
             return false;
         }
-
+        noticeService.deleteByCommentCode(commentCode);
         communityCommentRepository.delete(comment);
         return true;
     }

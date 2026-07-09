@@ -4,6 +4,7 @@ import { useAuth } from "../context/AuthContext";
 import {
   createCommunityPostComment,
   deleteCommunityComment,
+  deleteCommunityPost,
   getCommunityCategoryList,
   getCommunityPost,
   getCommunityPostComments,
@@ -12,7 +13,10 @@ import {
   increaseCommunityPostView,
   likeCommunityPost,
   scrapCommunityPost,
+  updateCommunityPost,
 } from "../springApi/communitySpringBootApi";
+import { springApi } from "../config/axiosInstance";
+import { getProfileImageSrc } from "../utils/profileImage";
 import "./CommunityPostDetailPage.css";
 
 function formatPostDate(value) {
@@ -61,6 +65,15 @@ function CommunityPostDetailPage() {
   const [isCommentSaving, setIsCommentSaving] = useState(false);
   const [deletingCommentCodes, setDeletingCommentCodes] = useState({});
   const [commentMessage, setCommentMessage] = useState("");
+  const [authorProfile, setAuthorProfile] = useState(null);
+  const [authorImageError, setAuthorImageError] = useState(false);
+  const [isEditing, setIsEditing] = useState(false);
+  const [editCategoryCode, setEditCategoryCode] = useState("");
+  const [editTitle, setEditTitle] = useState("");
+  const [editContent, setEditContent] = useState("");
+  const [isPostSaving, setIsPostSaving] = useState(false);
+  const [isPostDeleting, setIsPostDeleting] = useState(false);
+  const [postActionMessage, setPostActionMessage] = useState("");
 
   useEffect(() => {
     const fetchPostDetail = async () => {
@@ -122,6 +135,54 @@ function CommunityPostDetailPage() {
     fetchPostDetail();
   }, [postCode, loginUserId]);
 
+  useEffect(() => {
+    if (!post) return;
+
+    setEditCategoryCode(post.categoryCode || "");
+    setEditTitle(post.postTitle || "");
+    setEditContent(post.postContent || "");
+  }, [post]);
+
+  useEffect(() => {
+    if (!post?.postUserId) {
+      setAuthorProfile(null);
+      return;
+    }
+
+    let isMounted = true;
+    const loadAuthorProfile = () => {
+      setAuthorImageError(false);
+
+      springApi
+        .get(`/user/${post.postUserId}`)
+        .then((response) => {
+          if (isMounted) {
+            setAuthorProfile(response.data);
+          }
+        })
+        .catch((error) => {
+          console.error("게시글 작성자 프로필 조회 실패:", error);
+          if (isMounted) {
+            setAuthorProfile(null);
+          }
+        });
+    };
+
+    const handleProfileUpdated = (event) => {
+      if (!event.detail?.userId || event.detail.userId === post.postUserId) {
+        loadAuthorProfile();
+      }
+    };
+
+    loadAuthorProfile();
+    window.addEventListener("profile-updated", handleProfileUpdated);
+
+    return () => {
+      isMounted = false;
+      window.removeEventListener("profile-updated", handleProfileUpdated);
+    };
+  }, [post?.postUserId]);
+
   const categoryName = useMemo(() => {
     if (!post) return "";
 
@@ -130,6 +191,11 @@ function CommunityPostDetailPage() {
         ?.categoryName || "기타"
     );
   }, [categories, post]);
+  const isOwnPost = Boolean(post && loginUserId && post.postUserId === loginUserId);
+  const authorDisplayName = authorProfile?.userNickname || post?.postUserId || "";
+  const authorInitial = (authorDisplayName || "?").slice(0, 1).toUpperCase();
+  const authorProfileImage =
+    !authorImageError ? getProfileImageSrc(authorProfile?.userProfileImage) : null;
 
   const handleLikeClick = async () => {
     if (!post || isLiking) return;
@@ -226,6 +292,92 @@ function CommunityPostDetailPage() {
     }
   };
 
+  const handleEditStart = () => {
+    if (!post) return;
+
+    setEditCategoryCode(post.categoryCode || "");
+    setEditTitle(post.postTitle || "");
+    setEditContent(post.postContent || "");
+    setPostActionMessage("");
+    setIsEditing(true);
+  };
+
+  const handleEditCancel = () => {
+    if (!post) return;
+
+    setEditCategoryCode(post.categoryCode || "");
+    setEditTitle(post.postTitle || "");
+    setEditContent(post.postContent || "");
+    setPostActionMessage("");
+    setIsEditing(false);
+  };
+
+  const handlePostUpdate = async (event) => {
+    event.preventDefault();
+
+    if (!post || isPostSaving) return;
+    if (!loginUserId) {
+      setPostActionMessage("로그인 후 게시글을 수정할 수 있습니다.");
+      return;
+    }
+    if (!editTitle.trim()) {
+      setPostActionMessage("제목을 입력해주세요.");
+      return;
+    }
+    if (!editContent.trim()) {
+      setPostActionMessage("내용을 입력해주세요.");
+      return;
+    }
+    if (!editCategoryCode) {
+      setPostActionMessage("카테고리를 선택해주세요.");
+      return;
+    }
+
+    setIsPostSaving(true);
+    setPostActionMessage("");
+
+    try {
+      const response = await updateCommunityPost(post.postCode, {
+        postUserId: loginUserId,
+        categoryCode: Number(editCategoryCode),
+        postTitle: editTitle.trim(),
+        postContent: editContent.trim(),
+      });
+
+      setPost(response.data);
+      setIsEditing(false);
+      setPostActionMessage("게시글이 수정되었습니다.");
+    } catch (error) {
+      console.error("커뮤니티 게시글 수정 실패:", error.response?.data || error);
+      setPostActionMessage("게시글 수정에 실패했습니다.");
+    } finally {
+      setIsPostSaving(false);
+    }
+  };
+
+  const handlePostDelete = async () => {
+    if (!post || isPostDeleting) return;
+    if (!loginUserId) {
+      setPostActionMessage("로그인 후 게시글을 삭제할 수 있습니다.");
+      return;
+    }
+    if (!window.confirm("게시글을 삭제할까요? 삭제 후에는 복구할 수 없습니다.")) {
+      return;
+    }
+
+    setIsPostDeleting(true);
+    setPostActionMessage("");
+
+    try {
+      await deleteCommunityPost(post.postCode, loginUserId);
+      navigate("/community");
+    } catch (error) {
+      console.error("커뮤니티 게시글 삭제 실패:", error.response?.data || error);
+      setPostActionMessage("게시글 삭제에 실패했습니다.");
+      setIsPostDeleting(false);
+    }
+  };
+
   return (
     <main className="community_detail_page">
       <section className="community_detail_shell">
@@ -246,17 +398,102 @@ function CommunityPostDetailPage() {
         ) : (
           <article className="community_detail_card">
             <header className="community_detail_header">
-              <span className="community_detail_category">{categoryName}</span>
-              <h2>{post.postTitle}</h2>
-              <div className="community_detail_meta">
-                <span>{post.postUserId}</span>
-                <time>{formatPostDate(post.postDate)}</time>
-              </div>
+              {isEditing ? (
+                <form className="community_detail_edit_form" onSubmit={handlePostUpdate}>
+                  <label>
+                    카테고리
+                    <select
+                      value={editCategoryCode}
+                      onChange={(event) => setEditCategoryCode(event.target.value)}
+                      disabled={categories.length === 0}
+                    >
+                      {categories.map((category) => (
+                        <option
+                          key={category.categoryCode}
+                          value={category.categoryCode}
+                        >
+                          {category.categoryName}
+                        </option>
+                      ))}
+                    </select>
+                  </label>
+
+                  <label>
+                    제목
+                    <input
+                      type="text"
+                      value={editTitle}
+                      onChange={(event) => setEditTitle(event.target.value)}
+                    />
+                  </label>
+
+                  <label>
+                    내용
+                    <textarea
+                      value={editContent}
+                      onChange={(event) => setEditContent(event.target.value)}
+                      rows={12}
+                    />
+                  </label>
+
+                  <div className="community_detail_owner_actions">
+                    <button type="button" onClick={handleEditCancel}>
+                      취소
+                    </button>
+                    <button type="submit" disabled={isPostSaving}>
+                      {isPostSaving ? "저장 중..." : "저장"}
+                    </button>
+                  </div>
+                </form>
+              ) : (
+                <>
+                  <div className="community_detail_header_top">
+                    <span className="community_detail_category">{categoryName}</span>
+                    {isOwnPost && (
+                      <div className="community_detail_owner_actions">
+                        <button type="button" onClick={handleEditStart}>
+                          수정
+                        </button>
+                        <button
+                          type="button"
+                          className="danger"
+                          onClick={handlePostDelete}
+                          disabled={isPostDeleting}
+                        >
+                          {isPostDeleting ? "삭제 중..." : "삭제"}
+                        </button>
+                      </div>
+                    )}
+                  </div>
+
+                  <h2>{post.postTitle}</h2>
+                  <div className="community_detail_meta">
+                    <span className="community_detail_author">
+                      {authorProfileImage ? (
+                        <img
+                          src={authorProfileImage}
+                          alt=""
+                          className="community_detail_author_img"
+                          onError={() => setAuthorImageError(true)}
+                        />
+                      ) : (
+                        <span className="community_detail_author_fallback">
+                          {authorInitial}
+                        </span>
+                      )}
+                      <span>{authorDisplayName}</span>
+                    </span>
+                    <time>{formatPostDate(post.postDate)}</time>
+                  </div>
+                </>
+              )}
             </header>
 
-            <div className="community_detail_content">
-              {post.postContent || "내용이 없습니다."}
-            </div>
+            {!isEditing && (
+              <div className="community_detail_content">
+                {post.postContent || "내용이 없습니다."}
+              </div>
+            )}
 
             <footer className="community_detail_metrics">
               <span>조회 {post.postViews || 0}</span>
@@ -291,6 +528,9 @@ function CommunityPostDetailPage() {
             )}
             {scrapMessage && (
               <p className="community_detail_action_message">{scrapMessage}</p>
+            )}
+            {postActionMessage && (
+              <p className="community_detail_action_message">{postActionMessage}</p>
             )}
 
             <section className="community_comment_section">

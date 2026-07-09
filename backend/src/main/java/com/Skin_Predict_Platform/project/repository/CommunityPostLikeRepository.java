@@ -12,4 +12,6 @@ public interface CommunityPostLikeRepository extends JpaRepository<CommunityPost
 
     boolean existsByLikePostCodeAndLikeUserId(Long likePostCode, String likeUserId);
     List<CommunityPostLike> findByLikeUserId(String likeUserId);
+
+    void deleteByLikePostCode(Long likePostCode);
 }

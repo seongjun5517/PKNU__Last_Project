@@ -6,6 +6,10 @@ export const getCommunityPost = (postCode) => springApi.get(`/community/posts/${
 export const increaseCommunityPostView = (postCode, userId) =>
   springApi.post(`/community/posts/${postCode}/view`, { userId });
 export const insertCommunityPost = (post) => springApi.post("/community/posts", post);
+export const updateCommunityPost = (postCode, post) =>
+  springApi.put(`/community/posts/${postCode}`, post);
+export const deleteCommunityPost = (postCode, userId) =>
+  springApi.delete(`/community/posts/${postCode}`, { params: { userId } });
 export const likeCommunityPost = (postCode, userId) =>
   springApi.post(`/community/posts/${postCode}/like`, { userId });
 export const getCommunityPostLikeStatus = (postCode, userId) =>

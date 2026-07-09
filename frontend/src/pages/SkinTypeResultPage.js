@@ -1,8 +1,8 @@
 import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import {
-  deleteTodaySkinTypeResult,
-  getTodaySkinTypeResult,
+  deleteLatestSkinTypeResult,
+  getLatestSkinTypeResult,
 } from "../springApi/skinTypeSpringBootApi";
 import "./SkinTypeResultPage.css";
 
@@ -49,7 +49,7 @@ function SkinTypeResultPage() {
     : "";
 
   useEffect(() => {
-    const fetchTodayResult = async () => {
+    const fetchLatestResult = async () => {
       const userId = getLoginUserId();
 
       if (!userId) {
@@ -59,17 +59,17 @@ function SkinTypeResultPage() {
       }
 
       try {
-        const response = await getTodaySkinTypeResult(userId);
+        const response = await getLatestSkinTypeResult(userId);
         setResults(response.data || []);
       } catch (error) {
         console.error("피부 타입 진단 결과 조회 실패:", error);
-        setMessage("오늘 진단 결과를 불러오지 못했습니다. 서버 상태를 확인해주세요.");
+        setMessage("저장된 진단 결과를 불러오지 못했습니다. 서버 상태를 확인해주세요.");
       } finally {
         setLoading(false);
       }
     };
 
-    fetchTodayResult();
+    fetchLatestResult();
   }, []);
 
   const handleRetest = async () => {
@@ -80,16 +80,17 @@ function SkinTypeResultPage() {
       return;
     }
 
-    if (!window.confirm("오늘 저장된 피부 타입 진단 결과를 삭제하고 다시 진단할까요?")) {
+    if (!window.confirm("저장된 최신 피부 타입 진단 결과를 삭제하고 다시 진단할까요?")) {
       return;
     }
 
     try {
       setDeleting(true);
-      await deleteTodaySkinTypeResult(userId);
+      await deleteLatestSkinTypeResult(userId);
+      sessionStorage.setItem("skipSkinTypeSavedResultCheck", "true");
       navigate("/analysis");
     } catch (error) {
-      console.error("오늘 피부 타입 진단 결과 삭제 실패:", error);
+      console.error("최신 피부 타입 진단 결과 삭제 실패:", error);
       alert("재진단 준비에 실패했습니다. 서버 상태를 확인해주세요.");
     } finally {
       setDeleting(false);
@@ -119,13 +120,6 @@ function SkinTypeResultPage() {
   return (
     <div className="type_result_app">
       <header className="type_result_header">
-        <button
-          type="button"
-          className="result_back_button"
-          onClick={() => navigate("/main")}
-        >
-          ← 메인으로
-        </button>
         <div>
           <p className="result_eyebrow">SKIN TYPE RESULT</p>
           <h1>피부 타입 진단 결과</h1>
@@ -163,6 +157,11 @@ function SkinTypeResultPage() {
             <section className="face_result_panel">
               <div className="face_diagram_wrap">
                 <div className="face_diagram" aria-label="T존과 U존 피부 타입 결과">
+                  <img
+                    className="face_diagram_image"
+                    src="/img/skin-type-face-map.png"
+                    alt="T존과 U존 피부 타입 영역"
+                  />
                   <svg viewBox="0 0 240 300" role="img">
                     {/* 얼굴 윤곽 */}
                     <path
@@ -212,7 +211,7 @@ function SkinTypeResultPage() {
               </div>
 
               <div className="result_summary">
-                <p className="result_caption">오늘의 진단</p>
+                <p className="result_caption">최신 진단</p>
                 <div className="final_result_block">
                   <span>당신의 피부 타입은 ~~ ?</span>
                   <h2>{finalTypeName}</h2>

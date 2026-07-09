@@ -24,4 +24,6 @@ public interface CommunityCommentRepository extends JpaRepository<CommunityComme
             ORDER BY comment.cmtCreatedAt DESC, comment.cmtCode DESC
             """)
     List<CommunityComment> findByUserId(@Param("userId") String userId);
+
+    void deleteByCmtPostCode(Long cmtPostCode);
 }

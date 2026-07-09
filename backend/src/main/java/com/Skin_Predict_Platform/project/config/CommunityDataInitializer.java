@@ -23,7 +23,7 @@ public class CommunityDataInitializer implements CommandLineRunner {
         }
         // 카테고리 삽입 세팅하기
         communityCategoryRepository.saveAll(List.of(
-                CommunityCategory.builder().categoryCode(1L).categoryName("큰방").build(),
+                CommunityCategory.builder().categoryCode(1L).categoryName("자유게시판").build(),
                 CommunityCategory.builder().categoryCode(2L).categoryName("다이어트").build(),
                 CommunityCategory.builder().categoryCode(3L).categoryName("패션").build(),
                 CommunityCategory.builder().categoryCode(4L).categoryName("피부").build(),

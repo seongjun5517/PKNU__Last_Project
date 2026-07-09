@@ -32,27 +32,6 @@
 .survey_header {
   max-width: 1180px;
   margin: 0 auto 24px;
-  display: grid;
-  grid-template-columns: auto 1fr;
-  gap: 24px;
-  align-items: start;
-}
-
-.survey_back_button {
-  border: 1px solid var(--line);
-  background: var(--card-white);
-  color: var(--ink-soft);
-  font-size: 13px;
-  font-weight: 700;
-  padding: 10px 16px;
-  border-radius: 999px;
-  cursor: pointer;
-  transition: border-color 160ms ease, color 160ms ease;
-}
-
-.survey_back_button:hover {
-  border-color: var(--rose);
-  color: var(--rose-dark);
 }
 
 .survey_eyebrow {

@@ -12,7 +12,7 @@ import {
   ResponsiveContainer,
 } from "recharts";
 import { getDeepHistory } from "../springApi/deepSpringBootApi";
-import { getSkinTypeHistory, getTodaySkinTypeResult } from "../springApi/skinTypeSpringBootApi";
+import { getSkinTypeHistory } from "../springApi/skinTypeSpringBootApi";
 import "./AnalysisHistory.css";
 
 
