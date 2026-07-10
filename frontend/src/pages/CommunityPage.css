@@ -161,15 +161,11 @@
   box-shadow: 0 0 0 3px rgba(189, 111, 99, 0.14);
 }
 
-.post_table_head,
-.post_row {
+.post_table_head {
   display: grid;
   grid-template-columns: 58px 94px minmax(0, 1fr) 150px 86px;
   gap: 14px;
   align-items: center;
-}
-
-.post_table_head {
   min-height: 42px;
   padding: 0 18px;
   border-bottom: 1px solid var(--line);
@@ -179,6 +175,10 @@
 }
 
 .post_row {
+  display: grid;
+  grid-template-columns: 58px 94px minmax(0, 1fr) 150px 86px;
+  gap: 14px;
+  align-items: center;
   min-height: 84px;
   padding: 14px 18px;
   border-bottom: 1px solid var(--line);
@@ -275,21 +275,19 @@
 
 .post_scrap_button {
   width: fit-content;
-  border: 1px solid rgba(124, 155, 130, 0.28);
-  border-radius: 8px;
-  padding: 4px 8px;
-  background: #ffffff;
-  color: var(--sage-dark);
+  border: 0;
+  padding: 0;
+  background: transparent;
+  color: var(--ink-soft);
   font: inherit;
   font-size: 12px;
-  font-weight: 800;
+  font-weight: 700;
   cursor: pointer;
 }
 
 .post_scrap_button.is_scrapped {
-  border-color: var(--sage);
-  background: var(--sage);
-  color: #ffffff;
+  color: var(--ink-soft);
+  font-weight: 800;
 }
 
 .post_scrap_button:disabled {
@@ -301,7 +299,7 @@
   color: var(--ink-faint);
   font-size: 12px;
   font-weight: 700;
-  text-align: right;
+  text-align: left;
 }
 
 .post_empty {
@@ -382,13 +380,8 @@
   .post_row {
     grid-template-columns: 1fr;
     gap: 8px;
-    align-items: start;
+    align-items: center;
     min-height: 0;
-  }
-
-  .post_metrics {
-    flex-direction: row;
-    flex-wrap: wrap;
   }
 
   .post_code::before {
@@ -396,7 +389,10 @@
   }
 
   .post_row time {
-    text-align: left;
+    color: var(--ink-faint);
+    font-size: 12px;
+    font-weight: 700;
+    text-align: right;
   }
 }
 

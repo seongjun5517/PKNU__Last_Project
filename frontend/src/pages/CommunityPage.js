@@ -227,21 +227,9 @@ function CommunityPage() {
                   </div>
                   <div className="post_metrics">
                     <span>조회 {post.postViews}</span>
-                    <span>조화효~ {post.postLike}</span>
-                    <button
-                      type="button"
-                      className={`post_scrap_button${
-                        scrappedPostCodes[post.postCode] ? " is_scrapped" : ""
-                      }`}
-                      onClick={() => handleScrapClick(post.postCode)}
-                      disabled={scrappingPostCodes[post.postCode]}
-                    >
-                      {scrappingPostCodes[post.postCode]
-                        ? "반영 중..."
-                        : `${scrappedPostCodes[post.postCode] ? "스크랩됨" : "스크랩"} ${
-                            post.postScrap || 0
-                          }`}
-                    </button>
+                    <span>좋아요 {post.postLike}</span>
+                    <span>스크랩 {post.postScrap}</span>
+                    {/* <span>댓글 {post.commentCount || 0}</span> */}
                   </div>
                   <time>{formatPostDate(post.postDate)}</time>
                 </article>
