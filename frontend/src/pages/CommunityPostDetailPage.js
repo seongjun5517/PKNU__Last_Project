@@ -517,9 +517,26 @@ function CommunityPostDetailPage() {
                 onClick={handleScrapClick}
                 disabled={isScrapping}
               >
-                {isScrapping
-                  ? "반영 중..."
-                  : `${isScrapped ? "스크랩됨" : "스크랩"} ${post.postScrap || 0}`}
+                {isScrapping ? (
+                  "반영 중..."
+                ) : (
+                  <>
+                    <svg
+                      className="community_detail_scrap_icon"
+                      viewBox="0 0 24 24"
+                      width="14"
+                      height="14"
+                      fill={isScrapped ? "currentColor" : "none"}
+                      stroke="currentColor"
+                      strokeWidth="2"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                    >
+                      <path d="M6 3h12a1 1 0 0 1 1 1v17l-7-4-7 4V4a1 1 0 0 1 1-1z" />
+                    </svg>
+                    {post.postScrap || 0}
+                  </>
+                )}
               </button>
             </footer>
 
