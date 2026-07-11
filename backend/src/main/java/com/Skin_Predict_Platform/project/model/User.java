@@ -8,11 +8,13 @@ import jakarta.persistence.Entity;
 import jakarta.persistence.Id;
 import jakarta.persistence.PrePersist;
 import jakarta.persistence.Table;
+import jakarta.persistence.Transient;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
+import com.fasterxml.jackson.annotation.JsonProperty;
 
 @Entity
 @Table(name = "users")
@@ -47,6 +49,17 @@ public class User {
 
     @Column(name = "user_man")
     private Boolean userMan;
+
+    @Transient
+    public String getManAuth() {
+        return Boolean.TRUE.equals(userMan) ? "SUPER_ADMIN" : "USER";
+    }
+
+    @Transient
+    @JsonProperty("man_auth")
+    public String getManAuthSnake() {
+        return getManAuth();
+    }
 
     // 비어있는 데이터 값 기본 값 지정.
     @PrePersist

@@ -37,12 +37,12 @@ function LoginPage() {
     };
 
     try {
-      await loginMember(loginPayload);
+      const response = await loginMember(loginPayload);
       
       // 3. 여기서 전역 상태(Context)를 업데이트합니다.
       // login() 내부에서 localStorage.setItem도 처리되도록 
       // AuthContext.js를 작성했으므로 여기선 login(id)만 호출하면 됩니다.
-      login(loginPayload.user_id); 
+      login(loginPayload.user_id, response.data);
       
       navigate("/main");
     } catch (error) {

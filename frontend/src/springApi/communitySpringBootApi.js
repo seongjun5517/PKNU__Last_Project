@@ -22,6 +22,14 @@ export const getCommunityPostComments = (postCode) =>
   springApi.get(`/community/posts/${postCode}/comments`);
 export const createCommunityPostComment = (postCode, userId, contents) =>
   springApi.post(`/community/posts/${postCode}/comments`, { userId, contents });
+export const createCommunityPostReport = (postCode, userId, reportReason) =>
+  springApi.post(`/community/posts/${postCode}/reports`, { userId, reportReason });
+export const getCommunityPostReportCount = (postCode, userId) =>
+  springApi.get(`/community/posts/${postCode}/reports/count`, { params: { userId } });
+export const getCommunityPostReports = (postCode, userId) =>
+  springApi.get(`/community/posts/${postCode}/reports`, { params: { userId } });
+export const resolveCommunityPostReports = (postCode, userId, decision) =>
+  springApi.post(`/community/posts/${postCode}/reports/resolve`, { userId, decision });
 export const getMyCommunityComments = (userId) =>
   springApi.get(`/community/comments/mine/${userId}`);
 export const deleteCommunityComment = (commentCode, userId) =>

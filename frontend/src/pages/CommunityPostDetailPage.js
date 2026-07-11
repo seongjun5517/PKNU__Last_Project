@@ -3,16 +3,20 @@ import { useNavigate, useParams } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import {
   createCommunityPostComment,
+  createCommunityPostReport,
   deleteCommunityComment,
   deleteCommunityPost,
   getCommunityCategoryList,
   getCommunityPost,
   getCommunityPostComments,
   getCommunityPostLikeStatus,
+  getCommunityPostReportCount,
+  getCommunityPostReports,
   getCommunityPostScrapStatus,
   increaseCommunityPostView,
   likeCommunityPost,
   scrapCommunityPost,
+  resolveCommunityPostReports,
   updateCommunityPost,
 } from "../springApi/communitySpringBootApi";
 import { springApi } from "../config/axiosInstance";
@@ -33,7 +37,7 @@ function formatPostDate(value) {
 function CommunityPostDetailPage() {
   const navigate = useNavigate();
   const { postCode } = useParams();
-  const { userId } = useAuth();
+  const { userId, adminMode } = useAuth();
   const loginUserId =
     userId || localStorage.getItem("userId") || localStorage.getItem("loginUserId");
 
@@ -74,6 +78,23 @@ function CommunityPostDetailPage() {
   const [isPostSaving, setIsPostSaving] = useState(false);
   const [isPostDeleting, setIsPostDeleting] = useState(false);
   const [postActionMessage, setPostActionMessage] = useState("");
+  const [isReportOpen, setIsReportOpen] = useState(false);
+  const [reportReason, setReportReason] = useState("");
+  const [isReporting, setIsReporting] = useState(false);
+  const [reportMessage, setReportMessage] = useState("");
+  const [reportCount, setReportCount] = useState(0);
+  const [reports, setReports] = useState([]);
+  const [isReportListOpen, setIsReportListOpen] = useState(false);
+  const [isReportListLoading, setIsReportListLoading] = useState(false);
+  const [isReportResolving, setIsReportResolving] = useState(false);
+  const [reportListMessage, setReportListMessage] = useState("");
+
+  const reportReasons = [
+    { value: "SPAM_ADVERTISING", label: "스팸 또는 광고성 게시물" },
+    { value: "ABUSE_HARASSMENT", label: "욕설, 비방 또는 괴롭힘" },
+    { value: "HATE_DISCRIMINATION", label: "혐오 또는 차별 표현" },
+    { value: "INAPPROPRIATE_CONTENT", label: "음란하거나 부적절한 내용" },
+  ];
 
   useEffect(() => {
     const fetchPostDetail = async () => {
@@ -144,6 +165,25 @@ function CommunityPostDetailPage() {
   }, [post]);
 
   useEffect(() => {
+    if (!adminMode || !postCode) {
+      setReportCount(0);
+      return;
+    }
+
+    if (!loginUserId) {
+      setReportCount(0);
+      return;
+    }
+
+    getCommunityPostReportCount(postCode, loginUserId)
+      .then((response) => setReportCount(response.data?.count || 0))
+      .catch((error) => {
+        console.error("신고 수 조회 실패:", error);
+        setReportCount(0);
+      });
+  }, [adminMode, postCode, loginUserId]);
+
+  useEffect(() => {
     if (!post?.postUserId) {
       setAuthorProfile(null);
       return;
@@ -192,6 +232,7 @@ function CommunityPostDetailPage() {
     );
   }, [categories, post]);
   const isOwnPost = Boolean(post && loginUserId && post.postUserId === loginUserId);
+  const canDeletePost = isOwnPost || adminMode;
   const authorDisplayName = authorProfile?.userNickname || post?.postUserId || "";
   const authorInitial = (authorDisplayName || "?").slice(0, 1).toUpperCase();
   const authorProfileImage =
@@ -378,6 +419,96 @@ function CommunityPostDetailPage() {
     }
   };
 
+  const handleReportOpen = () => {
+    if (!loginUserId) {
+      setPostActionMessage("로그인 후 신고할 수 있습니다.");
+      return;
+    }
+
+    setReportReason("");
+    setReportMessage("");
+    setIsReportOpen(true);
+  };
+
+  const handleReportSubmit = async (event) => {
+    event.preventDefault();
+
+    if (!post || !reportReason || isReporting) return;
+
+    setIsReporting(true);
+    setReportMessage("");
+
+    try {
+      await createCommunityPostReport(post.postCode, loginUserId, reportReason);
+      setIsReportOpen(false);
+      setPostActionMessage("신고가 접수되었습니다.");
+    } catch (error) {
+      if (error.response?.status === 409) {
+        setReportMessage("이미 신고한 게시물입니다.");
+      } else if (error.response?.status === 403) {
+        setReportMessage("본인이 작성한 게시물은 신고할 수 없습니다.");
+      } else {
+        setReportMessage("신고 접수에 실패했습니다. 잠시 후 다시 시도해주세요.");
+      }
+    } finally {
+      setIsReporting(false);
+    }
+  };
+
+  const getReportReasonLabel = (reason) =>
+    reportReasons.find((item) => item.value === reason)?.label || reason;
+
+  const handleReportListOpen = async () => {
+    if (!post || !loginUserId || isReportListLoading) return;
+
+    setIsReportListOpen(true);
+    setIsReportListLoading(true);
+    setReportListMessage("");
+
+    try {
+      const response = await getCommunityPostReports(post.postCode, loginUserId);
+      setReports(response.data || []);
+    } catch (error) {
+      console.error("신고 목록 조회 실패:", error);
+      setReportListMessage("신고 목록을 불러오지 못했습니다.");
+    } finally {
+      setIsReportListLoading(false);
+    }
+  };
+
+  const handleReportResolve = async (decision) => {
+    if (!post || !loginUserId || isReportResolving) return;
+
+    if (
+      decision === "DELETE" &&
+      !window.confirm("신고된 게시글을 삭제하시겠습니까? 작성자에게 삭제 알림이 전송됩니다.")
+    ) {
+      return;
+    }
+
+    setIsReportResolving(true);
+    setReportListMessage("");
+
+    try {
+      await resolveCommunityPostReports(post.postCode, loginUserId, decision);
+
+      if (decision === "DELETE") {
+        navigate("/community");
+        return;
+      }
+
+      setReports([]);
+      setReportCount(0);
+      setIsReportListOpen(false);
+      setPostActionMessage("신고를 유지 결정으로 처리했습니다.");
+    } catch (error) {
+      console.error("신고 처리 실패:", error);
+      setReportListMessage("신고 처리에 실패했습니다. 잠시 후 다시 시도해주세요.");
+    } finally {
+      setIsReportResolving(false);
+    }
+  };
+
   return (
     <main className="community_detail_page">
       <section className="community_detail_shell">
@@ -449,11 +580,13 @@ function CommunityPostDetailPage() {
                 <>
                   <div className="community_detail_header_top">
                     <span className="community_detail_category">{categoryName}</span>
-                    {isOwnPost && (
+                    {canDeletePost && (
                       <div className="community_detail_owner_actions">
-                        <button type="button" onClick={handleEditStart}>
-                          수정
-                        </button>
+                        {isOwnPost && (
+                          <button type="button" onClick={handleEditStart}>
+                            수정
+                          </button>
+                        )}
                         <button
                           type="button"
                           className="danger"
@@ -521,6 +654,23 @@ function CommunityPostDetailPage() {
                   ? "반영 중..."
                   : `${isScrapped ? "스크랩됨" : "스크랩"} ${post.postScrap || 0}`}
               </button>
+              {adminMode ? (
+                <button
+                  type="button"
+                  className="community_detail_report_count"
+                  onClick={handleReportListOpen}
+                >
+                  신고 {reportCount}
+                </button>
+              ) : !isOwnPost && (
+                <button
+                  type="button"
+                  className="community_detail_report_button"
+                  onClick={handleReportOpen}
+                >
+                  신고
+                </button>
+              )}
             </footer>
 
             {likeMessage && (
@@ -549,7 +699,7 @@ function CommunityPostDetailPage() {
                         <strong>{comment.cmtUserId}</strong>
                         <div className="community_comment_meta_right">
                           <time>{formatPostDate(comment.cmtCreatedAt)}</time>
-                          {comment.cmtUserId === loginUserId && (
+                          {(comment.cmtUserId === loginUserId || adminMode) && (
                             <button
                               type="button"
                               onClick={() => handleCommentDelete(comment.cmtCode)}
@@ -589,6 +739,102 @@ function CommunityPostDetailPage() {
           </article>
         )}
       </section>
+      {isReportOpen && (
+        <div className="community_report_modal_backdrop" role="presentation">
+          <form className="community_report_modal" onSubmit={handleReportSubmit}>
+            <div className="community_report_modal_head">
+              <h2>게시물 신고</h2>
+              <button
+                type="button"
+                className="community_report_modal_close"
+                onClick={() => setIsReportOpen(false)}
+                aria-label="신고 창 닫기"
+              >
+                x
+              </button>
+            </div>
+            <div className="community_report_reason_list">
+              {reportReasons.map((reason) => (
+                <label key={reason.value} className="community_report_reason">
+                  <input
+                    type="checkbox"
+                    checked={reportReason === reason.value}
+                    onChange={() => setReportReason(reason.value)}
+                  />
+                  <span>{reason.label}</span>
+                </label>
+              ))}
+            </div>
+            {reportMessage && <p className="community_report_message">{reportMessage}</p>}
+            <div className="community_report_modal_actions">
+              <button type="button" onClick={() => setIsReportOpen(false)}>
+                취소
+              </button>
+              <button type="submit" disabled={!reportReason || isReporting}>
+                {isReporting ? "접수 중..." : "신고하기"}
+              </button>
+            </div>
+          </form>
+        </div>
+      )}
+      {isReportListOpen && (
+        <div className="community_report_modal_backdrop" role="presentation">
+          <section className="community_report_modal community_report_admin_modal">
+            <div className="community_report_modal_head">
+              <div>
+                <h2>신고 관리</h2>
+                <p className="community_report_post_title">{post?.postTitle}</p>
+              </div>
+              <button
+                type="button"
+                className="community_report_modal_close"
+                onClick={() => setIsReportListOpen(false)}
+                aria-label="신고 목록 닫기"
+              >
+                x
+              </button>
+            </div>
+
+            {isReportListLoading ? (
+              <p className="community_report_admin_state">신고 목록을 불러오는 중입니다.</p>
+            ) : reportListMessage ? (
+              <p className="community_report_message">{reportListMessage}</p>
+            ) : reports.length === 0 ? (
+              <p className="community_report_admin_state">접수된 신고가 없습니다.</p>
+            ) : (
+              <ul className="community_report_admin_list">
+                {reports.map((report) => (
+                  <li key={report.reportCode}>
+                    <div>
+                      <strong>{report.reportUserId}</strong>
+                      <span>{getReportReasonLabel(report.reportReason)}</span>
+                    </div>
+                    <time>{formatPostDate(report.reportCreatedAt)}</time>
+                  </li>
+                ))}
+              </ul>
+            )}
+
+            <div className="community_report_modal_actions">
+              <button
+                type="button"
+                onClick={() => handleReportResolve("KEEP")}
+                disabled={isReportResolving || reports.length === 0}
+              >
+                유지 결정
+              </button>
+              <button
+                type="button"
+                className="community_report_delete_action"
+                onClick={() => handleReportResolve("DELETE")}
+                disabled={isReportResolving || reports.length === 0}
+              >
+                {isReportResolving ? "처리 중..." : "게시글 삭제"}
+              </button>
+            </div>
+          </section>
+        </div>
+      )}
     </main>
   );
 }

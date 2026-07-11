@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import {
+  deleteCommunityPost,
   getCommunityCategoryList,
   getCommunityPostList,
   getCommunityPostScrapStatus,
@@ -22,7 +23,7 @@ function formatPostDate(value) {
 
 function CommunityPage() {
   const navigate = useNavigate();
-  const { userId } = useAuth();
+  const { userId, adminMode } = useAuth();
   const loginUserId =
     userId || localStorage.getItem("userId") || localStorage.getItem("loginUserId");
 
@@ -42,6 +43,7 @@ function CommunityPage() {
   const [categories, setCategories] = useState([]);
   const [scrappedPostCodes, setScrappedPostCodes] = useState({});
   const [scrappingPostCodes, setScrappingPostCodes] = useState({});
+  const [deletingPostCodes, setDeletingPostCodes] = useState({});
 
   useEffect(() => {
     const fetchCommunityData = async () => {
@@ -137,6 +139,32 @@ function CommunityPage() {
     }
   };
 
+  const handleAdminDeletePost = async (event, postCode) => {
+    event.stopPropagation();
+
+    if (!loginUserId) {
+      alert("로그인 후 삭제할 수 있습니다.");
+      return;
+    }
+    if (!window.confirm("관리자 권한으로 이 게시글을 삭제할까요?")) {
+      return;
+    }
+
+    setDeletingPostCodes((current) => ({ ...current, [postCode]: true }));
+
+    try {
+      await deleteCommunityPost(postCode, loginUserId);
+      setPosts((currentPosts) =>
+        currentPosts.filter((post) => post.postCode !== postCode)
+      );
+    } catch (error) {
+      console.error("관리자 게시글 삭제 실패:", error.response?.data || error);
+      alert("게시글 삭제에 실패했습니다.");
+    } finally {
+      setDeletingPostCodes((current) => ({ ...current, [postCode]: false }));
+    }
+  };
+
   return (
     <main className="community_page">
       <section className="community_shell">
@@ -226,8 +254,8 @@ function CommunityPage() {
                     <span className="post_writer">{post.postUserId}</span>
                   </div>
                   <div className="post_metrics">
-                    <span>조회 {post.postViews}</span>
-                    <span>조화효~ {post.postLike}</span>
+                    <span className="post_metric_badge">조회 {post.postViews}</span>
+                    <span className="post_metric_badge like">좋아요 {post.postLike}</span>
                     <button
                       type="button"
                       className={`post_scrap_button${
@@ -242,6 +270,18 @@ function CommunityPage() {
                             post.postScrap || 0
                           }`}
                     </button>
+                    {adminMode && (
+                      <button
+                        type="button"
+                        className="post_admin_delete_button"
+                        onClick={(event) =>
+                          handleAdminDeletePost(event, post.postCode)
+                        }
+                        disabled={deletingPostCodes[post.postCode]}
+                      >
+                        {deletingPostCodes[post.postCode] ? "삭제 중..." : "삭제"}
+                      </button>
+                    )}
                   </div>
                   <time>{formatPostDate(post.postDate)}</time>
                 </article>

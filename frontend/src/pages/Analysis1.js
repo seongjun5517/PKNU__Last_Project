@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import {
   deleteLatestPredict,
   getLatestPredict,
@@ -100,6 +100,11 @@ const DIAGNOSIS_COMMENTS = {
 
 const DIAGNOSIS_TYPE_ORDER = ["acne", "bi", "ato"];
 
+const MEDIAPIPE_TASKS_URL = "https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.14";
+const MEDIAPIPE_WASM_URL = "https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.14/wasm";
+const MEDIAPIPE_MODEL_URL =
+  "https://storage.googleapis.com/mediapipe-models/face_landmarker/face_landmarker/float16/1/face_landmarker.task";
+
 const MASCOT_INFO = {
   acne: {
     label: "아크니",
@@ -167,8 +172,61 @@ function normalizeDetections(detections) {
   return Array.isArray(detections) ? detections : [];
 }
 
+function evaluateFaceQuality(landmarks, videoWidth, videoHeight) {
+  const LEFT_CHEEK = 234;
+  const RIGHT_CHEEK = 454;
+  const LEFT_EYE_OUTER = 33;
+  const RIGHT_EYE_OUTER = 263;
+  const NOSE_TIP = 1;
+  const FOREHEAD = 10;
+  const CHIN = 152;
+
+  const get = (index) => ({
+    x: landmarks[index].x * videoWidth,
+    y: landmarks[index].y * videoHeight,
+  });
+
+  const leftCheek = get(LEFT_CHEEK);
+  const rightCheek = get(RIGHT_CHEEK);
+  const leftEye = get(LEFT_EYE_OUTER);
+  const rightEye = get(RIGHT_EYE_OUTER);
+  const nose = get(NOSE_TIP);
+  const forehead = get(FOREHEAD);
+  const chin = get(CHIN);
+
+  const faceWidth = Math.abs(rightCheek.x - leftCheek.x);
+  const widthRatio = faceWidth / videoWidth;
+  const faceCenterX = (leftCheek.x + rightCheek.x) / 2;
+  const faceCenterY = (forehead.y + chin.y) / 2;
+  const offsetX = Math.abs(faceCenterX - videoWidth / 2) / videoWidth;
+  const offsetY = Math.abs(faceCenterY - videoHeight / 2) / videoHeight;
+  const eyeMidX = (leftEye.x + rightEye.x) / 2;
+  const eyeDistance = Math.abs(rightEye.x - leftEye.x);
+  const noseOffset = Math.abs(nose.x - eyeMidX) / (eyeDistance || 1);
+
+  const messages = [];
+  if (widthRatio < 0.28) messages.push("얼굴을 조금 더 가까이 해주세요.");
+  else if (widthRatio > 0.62) messages.push("얼굴을 조금 더 멀리 해주세요.");
+  if (offsetX > 0.12 || offsetY > 0.12) messages.push("얼굴을 화면 중앙에 맞춰주세요.");
+  if (noseOffset > 0.18) messages.push("정면을 바라봐주세요.");
+
+  return {
+    ok: messages.length === 0,
+    message: messages[0] || "좋습니다. 촬영할 수 있어요.",
+  };
+}
+
 function Analysis1() {
   const { userId } = useAuth();
+  const videoRef = useRef(null);
+  const canvasRef = useRef(null);
+  const streamRef = useRef(null);
+  const rafRef = useRef(null);
+  const faceLandmarkerRef = useRef(null);
+  const mediaPipeRef = useRef(null);
+  const runningModeRef = useRef("VIDEO");
+  const previewUrlRef = useRef(null);
+  const lastGuideRef = useRef({ ok: false, message: "" });
   const [imageFile, setImageFile] = useState(null);
   const [previewUrl, setPreviewUrl] = useState(null);
   const [error, setError] = useState("");
@@ -176,6 +234,272 @@ function Analysis1() {
   const [view, setView] = useState("upload"); // 'upload' | 'loading' | 'result'
   const [checkingSavedResult, setCheckingSavedResult] = useState(true);
   const [deletingLatest, setDeletingLatest] = useState(false);
+  const [cameraStatus, setCameraStatus] = useState("idle");
+  const [cameraMessage, setCameraMessage] = useState("카메라를 시작하면 얼굴 위치를 인식해 촬영할 수 있어요.");
+  const [captureReady, setCaptureReady] = useState(false);
+
+  const clearSelectedImage = () => {
+    if (previewUrlRef.current) {
+      URL.revokeObjectURL(previewUrlRef.current);
+      previewUrlRef.current = null;
+    }
+    setImageFile(null);
+    setPreviewUrl(null);
+  };
+
+  const applySelectedImage = (file, message) => {
+    if (previewUrlRef.current) {
+      URL.revokeObjectURL(previewUrlRef.current);
+    }
+
+    const nextPreviewUrl = URL.createObjectURL(file);
+    previewUrlRef.current = nextPreviewUrl;
+    setImageFile(file);
+    setPreviewUrl(nextPreviewUrl);
+    setError("");
+    setCameraStatus("captured");
+    setCameraMessage(message);
+    setCaptureReady(false);
+    lastGuideRef.current = { ok: false, message };
+  };
+
+  const clearCameraCanvas = () => {
+    const canvas = canvasRef.current;
+    const ctx = canvas?.getContext("2d");
+    if (canvas && ctx) {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+    }
+  };
+
+  const stopCamera = ({ keepStatus = false } = {}) => {
+    if (rafRef.current) {
+      cancelAnimationFrame(rafRef.current);
+      rafRef.current = null;
+    }
+
+    if (streamRef.current) {
+      streamRef.current.getTracks().forEach((track) => track.stop());
+      streamRef.current = null;
+    }
+
+    if (videoRef.current) {
+      videoRef.current.srcObject = null;
+    }
+
+    clearCameraCanvas();
+    setCaptureReady(false);
+
+    if (!keepStatus) {
+      setCameraStatus("idle");
+      setCameraMessage("카메라를 시작하면 얼굴 위치를 인식해 촬영할 수 있어요.");
+      lastGuideRef.current = { ok: false, message: "" };
+    }
+  };
+
+  const updateCameraGuide = (ok, message) => {
+    if (lastGuideRef.current.ok === ok && lastGuideRef.current.message === message) return;
+
+    lastGuideRef.current = { ok, message };
+    setCaptureReady(ok);
+    setCameraMessage(message);
+  };
+
+  const ensureFaceLandmarker = async () => {
+    if (faceLandmarkerRef.current && mediaPipeRef.current) {
+      return mediaPipeRef.current;
+    }
+
+    const mediaPipe = await import(/* webpackIgnore: true */ MEDIAPIPE_TASKS_URL);
+    const { FaceLandmarker, FilesetResolver, DrawingUtils } = mediaPipe;
+    const filesetResolver = await FilesetResolver.forVisionTasks(MEDIAPIPE_WASM_URL);
+
+    try {
+      faceLandmarkerRef.current = await FaceLandmarker.createFromOptions(filesetResolver, {
+        baseOptions: {
+          modelAssetPath: MEDIAPIPE_MODEL_URL,
+          delegate: "GPU",
+        },
+        outputFaceBlendshapes: false,
+        runningMode: "VIDEO",
+        numFaces: 5,
+      });
+    } catch (err) {
+      faceLandmarkerRef.current = await FaceLandmarker.createFromOptions(filesetResolver, {
+        baseOptions: {
+          modelAssetPath: MEDIAPIPE_MODEL_URL,
+        },
+        outputFaceBlendshapes: false,
+        runningMode: "VIDEO",
+        numFaces: 5,
+      });
+    }
+
+    mediaPipeRef.current = { FaceLandmarker, DrawingUtils };
+    return mediaPipeRef.current;
+  };
+
+  const resizeCameraCanvas = () => {
+    const video = videoRef.current;
+    const canvas = canvasRef.current;
+    if (!video || !canvas) return;
+
+    canvas.width = video.videoWidth || 640;
+    canvas.height = video.videoHeight || 480;
+  };
+
+  const drawLandmarks = (landmarksList) => {
+    const canvas = canvasRef.current;
+    const ctx = canvas?.getContext("2d");
+    const mediaPipe = mediaPipeRef.current;
+    if (!canvas || !ctx || !mediaPipe) return;
+
+    const { FaceLandmarker, DrawingUtils } = mediaPipe;
+    ctx.save();
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    const drawingUtils = new DrawingUtils(ctx);
+
+    landmarksList.forEach((landmarks) => {
+      drawingUtils.drawConnectors(landmarks, FaceLandmarker.FACE_LANDMARKS_TESSELATION, {
+        color: "#C0C0C030",
+        lineWidth: 1,
+      });
+      drawingUtils.drawConnectors(landmarks, FaceLandmarker.FACE_LANDMARKS_RIGHT_EYE, {
+        color: "#7C9B82",
+        lineWidth: 2,
+      });
+      drawingUtils.drawConnectors(landmarks, FaceLandmarker.FACE_LANDMARKS_LEFT_EYE, {
+        color: "#7C9B82",
+        lineWidth: 2,
+      });
+      drawingUtils.drawConnectors(landmarks, FaceLandmarker.FACE_LANDMARKS_RIGHT_EYEBROW, {
+        color: "#7C9B82",
+        lineWidth: 1,
+      });
+      drawingUtils.drawConnectors(landmarks, FaceLandmarker.FACE_LANDMARKS_LEFT_EYEBROW, {
+        color: "#7C9B82",
+        lineWidth: 1,
+      });
+      drawingUtils.drawConnectors(landmarks, FaceLandmarker.FACE_LANDMARKS_FACE_OVAL, {
+        color: "#BD6F63",
+        lineWidth: 2,
+      });
+      drawingUtils.drawConnectors(landmarks, FaceLandmarker.FACE_LANDMARKS_LIPS, {
+        color: "#D9A441",
+        lineWidth: 2,
+      });
+    });
+
+    ctx.restore();
+  };
+
+  const predictCamera = () => {
+    const video = videoRef.current;
+    const faceLandmarker = faceLandmarkerRef.current;
+    if (!video || !faceLandmarker || !streamRef.current) return;
+
+    if (video.readyState >= 2 && video.videoWidth > 0 && video.videoHeight > 0) {
+      const detection = faceLandmarker.detectForVideo(video, performance.now());
+      const faces = detection.faceLandmarks || [];
+      drawLandmarks(faces);
+
+      if (faces.length === 1) {
+        const quality = evaluateFaceQuality(faces[0], video.videoWidth, video.videoHeight);
+        updateCameraGuide(quality.ok, quality.message);
+      } else if (faces.length === 0) {
+        updateCameraGuide(false, "얼굴이 인식되지 않습니다.");
+      } else {
+        updateCameraGuide(false, "얼굴이 여러 개 감지되었습니다. 한 명만 화면에 나와주세요.");
+      }
+    }
+
+    rafRef.current = requestAnimationFrame(predictCamera);
+  };
+
+  const startCamera = async () => {
+    if (!userId) {
+      setError("로그인이 필요합니다.");
+      return;
+    }
+
+    if (!navigator.mediaDevices?.getUserMedia) {
+      setError("이 브라우저에서는 카메라를 사용할 수 없습니다.");
+      return;
+    }
+
+    try {
+      setError("");
+      clearSelectedImage();
+      stopCamera({ keepStatus: true });
+      setCameraStatus("loading");
+      setCameraMessage("얼굴 인식 모델을 준비하고 있어요.");
+
+      await ensureFaceLandmarker();
+
+      if (runningModeRef.current !== "VIDEO") {
+        await faceLandmarkerRef.current.setOptions({ runningMode: "VIDEO" });
+        runningModeRef.current = "VIDEO";
+      }
+
+      const stream = await navigator.mediaDevices.getUserMedia({
+        audio: false,
+        video: {
+          facingMode: "user",
+          width: { ideal: 640 },
+          height: { ideal: 480 },
+        },
+      });
+
+      streamRef.current = stream;
+      videoRef.current.srcObject = stream;
+      await new Promise((resolve) => {
+        videoRef.current.onloadedmetadata = resolve;
+      });
+      await videoRef.current.play();
+
+      resizeCameraCanvas();
+      setCameraStatus("running");
+      setCameraMessage("얼굴을 화면 중앙에 맞춰주세요.");
+      rafRef.current = requestAnimationFrame(predictCamera);
+    } catch (err) {
+      stopCamera({ keepStatus: true });
+      setCameraStatus("error");
+      setCaptureReady(false);
+      setCameraMessage("카메라를 시작하지 못했습니다.");
+      setError(`카메라 접근 실패: ${err.message}`);
+    }
+  };
+
+  const handleCapture = () => {
+    const video = videoRef.current;
+    if (!video || !captureReady) return;
+
+    const captureCanvas = document.createElement("canvas");
+    captureCanvas.width = video.videoWidth;
+    captureCanvas.height = video.videoHeight;
+    const captureCtx = captureCanvas.getContext("2d");
+    captureCtx.drawImage(video, 0, 0, captureCanvas.width, captureCanvas.height);
+
+    captureCanvas.toBlob((blob) => {
+      if (!blob) {
+        setError("촬영한 이미지를 만들지 못했습니다.");
+        return;
+      }
+
+      const file = new File([blob], `skin_capture_${Date.now()}.jpg`, {
+        type: "image/jpeg",
+      });
+
+      stopCamera({ keepStatus: true });
+      applySelectedImage(file, "촬영 완료. 분석 시작을 눌러주세요.");
+    }, "image/jpeg", 0.92);
+  };
+
+  const handleRetakeCapture = () => {
+    clearSelectedImage();
+    setCameraStatus("idle");
+    setCameraMessage("카메라를 다시 시작해 촬영해주세요.");
+    setCaptureReady(false);
+  };
 
   // 저장된 최신 분석이 있으면 바로 결과 화면 표시
   useEffect(() => {
@@ -202,13 +526,29 @@ function Analysis1() {
     })();
   }, [userId]);
 
+  useEffect(() => {
+    return () => {
+      if (rafRef.current) {
+        cancelAnimationFrame(rafRef.current);
+      }
+      if (streamRef.current) {
+        streamRef.current.getTracks().forEach((track) => track.stop());
+      }
+      if (faceLandmarkerRef.current?.close) {
+        faceLandmarkerRef.current.close();
+      }
+      if (previewUrlRef.current) {
+        URL.revokeObjectURL(previewUrlRef.current);
+      }
+    };
+  }, []);
+
   const handleFileChange = (e) => {
     const file = e.target.files[0];
     if (!file) return;
 
-    setImageFile(file);
-    setError("");
-    setPreviewUrl(URL.createObjectURL(file));
+    stopCamera({ keepStatus: true });
+    applySelectedImage(file, "사진이 선택되었어요. 분석 시작을 눌러주세요.");
   };
 
   const handleSubmit = async () => {
@@ -222,6 +562,7 @@ function Analysis1() {
     }
 
     setError("");
+    stopCamera({ keepStatus: true });
     setView("loading");
 
     // 최소 2초간 로딩 화면을 보여주기 위한 지연
@@ -267,8 +608,8 @@ function Analysis1() {
       setDeletingLatest(true);
       setError("");
       await deleteLatestPredict(userId);
-      setImageFile(null);
-      setPreviewUrl(null);
+      clearSelectedImage();
+      stopCamera();
       setResult(null);
       setView("upload");
     } catch (err) {
@@ -304,14 +645,14 @@ function Analysis1() {
       </div>
 
       <p className="analysis1_subtitle">
-        사진을 업로드하면 AI가 피부 상태를 분석해드려요.
+        카메라로 얼굴을 인식하고 촬영하면 AI가 피부 상태를 분석해드려요.
       </p>
 
       <div className="analysis1_grid">
         {/* 왼쪽 박스: 이미지 (업로드 -> 로딩 -> 결과 전환) */}
         <div className="card analysis1_image_card">
           <div className="card_header_row">
-            <h2>사진</h2>
+            <h2>카메라 인식</h2>
             {view === "result" && result && (
               <span className="today_badge">최신 분석 완료</span>
             )}
@@ -319,23 +660,29 @@ function Analysis1() {
 
           <div className="analysis1_image_stage">
             {(view === "upload" || view === "loading") && (
-              <label className="upload_dropzone">
-                <input
-                  type="file"
-                  accept="image/*"
-                  onChange={handleFileChange}
-                  disabled={view === "loading"}
-                />
+              <div className="camera_panel">
                 {previewUrl ? (
-                  <div className="upload_preview">
-                    <img src={previewUrl} alt="업로드 미리보기" />
+                  <div className="upload_preview camera_capture_preview">
+                    <img src={previewUrl} alt="촬영 미리보기" />
                   </div>
                 ) : (
-                  <p className="upload_hint">
-                    클릭하여 사진을 선택해주세요
-                    <br />
-                    (JPG, PNG)
-                  </p>
+                  <div className={`camera_stage ${captureReady ? "is_ready" : ""}`}>
+                    <video ref={videoRef} autoPlay playsInline muted />
+                    <canvas ref={canvasRef} />
+                    <div className="camera_guide_frame" />
+                    {(cameraStatus === "idle" || cameraStatus === "error") && (
+                      <div className="camera_idle_hint">
+                        <strong>카메라 인식 준비</strong>
+                        <span>얼굴이 화면 중앙에 오면 촬영할 수 있어요.</span>
+                      </div>
+                    )}
+                    {cameraStatus === "loading" && (
+                      <div className="camera_idle_hint">
+                        <strong>모델 준비 중</strong>
+                        <span>얼굴 인식 기능을 불러오고 있어요.</span>
+                      </div>
+                    )}
+                  </div>
                 )}
 
                 {view === "loading" && (
@@ -348,7 +695,61 @@ function Analysis1() {
                     <p>AI가 피부를 분석하고 있어요</p>
                   </div>
                 )}
-              </label>
+
+                <p className={`camera_guide_text ${captureReady ? "ready" : ""}`}>
+                  {cameraMessage}
+                </p>
+
+                <div className="camera_actions">
+                  {previewUrl ? (
+                    <button
+                      type="button"
+                      className="camera_action_button secondary"
+                      onClick={handleRetakeCapture}
+                      disabled={view === "loading"}
+                    >
+                      다시 촬영
+                    </button>
+                  ) : (
+                    <>
+                      <button
+                        type="button"
+                        className="camera_action_button"
+                        onClick={startCamera}
+                        disabled={!userId || cameraStatus === "loading" || cameraStatus === "running" || view === "loading"}
+                      >
+                        카메라 인식하기
+                      </button>
+                      <button
+                        type="button"
+                        className="camera_action_button"
+                        onClick={handleCapture}
+                        disabled={!captureReady || view === "loading"}
+                      >
+                        촬영하기
+                      </button>
+                      <button
+                        type="button"
+                        className="camera_action_button secondary"
+                        onClick={() => stopCamera()}
+                        disabled={cameraStatus !== "running" || view === "loading"}
+                      >
+                        중지
+                      </button>
+                    </>
+                  )}
+                </div>
+
+                <label className="camera_file_fallback">
+                  사진 파일로 선택
+                  <input
+                    type="file"
+                    accept="image/*"
+                    onChange={handleFileChange}
+                    disabled={view === "loading"}
+                  />
+                </label>
+              </div>
             )}
 
             {view === "result" && result && (
@@ -362,7 +763,7 @@ function Analysis1() {
             <button
               className="analysis1_submit"
               onClick={handleSubmit}
-              disabled={!userId || checkingSavedResult}
+              disabled={!userId || checkingSavedResult || !imageFile}
             >
               분석 시작
             </button>
@@ -412,7 +813,7 @@ function Analysis1() {
               <p className="result_empty">
                 아직 분석 결과가 없어요.
                 <br />
-                왼쪽에서 사진을 업로드하고 분석을 시작해보세요.
+                왼쪽에서 카메라로 얼굴을 촬영하고 분석을 시작해보세요.
               </p>
             </div>
           )}
