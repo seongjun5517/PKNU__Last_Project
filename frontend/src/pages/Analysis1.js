@@ -7,6 +7,7 @@ import {
 } from "../flaskapi/DeepApi";
 import "./Analysis1.css";
 import { useAuth } from "../context/AuthContext";
+import AnalysisFeedback from "../components/AnalysisFeedback";
 
 // 진단 타입별 코멘트 & 추천 화장품 매핑
 // 실제 dtype_result 값: bi, acne, ato, normal
@@ -854,6 +855,13 @@ function Analysis1() {
             </ul>
           </div>
         </section>
+      )}
+
+      {view === "result" && result && skinInfo && (
+        <AnalysisFeedback
+          feedbackType="SKIN_STATUS"
+          analysisName="피부 상태 분석"
+        />
       )}
     </div>
   );

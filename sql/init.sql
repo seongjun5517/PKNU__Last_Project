@@ -14,6 +14,7 @@ DROP TABLE IF EXISTS community_report;
 DROP TABLE IF EXISTS community_post_like;
 DROP TABLE IF EXISTS calendar_tasks;
 DROP TABLE IF EXISTS manager;
+DROP TABLE IF EXISTS feedback;
 DROP TABLE IF EXISTS deep;
 DROP TABLE IF EXISTS `type`;
 DROP TABLE IF EXISTS posts_detail;
@@ -245,6 +246,24 @@ CREATE TABLE `type` (
         REFERENCES users(user_id)
         ON DELETE CASCADE
         ON UPDATE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+CREATE TABLE feedback (
+    fb_code BIGINT AUTO_INCREMENT PRIMARY KEY COMMENT '피드백 고유번호',
+    fb_user_id VARCHAR(255) NOT NULL COMMENT '피드백 작성자',
+    fb_type VARCHAR(30) NOT NULL COMMENT '분석 유형: SKIN_TYPE 또는 SKIN_STATUS',
+    fb_evaluate VARCHAR(30) NOT NULL COMMENT '평가: HELPFUL 또는 DISAPPOINTED',
+    fb_comment TEXT NULL COMMENT '피드백 코멘트',
+    fb_created_at DATETIME DEFAULT CURRENT_TIMESTAMP COMMENT '피드백 작성일시',
+
+    CONSTRAINT fk_feedback_user
+        FOREIGN KEY (fb_user_id)
+        REFERENCES users(user_id)
+        ON DELETE CASCADE
+        ON UPDATE CASCADE,
+
+    INDEX idx_feedback_created_at (fb_created_at),
+    INDEX idx_feedback_type (fb_type)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 CREATE TABLE ingredient (

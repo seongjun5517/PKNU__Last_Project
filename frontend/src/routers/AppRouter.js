@@ -11,6 +11,7 @@ import CommunityPage from "../pages/CommunityPage";
 import CommunityWritePage from "../pages/CommunityWritePage";
 import CommunityPostDetailPage from "../pages/CommunityPostDetailPage";
 import Mypage from "../pages/Mypage";
+import FeedbackListPage from "../pages/FeedbackListPage";
 
 export default function AppRouter() {
   return (
@@ -29,6 +30,7 @@ export default function AppRouter() {
           <Route path="/analysis/result" element={<SkinTypeResultPage />} />
           <Route path="/analysis1" element={<Analysis1 />} />
           <Route path="/mypage" element={<Mypage />} />
+          <Route path="/admin/feedback" element={<FeedbackListPage />} />
         </Routes>
       </Layout>
     </BrowserRouter>

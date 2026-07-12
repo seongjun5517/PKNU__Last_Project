@@ -95,6 +95,58 @@
   gap: 14px;
 }
 
+.admin_feedback_link {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  padding: 18px;
+  border: 1px solid rgba(122, 85, 112, 0.22);
+  border-radius: 16px;
+  background: linear-gradient(135deg, #fff 0%, #f1ecf4 100%);
+}
+
+.admin_feedback_link p {
+  margin: 0 0 5px;
+  color: var(--plum);
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.12em;
+}
+
+.admin_feedback_link strong,
+.admin_feedback_link span {
+  display: block;
+}
+
+.admin_feedback_link strong {
+  color: var(--ink);
+  font-size: 14px;
+}
+
+.admin_feedback_link span {
+  margin-top: 5px;
+  color: var(--ink-soft);
+  font-size: 12px;
+  line-height: 1.45;
+}
+
+.admin_feedback_link button {
+  flex: 0 0 auto;
+  border: 0;
+  border-radius: 10px;
+  padding: 10px 12px;
+  background: var(--plum);
+  color: #fff;
+  font-size: 12px;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.admin_feedback_link button:hover {
+  background: var(--plum-dark);
+}
+
 .card {
   background: var(--card-white);
   border-radius: 20px;

@@ -32,7 +32,7 @@ function getDiagnosisImageUrl(imgPath) {
 }
 
 function MainPage() {
-  const { userId } = useAuth();
+  const { userId, adminMode } = useAuth();
   const navigate = useNavigate();
 
   const today = useMemo(() => new Date(), []);
@@ -448,6 +448,19 @@ function MainPage() {
           />
 
           <AnalysisButtons onNavigate={navigate} />
+
+          {adminMode && (
+            <section className="admin_feedback_link">
+              <div>
+                <p>ADMIN MODE</p>
+                <strong>AI 분석 피드백을 확인하세요</strong>
+                <span>사용자가 남긴 타입·상태 분석 의견을 모아 볼 수 있습니다.</span>
+              </div>
+              <button type="button" onClick={() => navigate("/admin/feedback")}>
+                피드백 보러가기
+              </button>
+            </section>
+          )}
         </div>
       </div>
     </div>
