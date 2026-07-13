@@ -120,6 +120,14 @@ $env:DB_PASSWORD="your_password"
 
 `.env` 파일과 실제 비밀번호는 Git에 포함하지 않습니다.
 
+또는 로컬 개발에서는 다음 예시 파일을 복사해 사용할 수 있습니다.
+
+```powershell
+Copy-Item backend/src/main/resources/application-dev.properties.example backend/src/main/resources/application-dev.properties
+```
+
+`application-dev.properties`에 로컬 MySQL 계정 정보를 입력합니다. 이 파일은 Git에서 제외됩니다.
+
 ## 설치 및 실행
 
 ### 1. MySQL
