@@ -458,15 +458,6 @@
 }
 
 @media (max-width: 768px) {
-<<<<<<< HEAD
-  .site_header_notification_dropdown {
-    /* Keep the popover inside the viewport instead of anchoring its full
-       desktop width to the notification button. */
-    right: -112px;
-    width: calc(100vw - 32px);
-    max-width: 340px;
-    box-sizing: border-box;
-=======
   .site_header {
     padding: 12px 14px;
   }
@@ -497,6 +488,5 @@
     left: 10px;
     width: auto;
     max-height: min(70vh, 420px);
->>>>>>> df165a9334d66cf22ea3864a70ca26cedcb36de8
   }
 }
