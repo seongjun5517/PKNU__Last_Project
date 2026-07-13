@@ -456,3 +456,14 @@
   background-color: #fdecea;
   color: #bd6f63;
 }
+
+@media (max-width: 768px) {
+  .site_header_notification_dropdown {
+    /* Keep the popover inside the viewport instead of anchoring its full
+       desktop width to the notification button. */
+    right: -112px;
+    width: calc(100vw - 32px);
+    max-width: 340px;
+    box-sizing: border-box;
+  }
+}
