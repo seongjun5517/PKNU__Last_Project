@@ -1,6 +1,7 @@
 package com.Skin_Predict_Platform.project.service;
 
 import java.util.List;
+import java.util.Set;
 
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -11,16 +12,21 @@ import com.Skin_Predict_Platform.project.dto.CommunityMyCommentResponse;
 import com.Skin_Predict_Platform.project.dto.CommunityPostCreateRequest;
 import com.Skin_Predict_Platform.project.dto.CommunityPostLikeResponse;
 import com.Skin_Predict_Platform.project.dto.CommunityPostScrapResponse;
+import com.Skin_Predict_Platform.project.dto.CommunityReportCreateRequest;
+import com.Skin_Predict_Platform.project.dto.CommunityReportResolveRequest;
 import com.Skin_Predict_Platform.project.model.CommunityCategory;
 import com.Skin_Predict_Platform.project.model.CommunityComment;
 import com.Skin_Predict_Platform.project.model.CommunityPostLike;
 import com.Skin_Predict_Platform.project.model.CommunityPostScrap;
+import com.Skin_Predict_Platform.project.model.CommunityReport;
 import com.Skin_Predict_Platform.project.model.PostDetail;
 import com.Skin_Predict_Platform.project.repository.CommunityCategoryRepository;
 import com.Skin_Predict_Platform.project.repository.CommunityCommentRepository;
 import com.Skin_Predict_Platform.project.repository.CommunityPostLikeRepository;
 import com.Skin_Predict_Platform.project.repository.CommunityPostScrapRepository;
+import com.Skin_Predict_Platform.project.repository.CommunityReportRepository;
 import com.Skin_Predict_Platform.project.repository.PostDetailRepository;
+import com.Skin_Predict_Platform.project.repository.UserRepository;
 
 import lombok.RequiredArgsConstructor;
 
@@ -28,12 +34,22 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 public class CommunityService {
 
+    private static final Set<String> REPORT_REASONS = Set.of(
+            "SPAM_ADVERTISING",
+            "ABUSE_HARASSMENT",
+            "HATE_DISCRIMINATION",
+            "INAPPROPRIATE_CONTENT");
+    private static final String REPORT_DECISION_KEEP = "KEEP";
+    private static final String REPORT_DECISION_DELETE = "DELETE";
+
     private final PostDetailRepository postDetailRepository;
     private final CommunityCategoryRepository communityCategoryRepository;
     private final CommunityPostLikeRepository communityPostLikeRepository;
     private final CommunityPostScrapRepository communityPostScrapRepository;
+    private final CommunityReportRepository communityReportRepository;
     private final CommunityCommentRepository communityCommentRepository;
     private final NoticeService noticeService;
+    private final UserRepository userRepository;
 
     public List<PostDetail> getPostList() {
         return postDetailRepository.findAllByOrderByPostCodeDesc();
@@ -190,15 +206,11 @@ public class CommunityService {
         if (post == null) {
             return null;
         }
-        if (!post.getPostUserId().equals(userId)) {
+        if (!post.getPostUserId().equals(userId) && !isSuperAdmin(userId)) {
             return false;
         }
 
-        communityCommentRepository.deleteByCmtPostCode(postCode);
-        communityPostLikeRepository.deleteByLikePostCode(postCode);
-        communityPostScrapRepository.deleteByScrapPostCode(postCode);
-        noticeService.deleteByPostCode(postCode);
-        postDetailRepository.delete(post);
+        deletePostResources(post);
         return true;
     }
 
@@ -230,6 +242,82 @@ public class CommunityService {
         return savedComment;
     }
 
+    @Transactional
+    public CommunityReport createReport(Long postCode, CommunityReportCreateRequest request) {
+        if (request == null || !StringUtils.hasText(request.getUserId())
+                || !StringUtils.hasText(request.getReportReason())) {
+            throw new IllegalArgumentException("Report information is required.");
+        }
+
+        PostDetail post = postDetailRepository.findById(postCode).orElse(null);
+        if (post == null) {
+            return null;
+        }
+        if (!userRepository.existsById(request.getUserId())) {
+            throw new IllegalArgumentException("Reporter does not exist.");
+        }
+        if (post.getPostUserId().equals(request.getUserId())) {
+            throw new SecurityException("You cannot report your own post.");
+        }
+        if (!REPORT_REASONS.contains(request.getReportReason())) {
+            throw new IllegalArgumentException("Invalid report reason.");
+        }
+        if (communityReportRepository.existsByReportPostCodeAndReportUserId(postCode, request.getUserId())) {
+            throw new IllegalStateException("This post has already been reported.");
+        }
+
+        CommunityReport savedReport = communityReportRepository.save(CommunityReport.builder()
+                .reportPostCode(postCode)
+                .reportUserId(request.getUserId())
+                .reportReason(request.getReportReason())
+                .build());
+        noticeService.createReportNotifications(post, savedReport);
+
+        return savedReport;
+    }
+
+    public Long getReportCount(Long postCode, String userId) {
+        if (postDetailRepository.findById(postCode).isEmpty()) {
+            return null;
+        }
+        requireSuperAdmin(userId);
+        return communityReportRepository.countByReportPostCode(postCode);
+    }
+
+    public List<CommunityReport> getReports(Long postCode, String userId) {
+        if (postDetailRepository.findById(postCode).isEmpty()) {
+            return null;
+        }
+        requireSuperAdmin(userId);
+        return communityReportRepository.findByReportPostCodeOrderByReportCreatedAtDesc(postCode);
+    }
+
+    @Transactional
+    public Boolean resolveReports(Long postCode, CommunityReportResolveRequest request) {
+        if (request == null || !StringUtils.hasText(request.getUserId())
+                || !StringUtils.hasText(request.getDecision())) {
+            throw new IllegalArgumentException("Resolution information is required.");
+        }
+
+        PostDetail post = postDetailRepository.findById(postCode).orElse(null);
+        if (post == null) {
+            return null;
+        }
+        requireSuperAdmin(request.getUserId());
+
+        if (REPORT_DECISION_KEEP.equals(request.getDecision())) {
+            communityReportRepository.deleteByReportPostCode(postCode);
+            return true;
+        }
+        if (REPORT_DECISION_DELETE.equals(request.getDecision())) {
+            deletePostResources(post);
+            noticeService.createReportDeletionNotification(post, request.getUserId());
+            return true;
+        }
+
+        throw new IllegalArgumentException("Invalid report decision.");
+    }
+
     public List<CommunityMyCommentResponse> getMyComments(String userId) {
         return communityCommentRepository.findByUserId(userId)
                 .stream()
@@ -252,7 +340,7 @@ public class CommunityService {
         if (comment == null) {
             return null;
         }
-        if (!comment.getCmtUserId().equals(userId)) {
+        if (!comment.getCmtUserId().equals(userId) && !isSuperAdmin(userId)) {
             return false;
         }
         noticeService.deleteByCommentCode(commentCode);
@@ -278,5 +366,31 @@ public class CommunityService {
                 .map(CommunityPostScrap::getScrapPostCode)
                 .toList();
         return postDetailRepository.findByPostCodeInOrderByPostCodeDesc(postCodes);
+    }
+
+    private boolean isSuperAdmin(String userId) {
+        if (!StringUtils.hasText(userId)) {
+            return false;
+        }
+
+        return userRepository.findById(userId)
+                .map((user) -> Boolean.TRUE.equals(user.getUserMan()))
+                .orElse(false);
+    }
+
+    private void requireSuperAdmin(String userId) {
+        if (!isSuperAdmin(userId)) {
+            throw new SecurityException("Super admin access is required.");
+        }
+    }
+
+    private void deletePostResources(PostDetail post) {
+        Long postCode = post.getPostCode();
+        communityReportRepository.deleteByReportPostCode(postCode);
+        communityCommentRepository.deleteByCmtPostCode(postCode);
+        communityPostLikeRepository.deleteByLikePostCode(postCode);
+        communityPostScrapRepository.deleteByScrapPostCode(postCode);
+        noticeService.deleteByPostCode(postCode);
+        postDetailRepository.delete(post);
     }
 }

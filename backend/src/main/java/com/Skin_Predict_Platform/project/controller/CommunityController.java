@@ -22,8 +22,11 @@ import com.Skin_Predict_Platform.project.dto.CommunityPostCreateRequest;
 import com.Skin_Predict_Platform.project.dto.CommunityPostLikeRequest;
 import com.Skin_Predict_Platform.project.dto.CommunityPostLikeResponse;
 import com.Skin_Predict_Platform.project.dto.CommunityPostScrapResponse;
+import com.Skin_Predict_Platform.project.dto.CommunityReportCreateRequest;
+import com.Skin_Predict_Platform.project.dto.CommunityReportResolveRequest;
 import com.Skin_Predict_Platform.project.model.CommunityCategory;
 import com.Skin_Predict_Platform.project.model.CommunityComment;
+import com.Skin_Predict_Platform.project.model.CommunityReport;
 import com.Skin_Predict_Platform.project.model.PostDetail;
 import com.Skin_Predict_Platform.project.service.CommunityService;
 
@@ -196,6 +199,77 @@ public class CommunityController {
         }
 
         return ResponseEntity.ok(comment);
+    }
+
+    @PostMapping("/posts/{postCode}/reports")
+    public ResponseEntity<CommunityReport> createReport(
+            @PathVariable Long postCode,
+            @RequestBody CommunityReportCreateRequest request) {
+        try {
+            CommunityReport report = communityService.createReport(postCode, request);
+
+            if (report == null) {
+                return ResponseEntity.notFound().build();
+            }
+
+            return ResponseEntity.status(HttpStatus.CREATED).body(report);
+        } catch (SecurityException error) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+        } catch (IllegalStateException error) {
+            return ResponseEntity.status(HttpStatus.CONFLICT).build();
+        } catch (IllegalArgumentException error) {
+            return ResponseEntity.badRequest().build();
+        }
+    }
+
+    @GetMapping("/posts/{postCode}/reports/count")
+    public ResponseEntity<java.util.Map<String, Long>> getReportCount(
+            @PathVariable Long postCode,
+            @RequestParam String userId) {
+        try {
+            Long count = communityService.getReportCount(postCode, userId);
+            if (count == null) {
+                return ResponseEntity.notFound().build();
+            }
+
+            return ResponseEntity.ok(java.util.Map.of("count", count));
+        } catch (SecurityException error) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+        }
+    }
+
+    @GetMapping("/posts/{postCode}/reports")
+    public ResponseEntity<List<CommunityReport>> getReports(
+            @PathVariable Long postCode,
+            @RequestParam String userId) {
+        try {
+            List<CommunityReport> reports = communityService.getReports(postCode, userId);
+            if (reports == null) {
+                return ResponseEntity.notFound().build();
+            }
+
+            return ResponseEntity.ok(reports);
+        } catch (SecurityException error) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+        }
+    }
+
+    @PostMapping("/posts/{postCode}/reports/resolve")
+    public ResponseEntity<Void> resolveReports(
+            @PathVariable Long postCode,
+            @RequestBody CommunityReportResolveRequest request) {
+        try {
+            Boolean resolved = communityService.resolveReports(postCode, request);
+            if (resolved == null) {
+                return ResponseEntity.notFound().build();
+            }
+
+            return ResponseEntity.noContent().build();
+        } catch (SecurityException error) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+        } catch (IllegalArgumentException error) {
+            return ResponseEntity.badRequest().build();
+        }
     }
 
     @GetMapping("/posts/mine/{userId}")

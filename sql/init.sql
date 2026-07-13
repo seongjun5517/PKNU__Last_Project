@@ -7,11 +7,14 @@ USE skin_db;
 DROP TABLE IF EXISTS cosmetics;
 DROP TABLE IF EXISTS ingredient;
 DROP TABLE IF EXISTS Notice;
+DROP TABLE IF EXISTS notice;
 DROP TABLE IF EXISTS Scrap;
 DROP TABLE IF EXISTS comments;
+DROP TABLE IF EXISTS community_report;
 DROP TABLE IF EXISTS community_post_like;
 DROP TABLE IF EXISTS calendar_tasks;
 DROP TABLE IF EXISTS manager;
+DROP TABLE IF EXISTS feedback;
 DROP TABLE IF EXISTS deep;
 DROP TABLE IF EXISTS `type`;
 DROP TABLE IF EXISTS posts_detail;
@@ -81,6 +84,29 @@ CREATE TABLE community_post_like (
         UNIQUE (like_user_id, like_post_code)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
+CREATE TABLE community_report (
+    report_code BIGINT AUTO_INCREMENT PRIMARY KEY COMMENT '신고 고유번호',
+    report_post_code BIGINT NOT NULL COMMENT '게시글 고유번호',
+    report_user_id VARCHAR(255) NOT NULL COMMENT '신고한 사용자 아이디',
+    report_reason VARCHAR(50) NOT NULL COMMENT '신고 사유 타입',
+    report_created_at DATETIME DEFAULT CURRENT_TIMESTAMP COMMENT '신고 날짜',
+
+    CONSTRAINT fk_community_report_post
+        FOREIGN KEY (report_post_code)
+        REFERENCES posts_detail(post_code)
+        ON DELETE CASCADE
+        ON UPDATE CASCADE,
+
+    CONSTRAINT fk_community_report_user
+        FOREIGN KEY (report_user_id)
+        REFERENCES users(user_id)
+        ON DELETE CASCADE
+        ON UPDATE CASCADE,
+
+    CONSTRAINT uq_community_report_user_post
+        UNIQUE (report_user_id, report_post_code)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
 CREATE TABLE comments (
     cmt_code BIGINT AUTO_INCREMENT PRIMARY KEY COMMENT '댓글 고유번호',
     cmt_post_code BIGINT NOT NULL COMMENT '게시글 고유번호',
@@ -123,7 +149,7 @@ CREATE TABLE Scrap (
         UNIQUE (scrap_user_id, scrap_post_code)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
-CREATE TABLE Notice (
+CREATE TABLE notice (
     noti_code BIGINT AUTO_INCREMENT PRIMARY KEY COMMENT '알림 고유번호',
     noti_sender_user_id VARCHAR(255) NOT NULL COMMENT '보낸 사람 아이디',
     noti_receiver_user_id VARCHAR(255) NOT NULL COMMENT '받는 사용자 아이디',
@@ -220,6 +246,24 @@ CREATE TABLE `type` (
         REFERENCES users(user_id)
         ON DELETE CASCADE
         ON UPDATE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+CREATE TABLE feedback (
+    fb_code BIGINT AUTO_INCREMENT PRIMARY KEY COMMENT '피드백 고유번호',
+    fb_user_id VARCHAR(255) NOT NULL COMMENT '피드백 작성자',
+    fb_type VARCHAR(30) NOT NULL COMMENT '분석 유형: SKIN_TYPE 또는 SKIN_STATUS',
+    fb_evaluate VARCHAR(30) NOT NULL COMMENT '평가: HELPFUL 또는 DISAPPOINTED',
+    fb_comment TEXT NULL COMMENT '피드백 코멘트',
+    fb_created_at DATETIME DEFAULT CURRENT_TIMESTAMP COMMENT '피드백 작성일시',
+
+    CONSTRAINT fk_feedback_user
+        FOREIGN KEY (fb_user_id)
+        REFERENCES users(user_id)
+        ON DELETE CASCADE
+        ON UPDATE CASCADE,
+
+    INDEX idx_feedback_created_at (fb_created_at),
+    INDEX idx_feedback_type (fb_type)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 CREATE TABLE ingredient (

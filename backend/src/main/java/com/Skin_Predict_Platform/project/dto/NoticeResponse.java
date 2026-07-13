@@ -35,6 +35,12 @@ public class NoticeResponse {
 
     private static String buildMessage(Notice notice) {
         String sender = notice.getNotiSenderUserId();
+        if ("REPORT_DELETED".equalsIgnoreCase(notice.getNotiType())) {
+            return "Your post was removed after reports.";
+        }
+        if ("REPORT".equalsIgnoreCase(notice.getNotiType())) {
+            return sender + " reported a post.";
+        }
         if ("COMMENT".equalsIgnoreCase(notice.getNotiType())) {
             return sender + "님이 내 게시글에 댓글을 남겼습니다.";
         }

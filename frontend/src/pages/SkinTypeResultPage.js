@@ -5,6 +5,7 @@ import {
   getLatestSkinTypeResult,
 } from "../springApi/skinTypeSpringBootApi";
 import "./SkinTypeResultPage.css";
+import AnalysisFeedback from "../components/AnalysisFeedback";
 
 function getLoginUserId() {
   return localStorage.getItem("loginUserId");
@@ -256,6 +257,10 @@ function SkinTypeResultPage() {
                 </p>
               </div>
             </section>
+            <AnalysisFeedback
+              feedbackType="SKIN_TYPE"
+              analysisName="피부 타입 분석"
+            />
           </>
         )}
       </main>

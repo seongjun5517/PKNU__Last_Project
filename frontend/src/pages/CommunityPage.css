@@ -273,6 +273,23 @@
   font-weight: 700;
 }
 
+.post_metric_badge {
+  width: fit-content;
+  border: 1px solid rgba(167, 159, 176, 0.28);
+  border-radius: 8px;
+  padding: 4px 8px;
+  background: #ffffff;
+  color: var(--ink-soft);
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.post_metric_badge.like {
+  border-color: rgba(217, 164, 65, 0.32);
+  background: #fff9ec;
+  color: #9b7127;
+}
+
 .post_scrap_button {
   width: fit-content;
   border: 0;
@@ -293,6 +310,29 @@
 .post_scrap_button:disabled {
   cursor: wait;
   opacity: 0.68;
+}
+
+.post_admin_delete_button {
+  width: fit-content;
+  border: 1px solid rgba(189, 111, 99, 0.32);
+  border-radius: 8px;
+  padding: 4px 8px;
+  background: #fff6f4;
+  color: var(--rose-dark);
+  font: inherit;
+  font-size: 12px;
+  font-weight: 900;
+  cursor: pointer;
+}
+
+.post_admin_delete_button:hover:not(:disabled) {
+  background: var(--rose-dark);
+  color: #ffffff;
+}
+
+.post_admin_delete_button:disabled {
+  cursor: wait;
+  opacity: 0.62;
 }
 
 .post_row time {

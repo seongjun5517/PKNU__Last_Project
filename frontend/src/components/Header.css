@@ -11,6 +11,62 @@
   z-index: 100;
 }
 
+.admin_mode_bar {
+  position: sticky;
+  top: 73px;
+  z-index: 99;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 10px;
+  min-height: 46px;
+  padding: 8px 32px;
+  border-bottom: 1px solid #eee;
+  background: #fbf8fc;
+}
+
+.admin_mode_text {
+  color: #6e6478;
+  font-size: 13px;
+  font-weight: 800;
+}
+
+.admin_mode_bar.is_active .admin_mode_text {
+  color: #5f7f66;
+}
+
+.admin_mode_toggle {
+  position: relative;
+  width: 58px;
+  height: 30px;
+  border: 1px solid #d8cddd;
+  border-radius: 999px;
+  background: #d8d3dc;
+  cursor: pointer;
+  transition: background 160ms ease, border-color 160ms ease;
+}
+
+.admin_mode_bar.is_active .admin_mode_toggle {
+  border-color: #7c9b82;
+  background: #8cc84b;
+}
+
+.admin_mode_knob {
+  position: absolute;
+  top: 3px;
+  left: 3px;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: #ffffff;
+  box-shadow: 0 2px 8px rgba(46, 36, 56, 0.22);
+  transition: transform 160ms ease;
+}
+
+.admin_mode_bar.is_active .admin_mode_knob {
+  transform: translateX(28px);
+}
+
 .site_header_logo {
   cursor: pointer;
   line-height: 1.2;

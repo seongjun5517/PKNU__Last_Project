@@ -36,6 +36,10 @@ function getNotificationText(notification) {
       return notification.message || "내 게시글에 새 댓글이 달렸습니다.";
     case "like":
       return notification.message || "내 게시글에 좋아요를 받았습니다.";
+    case "report_deleted":
+      return "신고로 인해 작성한 게시글이 삭제되었습니다.";
+    case "report":
+      return "새 게시물 신고가 접수되었습니다.";
     default:
       return notification.message || "새 알람이 있습니다.";
   }
@@ -56,7 +60,13 @@ function formatNotificationTime(createdAt) {
 
 function Header() {
   const navigate = useNavigate();
-  const { userId: authUserId, logout } = useAuth();
+  const {
+    userId: authUserId,
+    logout,
+    isSuperAdmin,
+    adminMode,
+    toggleAdminMode,
+  } = useAuth();
   const currentUserId = authUserId || getLoginUserId();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isNotifOpen, setIsNotifOpen] = useState(false);
@@ -229,6 +239,7 @@ function Header() {
   };
 
   return (
+    <>
     <header className="site_header">
       <div className="site_header_top">
         <div
@@ -308,7 +319,7 @@ function Header() {
                       onClick={() => handleNotificationClick(notif)}
                     >
                       <span className="site_header_notification_type">
-                        {notif.type === "comment" ? "💬" : "❤️"}
+                        {notif.type === "comment" ? "💬" : (notif.type === "report" || notif.type === "report_deleted") ? "⚠️" : "❤️"}
                       </span>
                       <span className="site_header_notification_content">
                         <span className="site_header_notification_text">
@@ -388,6 +399,22 @@ function Header() {
         </button>
       </div>
     </header>
+    {isSuperAdmin && (
+      <div className={`admin_mode_bar ${adminMode ? "is_active" : ""}`}>
+        <span className="admin_mode_text">
+          {adminMode ? "관리자 모드 사용 중" : "관리자 모드"}
+        </span>
+        <button
+          type="button"
+          className="admin_mode_toggle"
+          onClick={toggleAdminMode}
+          aria-pressed={adminMode}
+        >
+          <span className="admin_mode_knob" />
+        </button>
+      </div>
+    )}
+    </>
   );
 }
 
