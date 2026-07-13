@@ -27,4 +27,16 @@ module.exports = function(app){
             },
         })
     );
+
+    app.use(
+        "/chatbot",
+        createProxyMiddleware({
+            target : "http://localhost:5001",
+            changeOrigin : true,
+            "secure" : true,
+            pathRewrite : {
+                "^/chatbot" : "",
+            },
+        })
+    );
 }

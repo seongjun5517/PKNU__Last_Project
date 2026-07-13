@@ -15,3 +15,11 @@ export const flaskApi = axios.create ({
         "Content-Type" : "application/json"
     },
 });
+
+export const chatbotApi = axios.create({
+    baseURL: "/chatbot",
+
+    headers: {
+        "Content-Type": "application/json"
+    },
+});
