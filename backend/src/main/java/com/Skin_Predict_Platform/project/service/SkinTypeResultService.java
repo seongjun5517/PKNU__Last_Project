@@ -58,6 +58,12 @@ public class SkinTypeResultService {
     }
 
     @Transactional(readOnly = true)
+    public LocalDateTime getLatestDiagnosisAt(String userId) {
+        List<SkinTypeResult> latestResults = getLatestResults(userId);
+        return latestResults.isEmpty() ? null : latestResults.get(0).getStypeDate();
+    }
+
+    @Transactional(readOnly = true)
     public List<SkinTypeResult> getTodayResults(String userId) {
         if (isBlank(userId)) {
             return Collections.emptyList();

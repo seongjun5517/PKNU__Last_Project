@@ -1,6 +1,8 @@
 package com.Skin_Predict_Platform.project.service;
 
 import java.text.SimpleDateFormat;
+import java.time.LocalDateTime;
+import java.time.ZoneId;
 import java.util.Calendar;
 import java.util.Collections;
 import java.util.Date;
@@ -90,6 +92,17 @@ public class DeepService {
 
         log.info("최신 예측 결과 조회 성공. userId={}, 감지 수={}", userId, detections.size());
         return new TodayPredictResult(imgPath, detections);
+    }
+
+    public LocalDateTime getLatestPredictionAt(String userId) {
+        List<Deepmodel> rows = getLatestDeepmodelGroup(userId);
+        if (rows.isEmpty() || rows.get(0).getDtypeDate() == null) {
+            return null;
+        }
+
+        return LocalDateTime.ofInstant(
+                rows.get(0).getDtypeDate().toInstant(),
+                ZoneId.systemDefault());
     }
 
     public boolean hasPredictedToday(String userId) {

@@ -29,6 +29,21 @@ public class FeedbackController {
     public ResponseEntity<?> create(@RequestBody FeedbackCreateRequest request) {
         try {
             return ResponseEntity.status(HttpStatus.CREATED).body(feedbackService.create(request));
+        } catch (IllegalStateException exception) {
+            return ResponseEntity.status(HttpStatus.CONFLICT).body(Map.of("message", exception.getMessage()));
+        } catch (IllegalArgumentException exception) {
+            return ResponseEntity.badRequest().body(Map.of("message", exception.getMessage()));
+        }
+    }
+
+    @GetMapping("/status")
+    public ResponseEntity<?> getSubmissionStatus(
+            @RequestParam String userId,
+            @RequestParam String feedbackType) {
+        try {
+            return ResponseEntity.ok(Map.of(
+                    "submitted",
+                    feedbackService.hasSubmittedForLatestAnalysis(userId, feedbackType)));
         } catch (IllegalArgumentException exception) {
             return ResponseEntity.badRequest().body(Map.of("message", exception.getMessage()));
         }

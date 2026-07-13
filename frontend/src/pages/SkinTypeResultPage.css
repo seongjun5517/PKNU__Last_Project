@@ -343,7 +343,7 @@
 
 .recommend_section {
   display: grid;
-  grid-template-columns: 1fr 1fr;
+  grid-template-columns: 1fr;
   gap: 18px;
 }
 
@@ -367,6 +367,60 @@
   margin: 0 0 10px;
   font-family: 'Gowun Batang', serif;
   font-size: 20px;
+}
+
+.ingredient_recommendation_group + .ingredient_recommendation_group {
+  margin-top: 18px;
+}
+
+.ingredient_recommendation_group h4 {
+  margin: 0 0 9px;
+  color: var(--rose-dark);
+  font-size: 14px;
+}
+
+.ingredient_recommendation_list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.ingredient_recommendation_list li {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 15px;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: var(--bg-cream);
+}
+
+.ingredient_recommendation_dot {
+  width: 8px;
+  height: 8px;
+  flex-shrink: 0;
+  border-radius: 50%;
+  background: var(--sage);
+}
+
+.ingredient_recommendation_list div {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.ingredient_recommendation_list strong {
+  color: var(--ink);
+  font-size: 13.5px;
+}
+
+.ingredient_recommendation_list span {
+  color: var(--ink-faint);
+  font-size: 12px;
 }
 
 .recommend_placeholder {

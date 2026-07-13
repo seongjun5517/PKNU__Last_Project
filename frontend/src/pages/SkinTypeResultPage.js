@@ -32,6 +32,46 @@ function getFallbackFinalType(tZoneResult, uZoneResult) {
   return "복합성 피부";
 }
 
+const SKIN_TYPE_INGREDIENTS = {
+  건성: [
+    { name: "세라마이드", desc: "건조해진 피부 장벽 보강에 도움" },
+    { name: "히알루론산", desc: "피부 속 수분 유지에 도움" },
+    { name: "스쿠알란", desc: "수분 증발을 줄이는 보습막 형성에 도움" },
+  ],
+  지성: [
+    { name: "나이아신아마이드", desc: "과다 피지와 번들거림 관리에 도움" },
+    { name: "살리실산(BHA)", desc: "피지와 묵은 각질 관리에 도움" },
+    { name: "징크 PCA", desc: "산뜻한 피부 컨디션 관리에 도움" },
+  ],
+  민감성: [
+    { name: "판테놀", desc: "자극받은 피부의 보습과 진정에 도움" },
+    { name: "마데카소사이드", desc: "민감해진 피부 진정에 도움" },
+    { name: "알란토인", desc: "피부 자극 완화에 도움" },
+  ],
+  복합성: [
+    { name: "글리세린", desc: "부위별 수분 균형 유지에 도움" },
+    { name: "베타글루칸", desc: "가볍게 수분을 보충하고 진정하는 데 도움" },
+    { name: "에크토인", desc: "건조하고 예민한 부위의 보호에 도움" },
+  ],
+  기본: [
+    { name: "히알루론산", desc: "기본 수분 관리에 도움" },
+    { name: "글리세린", desc: "피부 보습 유지에 도움" },
+    { name: "판테놀", desc: "피부 컨디션 진정에 도움" },
+  ],
+};
+
+const SKIN_TYPE_ORDER = ["건성", "지성", "민감성", "복합성"];
+
+function getSkinTypeIngredientRecommendations(finalTypeName) {
+  const types = SKIN_TYPE_ORDER.filter((type) => finalTypeName.includes(type));
+  const recommendationTypes = types.length > 0 ? types : ["기본"];
+
+  return recommendationTypes.map((type) => ({
+    label: type === "기본" ? "기본 피부 관리" : `${type} 피부`,
+    items: SKIN_TYPE_INGREDIENTS[type],
+  }));
+}
+
 function SkinTypeResultPage() {
   const navigate = useNavigate();
   const [results, setResults] = useState([]);
@@ -45,6 +85,7 @@ function SkinTypeResultPage() {
   const finalResult = useMemo(() => getFaceResult(results, "최종"), [results]);
   const finalTypeName =
     finalResult?.stypeName || getFallbackFinalType(tZoneResult, uZoneResult);
+  const ingredientRecommendations = getSkinTypeIngredientRecommendations(finalTypeName);
   const diagnosedAt = results[0]?.stypeDate
     ? new Date(results[0].stypeDate).toLocaleString("ko-KR")
     : "";
@@ -243,18 +284,24 @@ function SkinTypeResultPage() {
 
             <section className="recommend_section">
               <div className="recommend_card">
-                <p className="recommend_eyebrow">COSMETIC PICK</p>
-                <h3>화장품 추천</h3>
-                <p className="recommend_placeholder">
-                  진단된 피부 타입에 맞는 추천 화장품이 이곳에 표시될 예정입니다.
-                </p>
-              </div>
-              <div className="recommend_card">
                 <p className="recommend_eyebrow">INGREDIENT PICK</p>
                 <h3>성분 추천</h3>
-                <p className="recommend_placeholder">
-                  피부 타입별로 추천되는 성분 정보가 이곳에 표시될 예정입니다.
-                </p>
+                {ingredientRecommendations.map((recommendation) => (
+                  <div className="ingredient_recommendation_group" key={recommendation.label}>
+                    <h4>{recommendation.label}</h4>
+                    <ul className="ingredient_recommendation_list">
+                      {recommendation.items.map((item) => (
+                        <li key={item.name}>
+                          <span className="ingredient_recommendation_dot" />
+                          <div>
+                            <strong>{item.name}</strong>
+                            <span>{item.desc}</span>
+                          </div>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                ))}
               </div>
             </section>
             <AnalysisFeedback
