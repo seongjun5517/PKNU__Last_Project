@@ -458,6 +458,7 @@
 }
 
 @media (max-width: 768px) {
+<<<<<<< HEAD
   .site_header_notification_dropdown {
     /* Keep the popover inside the viewport instead of anchoring its full
        desktop width to the notification button. */
@@ -465,5 +466,37 @@
     width: calc(100vw - 32px);
     max-width: 340px;
     box-sizing: border-box;
+=======
+  .site_header {
+    padding: 12px 14px;
+  }
+
+  .site_header_title {
+    font-size: 22px;
+  }
+
+  .site_header_nav {
+    gap: 6px;
+    padding: 10px 0 4px;
+  }
+
+  .site_header_nav button {
+    width: 100%;
+    max-width: none;
+  }
+
+  .admin_mode_bar {
+    top: 65px;
+    padding-inline: 14px;
+  }
+
+  .site_header_notification_dropdown {
+    position: fixed;
+    top: 70px;
+    right: 10px;
+    left: 10px;
+    width: auto;
+    max-height: min(70vh, 420px);
+>>>>>>> df165a9334d66cf22ea3864a70ca26cedcb36de8
   }
 }
