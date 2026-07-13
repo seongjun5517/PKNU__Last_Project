@@ -16,7 +16,7 @@ os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 
 
 # 서버 시작 시 모델 한 번만 로드 (요청마다 로드하면 매우 느려짐)
-MODEL_PATH = './models/skin_bi_ato_acne_normal_v3/weights/best.pt'
+MODEL_PATH = './models/last_model/best.pt'
 model = YOLO(MODEL_PATH)
 
 
