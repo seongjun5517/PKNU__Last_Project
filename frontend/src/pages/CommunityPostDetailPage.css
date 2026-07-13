@@ -114,6 +114,7 @@
 .community_detail_metrics {
   display: flex;
   flex-wrap: wrap;
+  align-items: center;
   gap: 12px;
   color: var(--ink-faint);
   font-size: 13px;
@@ -136,11 +137,14 @@
 }
 
 .community_detail_like_button {
-  border: 1px solid var(--rose-tint);
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  border: 1px solid rgba(189, 111, 99, 0.32);
   border-radius: 8px;
   padding: 7px 12px;
-  background: var(--rose);
-  color: #ffffff;
+  background: #ffffff;
+  color: var(--rose-dark);
   font: inherit;
   font-weight: 900;
   cursor: pointer;
@@ -149,6 +153,7 @@
 .community_detail_like_button.is_liked {
   border-color: var(--rose-dark);
   background: var(--rose-dark);
+  color: #ffffff;
 }
 
 .community_detail_like_button:disabled {
@@ -157,14 +162,22 @@
 }
 
 .community_detail_scrap_button {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
   border: 1px solid rgba(124, 155, 130, 0.32);
   border-radius: 8px;
   padding: 7px 12px;
   background: #ffffff;
-  color: var(--sage, #7c9b82);
+  color: var(--sage, #18351e);
   font: inherit;
   font-weight: 900;
   cursor: pointer;
+}
+
+.community_detail_scrap_icon {
+  flex-shrink: 0;
+  color: #32c262;
 }
 
 .community_detail_scrap_button.is_scrapped {

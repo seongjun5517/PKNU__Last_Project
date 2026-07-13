@@ -9,6 +9,7 @@ import org.springframework.data.repository.query.Param;
 import com.Skin_Predict_Platform.project.model.CommunityComment;
 
 public interface CommunityCommentRepository extends JpaRepository<CommunityComment, Long> {
+
     @Query("""
             SELECT comment
             FROM CommunityComment comment
@@ -25,5 +26,22 @@ public interface CommunityCommentRepository extends JpaRepository<CommunityComme
             """)
     List<CommunityComment> findByUserId(@Param("userId") String userId);
 
+    // 게시글별 댓글 수 한 번에 집계 (목록 조회용)
+    @Query("""
+            SELECT comment.cmtPostCode AS postCode, COUNT(comment) AS commentCount
+            FROM CommunityComment comment
+            WHERE comment.cmtPostCode IN :postCodes
+            GROUP BY comment.cmtPostCode
+            """)
+    List<PostCommentCount> countByPostCodeIn(@Param("postCodes") List<Long> postCodes);
+
+    // 단건 조회(상세페이지)용
+    long countByCmtPostCode(Long cmtPostCode);
+
     void deleteByCmtPostCode(Long cmtPostCode);
+
+    interface PostCommentCount {
+        Long getPostCode();
+        Long getCommentCount();
+    }
 }
