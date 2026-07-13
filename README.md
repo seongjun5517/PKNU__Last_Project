@@ -50,15 +50,15 @@ Triple Skin은 사용자가 피부 사진과 생활 기록을 바탕으로 자�
 
 ```mermaid
 flowchart LR
-    U[사용자] --> R[React Frontend\nlocalhost:3000]
-    R --> S[Spring Boot API\nlocalhost:8080]
-    R --> Y[YOLO Flask API\nlocalhost:5000]
-    R --> C[Chatbot Flask API\nlocalhost:5001]
-    S --> M[(MySQL 8.0\nlocalhost:3307)]
-    Y --> W[YOLOv8 Weights]
-    C --> O[Ollama\ngemma3:4b]
-    C --> V[(Chroma DB)]
-    C --> E[Ollama Embedding\nnomic-embed-text]
+    U["사용자"] --> R["React Frontend<br/>localhost:3000"]
+    R --> S["Spring Boot API<br/>localhost:8080"]
+    R --> Y["YOLO Flask API<br/>localhost:5000"]
+    R --> C["Chatbot Flask API<br/>localhost:5001"]
+    S --> M[("MySQL 8.0<br/>localhost:3307")]
+    Y --> W["YOLOv8 Weights"]
+    C --> O["Ollama<br/>gemma3:4b"]
+    C --> V[("Chroma DB")]
+    C --> E["Ollama Embedding<br/>nomic-embed-text"]
 ```
 
 YOLO 추론 서버와 챗봇 서버를 분리하여 모델별 의존성과 장애 범위를 독립적으로 관리할 수 있도록 구성했습니다.
