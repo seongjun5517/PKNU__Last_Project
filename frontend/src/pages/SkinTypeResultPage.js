@@ -6,6 +6,7 @@ import {
 } from "../springApi/skinTypeSpringBootApi";
 import "./SkinTypeResultPage.css";
 import AnalysisFeedback from "../components/AnalysisFeedback";
+import { getOliveYoungSearchUrl } from "../utils/oliveYoung";
 
 function getLoginUserId() {
   return localStorage.getItem("loginUserId");
@@ -294,7 +295,18 @@ function SkinTypeResultPage() {
                         <li key={item.name}>
                           <span className="ingredient_recommendation_dot" />
                           <div>
-                            <strong>{item.name}</strong>
+                            <a
+                              className="ingredient_link"
+                              href={getOliveYoungSearchUrl(item.name)}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              aria-label={`${item.name} 올리브영에서 검색`}
+                            >
+                              <strong>{item.name}</strong>
+                              <span className="ingredient_link_cta">
+                                올리브영에서 제품 보기 ↗
+                              </span>
+                            </a>
                             <span>{item.desc}</span>
                           </div>
                         </li>

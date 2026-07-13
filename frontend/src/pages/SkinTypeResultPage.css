@@ -418,6 +418,46 @@
   font-size: 13.5px;
 }
 
+.ingredient_link {
+  align-items: center;
+  color: inherit;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 7px;
+  text-decoration: none;
+}
+
+.ingredient_link:hover,
+.ingredient_link:focus-visible {
+  color: #5f8f71;
+}
+
+.ingredient_link:focus-visible {
+  border-radius: 6px;
+  outline: 2px solid #5f8f71;
+  outline-offset: 3px;
+}
+
+.ingredient_recommendation_list .ingredient_link_cta {
+  align-items: center;
+  background: #edf6ef;
+  border: 1px solid #c9dfce;
+  border-radius: 999px;
+  color: #477557;
+  display: inline-flex;
+  font-size: 10.5px;
+  font-weight: 700;
+  gap: 2px;
+  padding: 3px 7px;
+  transition: background-color 0.2s ease, border-color 0.2s ease;
+}
+
+.ingredient_link:hover .ingredient_link_cta,
+.ingredient_link:focus-visible .ingredient_link_cta {
+  background: #dceee1;
+  border-color: #89b396;
+}
+
 .ingredient_recommendation_list span {
   color: var(--ink-faint);
   font-size: 12px;

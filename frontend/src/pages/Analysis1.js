@@ -8,6 +8,7 @@ import {
 import "./Analysis1.css";
 import { useAuth } from "../context/AuthContext";
 import AnalysisFeedback from "../components/AnalysisFeedback";
+import { getOliveYoungSearchUrl } from "../utils/oliveYoung";
 
 // 진단 타입별 코멘트 및 하드코딩 성분 추천 매핑
 // 실제 dtype_result 값: bi, acne, ato, normal
@@ -850,7 +851,18 @@ function Analysis1() {
                     <li key={item.name}>
                       <span className="recommend_dot ingredient_dot" />
                       <div className="recommend_text">
-                        <span className="recommend_name">{item.name}</span>
+                        <a
+                          className="recommend_name ingredient_link"
+                          href={getOliveYoungSearchUrl(item.name)}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          aria-label={`${item.name} 올리브영에서 검색`}
+                        >
+                          <span>{item.name}</span>
+                          <span className="ingredient_link_cta">
+                            올리브영에서 제품 보기 ↗
+                          </span>
+                        </a>
                         <span className="recommend_desc">{item.desc}</span>
                       </div>
                     </li>

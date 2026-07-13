@@ -256,7 +256,9 @@ function CommunityPage() {
                   <div className="post_metrics">
                     <span className="post_metric_badge">조회 {post.postViews}</span>
                     <span className="post_metric_badge like">좋아요 {post.postLike}</span>
-                    <button
+                    <span className="post_metric_badge scrap">스크랩 {post.postScrap}</span>
+                    
+                    {/* <button
                       type="button"
                       className={`post_scrap_button${
                         scrappedPostCodes[post.postCode] ? " is_scrapped" : ""
@@ -269,7 +271,7 @@ function CommunityPage() {
                         : `${scrappedPostCodes[post.postCode] ? "스크랩됨" : "스크랩"} ${
                             post.postScrap || 0
                           }`}
-                    </button>
+                    </button> */}
                     {adminMode && (
                       <button
                         type="button"
