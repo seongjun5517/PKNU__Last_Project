@@ -9,7 +9,7 @@ import "./Analysis1.css";
 import { useAuth } from "../context/AuthContext";
 import AnalysisFeedback from "../components/AnalysisFeedback";
 
-// 진단 타입별 코멘트 & 추천 화장품 매핑
+// 진단 타입별 코멘트 및 하드코딩 성분 추천 매핑
 // 실제 dtype_result 값: bi, acne, ato, normal
 const SKIN_TYPE_INFO = {
   acne: {
@@ -17,28 +17,23 @@ const SKIN_TYPE_INFO = {
     color: "var(--rose)",
     comment:
       "피부에 여드름성 트러블이 감지되었어요. 자극을 최소화하고 진정 케어를 우선해주세요.",
-    products: [
-      { name: "저자극 진정 토너", desc: "약산성으로 트러블 부위를 자극 없이 진정" },
-      { name: "티트리 스팟 세럼", desc: "트러블 부위 집중 케어" },
-      { name: "논코메도제닉 수분크림", desc: "모공 막힘 없이 수분 공급" },
-    ],
     ingredients: [
       { name: "티트리", desc: "트러블 부위 진정에 도움" },
       { name: "살리실산(BHA)", desc: "피지와 각질 관리에 도움" },
       { name: "판테놀", desc: "자극받은 피부 보습과 장벽 케어" },
+      { name: "나이아신아마이드", desc: "과다 피지와 피부결 관리에 도움" },
+      { name: "징크 PCA", desc: "번들거림 완화와 피부 컨디션 관리에 도움" },
     ],
   },
   bi: {
     label: "비립종",
     color: "var(--gold)",
-    products: [
-      { name: "저자극 각질 케어 토너", desc: "거친 피부결을 부드럽게 정돈" },
-      { name: "가벼운 수분 젤 크림", desc: "답답함 없이 수분 공급" },
-    ],
     ingredients: [
       { name: "PHA", desc: "민감 피부도 부담이 적은 각질 케어" },
       { name: "글루코노락톤", desc: "피부결 정돈과 보습 보조" },
       { name: "알란토인", desc: "자극 완화와 진정 케어" },
+      { name: "아젤라익애씨드", desc: "피부결과 모공 주변 관리에 도움" },
+      { name: "히알루론산", desc: "가벼운 수분 보충으로 건조함 완화에 도움" },
     ],
   },
   ato: {
@@ -46,24 +41,18 @@ const SKIN_TYPE_INFO = {
     color: "var(--sage)",
     comment:
       "아토피성 건조·자극 반응이 감지되었어요. 저자극 보습 중심의 케어가 필요해요.",
-    products: [
-      { name: "세라마이드 고보습 크림", desc: "피부 장벽 강화 및 자극 완화" },
-      { name: "무향 저자극 로션", desc: "민감해진 피부 진정" },
-    ],
     ingredients: [
       { name: "세라마이드", desc: "약해진 피부 장벽 보강" },
       { name: "시어버터", desc: "건조한 피부의 보습막 형성" },
       { name: "마데카소사이드", desc: "민감 피부 진정 케어" },
+      { name: "콜로이달 오트밀", desc: "건조하고 민감한 피부 진정에 도움" },
+      { name: "스쿠알란", desc: "피부 수분 보호막 유지에 도움" },
     ],
   },
   normal: {
     label: "양호",
     color: "var(--sage-dark)",
     comment: "전반적으로 양호한 피부 상태예요. 꾸준한 보습과 자외선 차단이 중요해요.",
-    products: [
-      { name: "수분 진정 크림", desc: "피부 장벽 강화" },
-      { name: "선크림 SPF50+", desc: "자외선 차단으로 피부 손상 예방" },
-    ],
     ingredients: [
       { name: "히알루론산", desc: "가벼운 수분 충전" },
       { name: "글리세린", desc: "기본 보습 유지" },
@@ -74,10 +63,6 @@ const SKIN_TYPE_INFO = {
     label: "결과",
     color: "var(--ink-faint)",
     comment: "전반적으로 양호한 피부 상태예요. 꾸준한 보습과 자외선 차단이 중요해요.",
-    products: [
-      { name: "수분 진정 크림", desc: "피부 장벽 강화" },
-      { name: "선크림 SPF50+", desc: "자외선 차단으로 피부 손상 예방" },
-    ],
     ingredients: [
       { name: "히알루론산", desc: "수분 공급" },
       { name: "세라마이드", desc: "피부 장벽 케어" },
@@ -129,6 +114,25 @@ function getSkinInfo(detections) {
 
 function getDetectionInfo(type) {
   return SKIN_TYPE_INFO[type] || SKIN_TYPE_INFO.default;
+}
+
+function getStatusIngredientRecommendations(detections) {
+  const detectedTypes = new Set(
+    normalizeDetections(detections)
+      .filter((item) => (item.dtype_cnt || 0) > 0)
+      .map((item) => item.dtype_result)
+  );
+  const types = DIAGNOSIS_TYPE_ORDER.filter((type) => detectedTypes.has(type));
+
+  if (types.length === 0) {
+    return [{ label: "기본 피부 관리", items: SKIN_TYPE_INFO.normal.ingredients }];
+  }
+
+  const itemCount = types.length === 1 ? 5 : 2;
+  return types.map((type) => ({
+    label: SKIN_TYPE_INFO[type].label,
+    items: SKIN_TYPE_INFO[type].ingredients.slice(0, itemCount),
+  }));
 }
 
 function getDiagnosisComment(detections) {
@@ -624,6 +628,9 @@ function Analysis1() {
   const skinInfo = result ? getSkinInfo(result.detections) : null;
   const diagnosisComment = result ? getDiagnosisComment(result.detections) : "";
   const detectedMascots = result ? getDetectedMascots(result.detections) : [];
+  const ingredientRecommendations = result
+    ? getStatusIngredientRecommendations(result.detections)
+    : [];
   
 
   return (
@@ -824,35 +831,24 @@ function Analysis1() {
       {view === "result" && result && skinInfo && (
         <section className="analysis1_recommend_section">
           <div className="analysis1_recommend_card">
-            <p className="analysis1_recommend_eyebrow">COSMETIC PICK</p>
-            <h3>화장품 추천</h3>
-            <ul className="recommend_list">
-              {skinInfo.products.map((p, idx) => (
-                <li key={idx}>
-                  <span className="recommend_dot" />
-                  <div className="recommend_text">
-                    <span className="recommend_name">{p.name}</span>
-                    <span className="recommend_desc">{p.desc}</span>
-                  </div>
-                </li>
-              ))}
-            </ul>
-          </div>
-
-          <div className="analysis1_recommend_card">
             <p className="analysis1_recommend_eyebrow">INGREDIENT PICK</p>
             <h3>성분 추천</h3>
-            <ul className="recommend_list">
-              {skinInfo.ingredients.map((item, idx) => (
-                <li key={idx}>
-                  <span className="recommend_dot ingredient_dot" />
-                  <div className="recommend_text">
-                    <span className="recommend_name">{item.name}</span>
-                    <span className="recommend_desc">{item.desc}</span>
-                  </div>
-                </li>
-              ))}
-            </ul>
+            {ingredientRecommendations.map((recommendation) => (
+              <div className="recommend_group" key={recommendation.label}>
+                <h4>{recommendation.label}</h4>
+                <ul className="recommend_list">
+                  {recommendation.items.map((item) => (
+                    <li key={item.name}>
+                      <span className="recommend_dot ingredient_dot" />
+                      <div className="recommend_text">
+                        <span className="recommend_name">{item.name}</span>
+                        <span className="recommend_desc">{item.desc}</span>
+                      </div>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            ))}
           </div>
         </section>
       )}

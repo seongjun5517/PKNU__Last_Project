@@ -4,8 +4,6 @@ DEFAULT COLLATE utf8mb4_unicode_ci;
 
 USE skin_db;
 
-DROP TABLE IF EXISTS cosmetics;
-DROP TABLE IF EXISTS ingredient;
 DROP TABLE IF EXISTS Notice;
 DROP TABLE IF EXISTS notice;
 DROP TABLE IF EXISTS Scrap;
@@ -83,7 +81,6 @@ CREATE TABLE community_post_like (
     CONSTRAINT uq_community_post_like_user_post
         UNIQUE (like_user_id, like_post_code)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
-
 CREATE TABLE community_report (
     report_code BIGINT AUTO_INCREMENT PRIMARY KEY COMMENT '신고 고유번호',
     report_post_code BIGINT NOT NULL COMMENT '게시글 고유번호',
@@ -266,35 +263,3 @@ CREATE TABLE feedback (
     INDEX idx_feedback_type (fb_type)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
-CREATE TABLE ingredient (
-    ing_code BIGINT AUTO_INCREMENT PRIMARY KEY COMMENT '성분 고유번호',
-    stype_code BIGINT COMMENT '타입 고유번호',
-    ing_name VARCHAR(255) NOT NULL COMMENT '성분 이름',
-    dtype_code BIGINT COMMENT '질병 고유번호',
-
-    CONSTRAINT fk_ingredient_type
-        FOREIGN KEY (stype_code)
-        REFERENCES `type`(stype_code)
-        ON DELETE CASCADE
-        ON UPDATE CASCADE,
-
-    CONSTRAINT fk_ingredient_deep
-        FOREIGN KEY (dtype_code)
-        REFERENCES deep(dtype_code)
-        ON DELETE CASCADE
-        ON UPDATE CASCADE
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
-
-CREATE TABLE cosmetics (
-    cos_code BIGINT AUTO_INCREMENT PRIMARY KEY COMMENT '화장품 고유번호',
-    ing_code BIGINT NOT NULL COMMENT '성분 고유번호',
-    cos_name VARCHAR(255) NOT NULL COMMENT '화장품 이름',
-    cos_img VARCHAR(255) COMMENT '이미지',
-    cos_url VARCHAR(255) COMMENT '화장품 URL',
-
-    CONSTRAINT fk_cosmetics_ingredient
-        FOREIGN KEY (ing_code)
-        REFERENCES ingredient(ing_code)
-        ON DELETE CASCADE
-        ON UPDATE CASCADE
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;

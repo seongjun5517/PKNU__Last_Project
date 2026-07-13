@@ -43,6 +43,18 @@
   gap: 9px;
 }
 
+.analysis_feedback_status {
+  flex: 0 0 auto;
+  margin: 0;
+  color: #6e6478;
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.analysis_feedback_status.is_submitted {
+  color: #7c9b82;
+}
+
 .analysis_feedback_actions button {
   border: 1px solid transparent;
   border-radius: 999px;

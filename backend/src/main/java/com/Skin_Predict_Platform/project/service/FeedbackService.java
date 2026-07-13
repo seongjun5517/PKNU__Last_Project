@@ -24,6 +24,8 @@ public class FeedbackService {
 
     private final FeedbackRepository feedbackRepository;
     private final UserRepository userRepository;
+    private final SkinTypeResultService skinTypeResultService;
+    private final DeepService deepService;
 
     @Transactional
     public FeedbackResponse create(FeedbackCreateRequest request) {
@@ -35,6 +37,14 @@ public class FeedbackService {
 
         User user = userRepository.findById(request.getUserId())
                 .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 사용자입니다."));
+        LocalDateTime latestAnalysisAt = getLatestAnalysisAt(user.getUserId(), request.getFeedbackType());
+        if (latestAnalysisAt == null) {
+            throw new IllegalArgumentException("피드백을 제출할 분석 결과가 없습니다.");
+        }
+        if (feedbackRepository.existsByFbUserIdAndFbTypeAndFbCreatedAtGreaterThanEqual(
+                user.getUserId(), request.getFeedbackType(), latestAnalysisAt)) {
+            throw new IllegalStateException("이미 제출한 피드백입니다. 재진단 후 다시 작성할 수 있습니다.");
+        }
         String comment = isBlank(request.getComment()) ? null : request.getComment().trim();
 
         Feedback saved = feedbackRepository.save(new Feedback(
@@ -46,6 +56,17 @@ public class FeedbackService {
                 LocalDateTime.now()));
 
         return toResponse(saved, user);
+    }
+
+    @Transactional(readOnly = true)
+    public boolean hasSubmittedForLatestAnalysis(String userId, String feedbackType) {
+        if (isBlank(userId) || !FEEDBACK_TYPES.contains(feedbackType)) {
+            throw new IllegalArgumentException("피드백 조회 조건이 올바르지 않습니다.");
+        }
+
+        LocalDateTime latestAnalysisAt = getLatestAnalysisAt(userId, feedbackType);
+        return latestAnalysisAt != null && feedbackRepository
+                .existsByFbUserIdAndFbTypeAndFbCreatedAtGreaterThanEqual(userId, feedbackType, latestAnalysisAt);
     }
 
     @Transactional(readOnly = true)
@@ -81,5 +102,11 @@ public class FeedbackService {
 
     private boolean isBlank(String value) {
         return value == null || value.isBlank();
+    }
+
+    private LocalDateTime getLatestAnalysisAt(String userId, String feedbackType) {
+        return "SKIN_TYPE".equals(feedbackType)
+                ? skinTypeResultService.getLatestDiagnosisAt(userId)
+                : deepService.getLatestPredictionAt(userId);
     }
 }

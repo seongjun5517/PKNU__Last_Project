@@ -587,7 +587,7 @@
 
 .analysis1_recommend_section {
   display: grid;
-  grid-template-columns: 1fr 1fr;
+  grid-template-columns: 1fr;
   gap: 18px;
   max-width: 1100px;
   margin: 22px auto 0;
@@ -614,6 +614,16 @@
   font-family: 'Gowun Batang', serif;
   font-size: 20px;
   color: var(--ink);
+}
+
+.recommend_group + .recommend_group {
+  margin-top: 18px;
+}
+
+.recommend_group h4 {
+  margin: 0 0 9px;
+  color: var(--rose-dark);
+  font-size: 14px;
 }
 
 .recommend_list {
