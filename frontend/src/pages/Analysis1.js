@@ -618,6 +618,15 @@ function Analysis1() {
       setResult(null);
       setView("upload");
     } catch (err) {
+      // DB가 초기화됐거나 이미 삭제된 경우에도 재검사를 계속할 수 있게 한다.
+      if (err.response?.status === 404) {
+        clearSelectedImage();
+        stopCamera();
+        setResult(null);
+        setView("upload");
+        return;
+      }
+
       console.error("최신 피부 상태 분석 결과 삭제 실패:", err);
       alert("재진단 준비에 실패했습니다. 서버 상태를 확인해주세요.");
     } finally {
