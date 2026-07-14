@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from "react";
 import {
   deleteLatestPredict,
-  getLatestPredict,
+  getTodayPredict,
   setPredictFlask,
   setPredictSave,
 } from "../flaskapi/DeepApi";
@@ -507,7 +507,7 @@ function Analysis1() {
     setCaptureReady(false);
   };
 
-  // 저장된 최신 분석이 있으면 바로 결과 화면 표시
+  // 오늘 저장된 분석이 있으면 결과 화면을 표시하고, 없으면 새 분석을 허용한다.
   useEffect(() => {
     if (!userId) {
       setCheckingSavedResult(false);
@@ -516,7 +516,7 @@ function Analysis1() {
 
     (async () => {
       try {
-        const res = await getLatestPredict(userId);
+        const res = await getTodayPredict(userId);
         if (res?.data) {
           setResult({
             detections: normalizeDetections(res.data.detections),
