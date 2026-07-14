@@ -66,3 +66,4 @@ mysql_data/
 
 # Jupyter
 .ipynb_checkpoints/
+.env 
