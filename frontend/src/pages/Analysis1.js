@@ -8,6 +8,7 @@ import {
 import "./Analysis1.css";
 import { useAuth } from "../context/AuthContext";
 import AnalysisFeedback from "../components/AnalysisFeedback";
+import { getOliveYoungSearchUrl } from "../utils/oliveYoung";
 
 // 진단 타입별 코멘트 및 하드코딩 성분 추천 매핑
 // 실제 dtype_result 값: bi, acne, ato, normal
@@ -618,6 +619,15 @@ function Analysis1() {
       setResult(null);
       setView("upload");
     } catch (err) {
+      // DB가 초기화됐거나 이미 삭제된 경우에도 재검사를 계속할 수 있게 한다.
+      if (err.response?.status === 404) {
+        clearSelectedImage();
+        stopCamera();
+        setResult(null);
+        setView("upload");
+        return;
+      }
+
       console.error("최신 피부 상태 분석 결과 삭제 실패:", err);
       alert("재진단 준비에 실패했습니다. 서버 상태를 확인해주세요.");
     } finally {
@@ -829,10 +839,40 @@ function Analysis1() {
       </div>
 
       {view === "result" && result && skinInfo && (
-        <section className="analysis1_recommend_section">
+        <nav className="analysis1_quick_guide" aria-label="피부 상태 분석 결과 활용 순서">
+          <a href="#status-recommendations">
+            <span>01</span>
+            <strong>성분 확인</strong>
+            <small>현재 피부 상태에 맞는 핵심 성분</small>
+          </a>
+          <a href="#status-recommendations">
+            <span>02</span>
+            <strong>화장품 찾기</strong>
+            <small>올리브영에서 바로 검색</small>
+          </a>
+          <a href="#status-feedback">
+            <span>03</span>
+            <strong>결과 평가</strong>
+            <small>분석이 도움 됐는지 알려주기</small>
+          </a>
+        </nav>
+      )}
+
+      {view === "result" && result && skinInfo && (
+        <section
+          className="analysis1_recommend_section"
+          id="status-recommendations"
+          aria-labelledby="status-ingredient-heading"
+        >
           <div className="analysis1_recommend_card">
-            <p className="analysis1_recommend_eyebrow">INGREDIENT PICK</p>
-            <h3>성분 추천</h3>
+            <div className="analysis1_section_heading">
+              <span className="analysis1_section_number">01–02</span>
+              <div>
+                <p className="analysis1_recommend_eyebrow">INGREDIENT &amp; PRODUCT PICK</p>
+                <h3 id="status-ingredient-heading">성분 추천과 화장품 찾기</h3>
+                <p>피부 상태별 추천 이유를 확인하고 관련 화장품을 바로 찾아보세요.</p>
+              </div>
+            </div>
             {ingredientRecommendations.map((recommendation) => (
               <div className="recommend_group" key={recommendation.label}>
                 <h4>{recommendation.label}</h4>
@@ -841,7 +881,18 @@ function Analysis1() {
                     <li key={item.name}>
                       <span className="recommend_dot ingredient_dot" />
                       <div className="recommend_text">
-                        <span className="recommend_name">{item.name}</span>
+                        <a
+                          className="recommend_name ingredient_link"
+                          href={getOliveYoungSearchUrl(item.name)}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          aria-label={`${item.name} 올리브영에서 검색`}
+                        >
+                          <span>{item.name}</span>
+                          <span className="ingredient_link_cta">
+                            화장품 추천 보기 ↗
+                          </span>
+                        </a>
                         <span className="recommend_desc">{item.desc}</span>
                       </div>
                     </li>
@@ -854,10 +905,16 @@ function Analysis1() {
       )}
 
       {view === "result" && result && skinInfo && (
-        <AnalysisFeedback
-          feedbackType="SKIN_STATUS"
-          analysisName="피부 상태 분석"
-        />
+        <div className="analysis1_feedback_section" id="status-feedback">
+          <div className="analysis1_feedback_label">
+            <span className="analysis1_section_number">03</span>
+            <span>마지막으로 분석 결과를 평가해 주세요</span>
+          </div>
+          <AnalysisFeedback
+            feedbackType="SKIN_STATUS"
+            analysisName="피부 상태 분석"
+          />
+        </div>
       )}
     </div>
   );

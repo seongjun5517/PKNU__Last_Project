@@ -119,6 +119,21 @@ public class DeepService {
         Date now = new Date();
 
         try {
+            // A detection-free response means the skin is normal.  It still needs a
+            // row so the result can be restored later and feedback can be linked to it.
+            if (dtypeResults == null || dtypeResults.isEmpty()) {
+                Deepmodel normalResult = new Deepmodel();
+                normalResult.setDtypeUserId(userId);
+                normalResult.setDtypeDate(now);
+                normalResult.setDtypeResult("NORMAL");
+                normalResult.setDtypeCnt(0);
+                normalResult.setDtypeImg(imgPath);
+                this.deeprepository.save(normalResult);
+
+                log.info("Normal skin result saved. userId={}", userId);
+                return true;
+            }
+
             for (int i = 0; i < dtypeResults.size(); i++) {
                 Deepmodel deep = new Deepmodel();
                 deep.setDtypeUserId(userId);

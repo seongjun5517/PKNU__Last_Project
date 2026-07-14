@@ -456,3 +456,37 @@
   background-color: #fdecea;
   color: #bd6f63;
 }
+
+@media (max-width: 768px) {
+  .site_header {
+    padding: 12px 14px;
+  }
+
+  .site_header_title {
+    font-size: 22px;
+  }
+
+  .site_header_nav {
+    gap: 6px;
+    padding: 10px 0 4px;
+  }
+
+  .site_header_nav button {
+    width: 100%;
+    max-width: none;
+  }
+
+  .admin_mode_bar {
+    top: 65px;
+    padding-inline: 14px;
+  }
+
+  .site_header_notification_dropdown {
+    position: fixed;
+    top: 70px;
+    right: 10px;
+    left: 10px;
+    width: auto;
+    max-height: min(70vh, 420px);
+  }
+}

@@ -290,6 +290,12 @@
   color: #9b7127;
 }
 
+.post_metric_badge.scrap {
+  border-color: rgba(41, 136, 38, 0.32);
+  background: #eef9f0;
+  color: #279b5b;
+}
+
 .post_scrap_button {
   width: fit-content;
   border: 0;

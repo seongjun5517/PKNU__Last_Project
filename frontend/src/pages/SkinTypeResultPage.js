@@ -6,6 +6,7 @@ import {
 } from "../springApi/skinTypeSpringBootApi";
 import "./SkinTypeResultPage.css";
 import AnalysisFeedback from "../components/AnalysisFeedback";
+import { getOliveYoungSearchUrl } from "../utils/oliveYoung";
 
 function getLoginUserId() {
   return localStorage.getItem("loginUserId");
@@ -282,10 +283,38 @@ function SkinTypeResultPage() {
               </div>
             </section>
 
-            <section className="recommend_section">
+            <nav className="result_quick_guide" aria-label="진단 결과 활용 순서">
+              <a href="#skin-recommendations">
+                <span>01</span>
+                <strong>성분 확인</strong>
+                <small>내 피부에 맞는 핵심 성분</small>
+              </a>
+              <a href="#skin-recommendations">
+                <span>02</span>
+                <strong>화장품 찾기</strong>
+                <small>올리브영에서 바로 검색</small>
+              </a>
+              <a href="#result-feedback">
+                <span>03</span>
+                <strong>결과 평가</strong>
+                <small>진단이 도움 됐는지 알려주기</small>
+              </a>
+            </nav>
+
+            <section
+              className="recommend_section"
+              id="skin-recommendations"
+              aria-labelledby="ingredient-heading"
+            >
               <div className="recommend_card">
-                <p className="recommend_eyebrow">INGREDIENT PICK</p>
-                <h3>성분 추천</h3>
+                <div className="result_section_heading">
+                  <span className="result_section_number">01–02</span>
+                  <div>
+                    <p className="recommend_eyebrow">INGREDIENT &amp; PRODUCT PICK</p>
+                    <h3 id="ingredient-heading">성분 추천과 화장품 찾기</h3>
+                    <p>추천 이유를 확인한 뒤, 원하는 성분의 제품을 바로 찾아보세요.</p>
+                  </div>
+                </div>
                 {ingredientRecommendations.map((recommendation) => (
                   <div className="ingredient_recommendation_group" key={recommendation.label}>
                     <h4>{recommendation.label}</h4>
@@ -294,7 +323,18 @@ function SkinTypeResultPage() {
                         <li key={item.name}>
                           <span className="ingredient_recommendation_dot" />
                           <div>
-                            <strong>{item.name}</strong>
+                            <a
+                              className="ingredient_link"
+                              href={getOliveYoungSearchUrl(item.name)}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              aria-label={`${item.name} 올리브영에서 검색`}
+                            >
+                              <strong>{item.name}</strong>
+                              <span className="ingredient_link_cta">
+                                화장품 추천 보기 ↗
+                              </span>
+                            </a>
                             <span>{item.desc}</span>
                           </div>
                         </li>
@@ -304,10 +344,16 @@ function SkinTypeResultPage() {
                 ))}
               </div>
             </section>
-            <AnalysisFeedback
-              feedbackType="SKIN_TYPE"
-              analysisName="피부 타입 분석"
-            />
+            <div className="result_feedback_section" id="result-feedback">
+              <div className="result_feedback_label">
+                <span className="result_section_number">03</span>
+                <span>마지막으로 진단 결과를 평가해 주세요</span>
+              </div>
+              <AnalysisFeedback
+                feedbackType="SKIN_TYPE"
+                analysisName="피부 타입 분석"
+              />
+            </div>
           </>
         )}
       </main>
