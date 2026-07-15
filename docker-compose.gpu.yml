@@ -1,0 +1,8 @@
+services:
+  yolo-flask:
+    gpus: all
+    environment:
+      YOLO_DEVICE: "0"
+
+  ollama:
+    gpus: all

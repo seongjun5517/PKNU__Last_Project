@@ -37,6 +37,8 @@ import lombok.extern.slf4j.Slf4j;
 @CrossOrigin(origins = "*")
 public class UserController {
 
+    private static final long MAX_PROFILE_IMAGE_SIZE_BYTES = 10L * 1024 * 1024;
+
     private final UserService userService;
 
     // 프로필 이미지가 저장될 실제 디스크 경로 (application.properties 에서 오버라이드 가능)
@@ -148,6 +150,10 @@ public class UserController {
 
         if (image == null || image.isEmpty()) {
             return ResponseEntity.badRequest().body("이미지 파일이 비어있습니다.");
+        }
+        if (image.getSize() > MAX_PROFILE_IMAGE_SIZE_BYTES) {
+            return ResponseEntity.status(HttpStatus.PAYLOAD_TOO_LARGE)
+                    .body("프로필 이미지는 10MB 이하만 업로드할 수 있습니다.");
         }
 
         try {

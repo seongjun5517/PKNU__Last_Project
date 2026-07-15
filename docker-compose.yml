@@ -3,17 +3,17 @@
 services:
   mysql:
     image: mysql:8.0
-    container_name: skin-mysql
-    restart: always
+    restart: unless-stopped
 
-    ports:
-      - "3307:3306"
+    expose:
+      - "3306"
 
     environment:
-      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
+      TZ: Asia/Seoul
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:?MYSQL_ROOT_PASSWORD must be set}
       MYSQL_DATABASE: ${MYSQL_DATABASE:-skin_db}
       MYSQL_USER: ${MYSQL_USER:-skin}
-      MYSQL_PASSWORD: ${MYSQL_PASSWORD}
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD:?MYSQL_PASSWORD must be set}
 
     volumes:
       - mysql_data:/var/lib/mysql
@@ -22,6 +22,147 @@ services:
     command:
       - --character-set-server=utf8mb4
       - --collation-server=utf8mb4_unicode_ci
+      - --default-time-zone=+09:00
+
+    healthcheck:
+      test: ["CMD-SHELL", "mysqladmin ping -h 127.0.0.1 -uroot -p$${MYSQL_ROOT_PASSWORD} --silent"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
+  spring:
+    build:
+      context: ./backend
+    restart: unless-stopped
+    depends_on:
+      mysql:
+        condition: service_healthy
+    environment:
+      TZ: Asia/Seoul
+      SPRING_PROFILES_ACTIVE: prod
+      DB_HOST: mysql
+      DB_PORT: 3306
+      DB_NAME: ${MYSQL_DATABASE:-skin_db}
+      DB_USERNAME: ${MYSQL_USER:-skin}
+      DB_PASSWORD: ${MYSQL_PASSWORD:?MYSQL_PASSWORD must be set}
+      DB_CONNECTION_TIMEOUT_MS: ${DB_CONNECTION_TIMEOUT_MS:-10000}
+      DB_VALIDATION_TIMEOUT_MS: ${DB_VALIDATION_TIMEOUT_MS:-5000}
+      PROFILE_IMAGE_DIR: /app/uploads/profile
+    expose:
+      - "8080"
+    volumes:
+      - profile_images:/app/uploads/profile
+    healthcheck:
+      test: ["CMD", "curl", "--fail", "--silent", "http://127.0.0.1:8080/actuator/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 15
+      start_period: 30s
+
+  yolo-flask:
+    build:
+      context: ./flask
+    restart: unless-stopped
+    environment:
+      TZ: Asia/Seoul
+      ANALYSIS_IMAGE_DIR: /app/uploads/analysis
+      MODEL_PATH: /app/models/last_model/best.pt
+      YOLO_DEVICE: ${YOLO_DEVICE:-cpu}
+    expose:
+      - "5000"
+    volumes:
+      - analysis_images:/app/uploads/analysis
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:5000/health', timeout=5)"]
+      interval: 15s
+      timeout: 10s
+      retries: 10
+      start_period: 60s
+
+  ollama:
+    image: ${OLLAMA_IMAGE:-ollama/ollama:latest}
+    restart: unless-stopped
+    environment:
+      TZ: Asia/Seoul
+      OLLAMA_HOST: 0.0.0.0:11434
+      OLLAMA_KEEP_ALIVE: ${OLLAMA_KEEP_ALIVE:-10m}
+    expose:
+      - "11434"
+    volumes:
+      - ollama_models:/root/.ollama
+    healthcheck:
+      test: ["CMD-SHELL", "OLLAMA_HOST=http://127.0.0.1:11434 ollama list >/dev/null 2>&1"]
+      interval: 10s
+      timeout: 5s
+      retries: 30
+      start_period: 20s
+
+  ollama-init:
+    image: ${OLLAMA_IMAGE:-ollama/ollama:latest}
+    restart: "no"
+    depends_on:
+      ollama:
+        condition: service_healthy
+    environment:
+      OLLAMA_HOST: http://ollama:11434
+      CHATBOT_MODEL: ${CHATBOT_MODEL:-gemma3:4b}
+      CHATBOT_EMBEDDING_MODEL: ${CHATBOT_EMBEDDING_MODEL:-nomic-embed-text}
+    entrypoint: ["/bin/sh", "-c"]
+    command:
+      - >-
+        ollama pull "$${CHATBOT_MODEL}" &&
+        ollama pull "$${CHATBOT_EMBEDDING_MODEL}"
+    volumes:
+      - ollama_models:/root/.ollama
+
+  chatbot-flask:
+    build:
+      context: ./chatbot-flask
+    restart: unless-stopped
+    depends_on:
+      ollama-init:
+        condition: service_completed_successfully
+    environment:
+      TZ: Asia/Seoul
+      CHATBOT_PORT: 5001
+      OLLAMA_BASE_URL: http://ollama:11434
+      CHATBOT_MODEL: ${CHATBOT_MODEL:-gemma3:4b}
+      CHATBOT_EMBEDDING_MODEL: ${CHATBOT_EMBEDDING_MODEL:-nomic-embed-text}
+      CHATBOT_CHROMA_PATH: /app/data/Chroma_DB_Skin_v6
+      CHATBOT_INGREDIENT_PATH: /app/data/ingredient_dictionary_100.xlsx
+    expose:
+      - "5001"
+    volumes:
+      - ${CHATBOT_DATA_DIR:-./chatbot-flask/data}:/app/data:ro
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:5001/health', timeout=5)"]
+      interval: 10s
+      timeout: 10s
+      retries: 12
+      start_period: 20s
+
+  frontend:
+    build:
+      context: ./frontend
+    restart: unless-stopped
+    depends_on:
+      spring:
+        condition: service_healthy
+      yolo-flask:
+        condition: service_healthy
+      chatbot-flask:
+        condition: service_healthy
+    ports:
+      - "${APP_PORT:-80}:80"
+    healthcheck:
+      test: ["CMD", "wget", "--quiet", "--spider", "http://127.0.0.1/"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
 
 volumes:
   mysql_data:
+  analysis_images:
+  profile_images:
+  ollama_models:

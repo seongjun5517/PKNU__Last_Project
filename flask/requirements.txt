@@ -1,2 +1,5 @@
-### 설치해야하는 패키지들
-# pip install flask ultralytics opencv-python-headless numpy
+Flask
+gunicorn
+numpy
+opencv-python-headless
+ultralytics

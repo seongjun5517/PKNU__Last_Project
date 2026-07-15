@@ -6,6 +6,10 @@ import "./Mypage.css";
 import { springApi } from "../config/axiosInstance";
 import AnalysisHistory from "./AnalysisHistory";
 import { getProfileImageSrc } from "../utils/profileImage";
+import {
+  isImageFileTooLarge,
+  MAX_IMAGE_FILE_SIZE_LABEL,
+} from "../config/uploadLimits";
 
 
 const INFO_MENU = [
@@ -21,8 +25,6 @@ const POST_MENU = [
   { key: "scrapped", label: "스크랩한 게시물" },
   { key: "comments", label: "내가 작성한 댓글" },
 ];
-
-const MAX_PROFILE_IMAGE_SIZE = 10 * 1024 * 1024;
 
 /* ---------------- 분석 기록 라인 차트 (외부 라이브러리 없이 순수 SVG) ---------------- */
 /* 백엔드 연결 전까지는 사용하지 않지만, 나중에 다시 쓸 수 있도록 컴포넌트는 그대로 둡니다. */
@@ -343,12 +345,12 @@ export default function Mypage() {
     const file = e.target.files?.[0];
     if (!file) return;
 
-    if (file.size > MAX_PROFILE_IMAGE_SIZE) {
+    if (isImageFileTooLarge(file)) {
       setEditImageFile(null);
       setEditPreview(null);
       setEditMessage({
         type: "error",
-        text: "이미지 파일이 너무 커요. 10MB 이하 이미지로 다시 선택해주세요.",
+        text: `이미지 파일이 너무 커요. ${MAX_IMAGE_FILE_SIZE_LABEL} 이하 이미지로 다시 선택해주세요.`,
       });
       e.target.value = "";
       return;

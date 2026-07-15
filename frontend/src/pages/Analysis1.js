@@ -9,6 +9,12 @@ import "./Analysis1.css";
 import { useAuth } from "../context/AuthContext";
 import AnalysisFeedback from "../components/AnalysisFeedback";
 import { getOliveYoungSearchUrl } from "../utils/oliveYoung";
+import { getAnalysisImageUrl } from "../utils/analysisImage";
+import { getApiErrorMessage } from "../utils/apiError";
+import {
+  isImageFileTooLarge,
+  MAX_IMAGE_FILE_SIZE_LABEL,
+} from "../config/uploadLimits";
 
 // 진단 타입별 코멘트 및 하드코딩 성분 추천 매핑
 // 실제 dtype_result 값: bi, acne, ato, normal
@@ -169,9 +175,6 @@ function getDetectedMascots(detections) {
       ...getDetectionInfo(type),
     }));
 }
-
-// Flask 서버 주소 (배포 시 실제 서버 주소로 변경)
-const FLASK_BASE_URL = "http://localhost:5000";
 
 // detections가 undefined/null로 와도 항상 배열을 반환
 function normalizeDetections(detections) {
@@ -520,7 +523,7 @@ function Analysis1() {
         if (res?.data) {
           setResult({
             detections: normalizeDetections(res.data.detections),
-            image: `${FLASK_BASE_URL}${res.data.imgPath}`,
+            image: getAnalysisImageUrl(res.data.imgPath),
           });
           setView("result");
         }
@@ -553,6 +556,13 @@ function Analysis1() {
     const file = e.target.files[0];
     if (!file) return;
 
+    if (isImageFileTooLarge(file)) {
+      clearSelectedImage();
+      setError(`이미지는 ${MAX_IMAGE_FILE_SIZE_LABEL} 이하만 선택할 수 있습니다.`);
+      e.target.value = "";
+      return;
+    }
+
     stopCamera({ keepStatus: true });
     applySelectedImage(file, "사진이 선택되었어요. 분석 시작을 눌러주세요.");
   };
@@ -564,6 +574,10 @@ function Analysis1() {
     }
     if (!imageFile) {
       setError("이미지를 선택해주세요.");
+      return;
+    }
+    if (isImageFileTooLarge(imageFile)) {
+      setError(`이미지는 ${MAX_IMAGE_FILE_SIZE_LABEL} 이하만 업로드할 수 있습니다.`);
       return;
     }
 
@@ -592,9 +606,15 @@ function Analysis1() {
       const message = err.response?.data?.message;
 
       setError(
-        status === 409
-          ? message || "이미 저장된 피부 상태 분석 결과가 있습니다."
-          : message || "예측 처리 중 오류가 발생했습니다."
+        status === 413
+          ? `이미지는 ${MAX_IMAGE_FILE_SIZE_LABEL} 이하만 업로드할 수 있습니다.`
+          : status === 409
+            ? message || "이미 저장된 피부 상태 분석 결과가 있습니다."
+            : getApiErrorMessage(err, {
+              timeout: "피부 분석 시간이 초과되었습니다. 잠시 후 다시 시도해주세요.",
+              unavailable: "피부 분석 서버를 사용할 수 없습니다. 잠시 후 다시 시도해주세요.",
+              fallback: message || "예측 처리 중 오류가 발생했습니다.",
+            })
       );
       setView("upload");
     }

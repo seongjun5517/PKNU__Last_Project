@@ -6,17 +6,36 @@ from collections import Counter
 from ultralytics import YOLO
 import os
 import uuid
+import torch
 from flask import send_from_directory
 
 
 app = Flask(__name__)
-UPLOAD_FOLDER = "uploads"
+MAX_IMAGE_FILE_SIZE_BYTES = 10 * 1024 * 1024
+MAX_REQUEST_SIZE_BYTES = 11 * 1024 * 1024
+app.config["MAX_CONTENT_LENGTH"] = MAX_REQUEST_SIZE_BYTES
+
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+UPLOAD_FOLDER = os.path.abspath(
+    os.getenv("ANALYSIS_IMAGE_DIR", os.path.join(BASE_DIR, "uploads"))
+)
 
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 
 
+@app.errorhandler(413)
+def request_too_large(_error):
+    return jsonify({"message": "이미지는 10MB 이하만 업로드할 수 있습니다."}), 413
+
+
 # 서버 시작 시 모델 한 번만 로드 (요청마다 로드하면 매우 느려짐)
-MODEL_PATH = './models/last_model/best.pt'
+MODEL_PATH = os.path.abspath(
+    os.getenv("MODEL_PATH", os.path.join(BASE_DIR, "models", "last_model", "best.pt"))
+)
+YOLO_DEVICE = os.getenv(
+    "YOLO_DEVICE",
+    "0" if torch.cuda.is_available() else "cpu"
+)
 model = YOLO(MODEL_PATH)
 
 
@@ -43,7 +62,11 @@ def draw_box(img, x1, y1, x2, y2, color, thickness=2):
 @app.route('/health', methods=['GET'])
 def health():
     """서버가 살아있는지 확인용"""
-    return jsonify({"status": "ok"})
+    return jsonify({
+        "status": "ok",
+        "device": YOLO_DEVICE,
+        "cudaAvailable": torch.cuda.is_available(),
+    })
 
 
 @app.route("/uploads/<filename>")
@@ -59,14 +82,18 @@ def predict():
     file = request.files['image']
 
     # 파일 -> numpy 배열 -> cv2 이미지 (디스크 저장 없이 바로 디코딩)
-    file_bytes = np.frombuffer(file.read(), np.uint8)
+    uploaded_bytes = file.read()
+    if len(uploaded_bytes) > MAX_IMAGE_FILE_SIZE_BYTES:
+        return jsonify({"message": "이미지는 10MB 이하만 업로드할 수 있습니다."}), 413
+
+    file_bytes = np.frombuffer(uploaded_bytes, np.uint8)
     img = cv2.imdecode(file_bytes, cv2.IMREAD_COLOR)
 
     if img is None:
         return jsonify({"error": "이미지를 읽을 수 없습니다."}), 400
 
     # 추론
-    results = model(img, conf=0.3, imgsz=640)
+    results = model(img, conf=0.3, imgsz=640, device=YOLO_DEVICE)
     result = results[0]
 
     names = result.names
@@ -97,6 +124,7 @@ def predict():
     cv2.imwrite(save_path, img_result)
 
     img_path = f"/uploads/{filename}"
+    # img_path = f"/flask/uploads/{filename}"
 
     return jsonify({
         "detections": detections,

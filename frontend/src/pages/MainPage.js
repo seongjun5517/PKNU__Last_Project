@@ -22,14 +22,7 @@ import CommunityList from "../components/main/CommunityList";
 import TodoList from "../components/main/TodoList";
 import UpcomingList from "../components/main/UpcomingList";
 import AnalysisButtons from "../components/main/AnalysisButtons";
-
-const FLASK_BASE_URL = "http://localhost:5000";
-
-function getDiagnosisImageUrl(imgPath) {
-  if (!imgPath) return "";
-  if (imgPath.startsWith("data:") || imgPath.startsWith("http")) return imgPath;
-  return `${FLASK_BASE_URL}${imgPath.startsWith("/") ? imgPath : `/${imgPath}`}`;
-}
+import { getAnalysisImageUrl } from "../utils/analysisImage";
 
 function MainPage() {
   const { userId, adminMode } = useAuth();
@@ -343,7 +336,7 @@ function MainPage() {
   );
 
   const selectedDiagnosisImageUrl = useMemo(
-    () => getDiagnosisImageUrl(selectedDiagnosisRecord?.imgPath),
+    () => getAnalysisImageUrl(selectedDiagnosisRecord?.imgPath),
     [selectedDiagnosisRecord]
   );
 
