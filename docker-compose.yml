@@ -5,6 +5,9 @@ services:
     image: mysql:8.0
     restart: unless-stopped
 
+    ports:
+    - "127.0.0.1:3307:3306"
+    
     expose:
       - "3306"
 

@@ -8,6 +8,7 @@ import {
 export const springApi = axios.create({
     baseURL: SPRING_BASE_URL,
     timeout: 15000,
+    withCredentials: true,
 
     headers : {
         "Content-Type" : "application/json"

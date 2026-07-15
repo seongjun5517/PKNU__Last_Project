@@ -11,7 +11,7 @@ import org.springframework.jdbc.core.JdbcTemplate;
 
 import com.Skin_Predict_Platform.project.config.TimeZoneConfig;
 
-@SpringBootTest
+@SpringBootTest(properties = "app.security.migrate-legacy-passwords=false")
 class ProjectApplicationTests {
 
 	@Autowired

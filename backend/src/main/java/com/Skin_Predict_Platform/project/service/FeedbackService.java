@@ -70,22 +70,11 @@ public class FeedbackService {
     }
 
     @Transactional(readOnly = true)
-    public List<FeedbackResponse> getAll(String adminUserId) {
-        if (!isAdmin(adminUserId)) {
-            throw new SecurityException("관리자 권한이 필요합니다.");
-        }
-
+    public List<FeedbackResponse> getAll() {
         return feedbackRepository.findAllByOrderByFbCreatedAtDesc().stream()
                 .map(feedback -> toResponse(feedback,
                         userRepository.findById(feedback.getFbUserId()).orElse(null)))
                 .toList();
-    }
-
-    @Transactional(readOnly = true)
-    public boolean isAdmin(String userId) {
-        return userRepository.findById(userId)
-                .map(User::getUserMan)
-                .orElse(false);
     }
 
     private FeedbackResponse toResponse(Feedback feedback, User user) {
