@@ -4,8 +4,6 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.time.LocalDate;
-import java.util.List;
 import java.util.Map;
 
 import org.springframework.beans.factory.annotation.Value;
@@ -24,6 +22,8 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
 
+import com.Skin_Predict_Platform.project.dto.SignUpRequest;
+import com.Skin_Predict_Platform.project.dto.UserResponse;
 import com.Skin_Predict_Platform.project.model.User;
 import com.Skin_Predict_Platform.project.service.UserService;
 
@@ -36,6 +36,8 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 @CrossOrigin(origins = "*")
 public class UserController {
+
+    private static final long MAX_PROFILE_IMAGE_SIZE_BYTES = 10L * 1024 * 1024;
 
     private final UserService userService;
 
@@ -51,14 +53,7 @@ public class UserController {
         return "user link ok";
     }
 
-    @GetMapping(path = "/list")
-    public ResponseEntity<List<User>> getUserList() {
-        log.info("getUserList() called");
-        return ResponseEntity.ok(userService.getUserList());
-    }
-
     // ---------------- 내 정보 조회 ----------------
-    // 응답은 User 엔티티가 그대로 직렬화되므로 필드명이 camelCase 로 내려감 (userId, userNickname, userProfileImage ...)
     @GetMapping(path = "/{user_id}")
     public ResponseEntity<?> getUser(@PathVariable("user_id") String userId) {
         log.info("getUser() called, user_id={}", userId);
@@ -68,14 +63,21 @@ public class UserController {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body("존재하지 않는 사용자입니다.");
         }
 
-        user.setUserPwd(null);
-        return ResponseEntity.ok(user);
+        return ResponseEntity.ok(UserResponse.from(user));
     }
 
     @PostMapping(path = "/insert")
-    public ResponseEntity<?> setMemberInsert(@RequestBody Map<String, Object> requestBody) {
-        User user = toUser(requestBody);
-        log.info("user insert request, user_id={}", user.getUserId());
+    public ResponseEntity<?> setMemberInsert(@RequestBody SignUpRequest request) {
+        User user = User.builder()
+                .userId(request.userId())
+                .userEmail(request.userEmail())
+                .userPwd(request.userPwd())
+                .userNickname(request.userNickname())
+                .userProfileImage(request.userProfileImage())
+                .userBirthday(request.userBirthday())
+                .build();
+
+        log.info("user insert request, user_id={}", request.userId());
 
         User savedUser = userService.setMemberInsert(user);
         if (savedUser == null) {
@@ -83,23 +85,7 @@ public class UserController {
                     .body("이미 사용 중인 아이디 또는 이메일입니다.");
         }
 
-        savedUser.setUserPwd(null);
-        return ResponseEntity.ok(savedUser);
-    }
-
-    @PostMapping(path = "/login")
-    public ResponseEntity<?> login(@RequestBody Map<String, Object> requestBody) {
-        User user = toUser(requestBody);
-        log.info("user login request, user_id={}", user.getUserId());
-
-        User loginUser = userService.login(user.getUserId(), user.getUserPwd());
-        if (loginUser == null) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
-                    .body("아이디 또는 비밀번호가 올바르지 않습니다.");
-        }
-
-        loginUser.setUserPwd(null);
-        return ResponseEntity.ok(loginUser);
+        return ResponseEntity.ok(UserResponse.from(savedUser));
     }
 
     // ---------------- 닉네임 / 프로필 이미지 경로 수정 ----------------
@@ -118,8 +104,7 @@ public class UserController {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body("존재하지 않는 사용자입니다.");
         }
 
-        updated.setUserPwd(null);
-        return ResponseEntity.ok(updated);
+        return ResponseEntity.ok(UserResponse.from(updated));
     }
 
     // ---------------- 비밀번호 변경 ----------------
@@ -129,7 +114,7 @@ public class UserController {
         String currentPwd = getString(requestBody, "current_pwd");
         String newPwd = getString(requestBody, "new_pwd");
 
-        log.info("user password update request, user_id={}", userId);
+        log.info("user password update request, user_sid={}", userId);
 
         String result = userService.updatePassword(userId, currentPwd, newPwd);
         if (!"OK".equals(result)) {
@@ -148,6 +133,10 @@ public class UserController {
 
         if (image == null || image.isEmpty()) {
             return ResponseEntity.badRequest().body("이미지 파일이 비어있습니다.");
+        }
+        if (image.getSize() > MAX_PROFILE_IMAGE_SIZE_BYTES) {
+            return ResponseEntity.status(HttpStatus.PAYLOAD_TOO_LARGE)
+                    .body("프로필 이미지는 10MB 이하만 업로드할 수 있습니다.");
         }
 
         try {
@@ -196,30 +185,8 @@ public class UserController {
         return ResponseEntity.noContent().build();
     }
 
-    private User toUser(Map<String, Object> requestBody) {
-        return User.builder()
-                .userId(getString(requestBody, "user_id"))
-                .userEmail(getString(requestBody, "user_email"))
-                .userPwd(getString(requestBody, "user_pwd"))
-                .userNickname(getString(requestBody, "user_nickname"))
-                .userProfileImage(getString(requestBody, "user_profile_image"))
-                .userBirthday(getLocalDate(requestBody, "user_birthday"))
-                .userMan(getBoolean(requestBody, "user_man"))
-                .build();
-    }
-
     private String getString(Map<String, Object> requestBody, String key) {
         Object value = requestBody.get(key);
         return value == null ? null : value.toString();
-    }
-
-    private LocalDate getLocalDate(Map<String, Object> requestBody, String key) {
-        String value = getString(requestBody, key);
-        return value == null || value.isBlank() ? null : LocalDate.parse(value);
-    }
-
-    private Boolean getBoolean(Map<String, Object> requestBody, String key) {
-        Object value = requestBody.get(key);
-        return value == null ? null : Boolean.valueOf(value.toString());
     }
 }

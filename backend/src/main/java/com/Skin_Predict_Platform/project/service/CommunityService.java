@@ -20,6 +20,7 @@ import com.Skin_Predict_Platform.project.model.CommunityPostLike;
 import com.Skin_Predict_Platform.project.model.CommunityPostScrap;
 import com.Skin_Predict_Platform.project.model.CommunityReport;
 import com.Skin_Predict_Platform.project.model.PostDetail;
+import com.Skin_Predict_Platform.project.model.Role;
 import com.Skin_Predict_Platform.project.repository.CommunityCategoryRepository;
 import com.Skin_Predict_Platform.project.repository.CommunityCommentRepository;
 import com.Skin_Predict_Platform.project.repository.CommunityPostLikeRepository;
@@ -374,7 +375,7 @@ public class CommunityService {
         }
 
         return userRepository.findById(userId)
-                .map((user) -> Boolean.TRUE.equals(user.getUserMan()))
+                .map((user) -> user.getRole() == Role.SUPER_ADMIN)
                 .orElse(false);
     }
 
