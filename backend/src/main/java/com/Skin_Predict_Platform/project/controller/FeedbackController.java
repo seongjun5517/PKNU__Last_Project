@@ -1,6 +1,5 @@
 package com.Skin_Predict_Platform.project.controller;
 
-import java.util.List;
 import java.util.Map;
 
 import org.springframework.http.HttpStatus;
@@ -13,7 +12,6 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.Skin_Predict_Platform.project.dto.FeedbackCreateRequest;
-import com.Skin_Predict_Platform.project.dto.FeedbackResponse;
 import com.Skin_Predict_Platform.project.service.FeedbackService;
 
 import lombok.RequiredArgsConstructor;
@@ -46,17 +44,6 @@ public class FeedbackController {
                     feedbackService.hasSubmittedForLatestAnalysis(userId, feedbackType)));
         } catch (IllegalArgumentException exception) {
             return ResponseEntity.badRequest().body(Map.of("message", exception.getMessage()));
-        }
-    }
-
-    @GetMapping
-    public ResponseEntity<?> getAll(@RequestParam String adminUserId) {
-        try {
-            List<FeedbackResponse> feedbackList = feedbackService.getAll(adminUserId);
-            return ResponseEntity.ok(feedbackList);
-        } catch (SecurityException exception) {
-            return ResponseEntity.status(HttpStatus.FORBIDDEN)
-                    .body(Map.of("message", exception.getMessage()));
         }
     }
 }

@@ -109,7 +109,7 @@ function FeedbackListPage() {
     const loadFeedback = async () => {
       try {
         setLoading(true);
-        const response = await getFeedbackList(userId);
+        const response = await getFeedbackList();
         setFeedbackList(Array.isArray(response.data) ? response.data : []);
       } catch (error) {
         console.error("피드백 목록 조회 실패:", error);

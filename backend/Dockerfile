@@ -1,11 +1,11 @@
-FROM eclipse-temurin:17-jdk-jammy AS build
+FROM gradle:9.5.1-jdk17 AS build
 
-WORKDIR /app
-COPY . .
+WORKDIR /home/gradle/project
+COPY --chown=gradle:gradle . .
 
-RUN chmod +x gradlew \
-    && ./gradlew bootJar --no-daemon \
-    && find build/libs -name "*.jar" ! -name "*-plain.jar" -exec cp {} /app/app.jar \;
+RUN --mount=type=cache,target=/home/gradle/.gradle,uid=1000,gid=1000 \
+    gradle bootJar --no-daemon \
+    && find build/libs -name "*.jar" ! -name "*-plain.jar" -exec cp {} /home/gradle/app.jar \;
 
 FROM eclipse-temurin:17-jre-jammy
 
@@ -13,7 +13,7 @@ WORKDIR /app
 RUN apt-get update \
     && apt-get install -y --no-install-recommends curl \
     && rm -rf /var/lib/apt/lists/*
-COPY --from=build /app/app.jar /app/app.jar
+COPY --from=build /home/gradle/app.jar /app/app.jar
 
 EXPOSE 8080
 

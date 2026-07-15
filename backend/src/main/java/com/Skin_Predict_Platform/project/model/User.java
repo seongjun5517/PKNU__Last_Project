@@ -4,17 +4,18 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 
 import jakarta.persistence.Column;
+import jakarta.persistence.Convert;
 import jakarta.persistence.Entity;
 import jakarta.persistence.Id;
 import jakarta.persistence.PrePersist;
 import jakarta.persistence.Table;
 import jakarta.persistence.Transient;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
-import com.fasterxml.jackson.annotation.JsonProperty;
 
 @Entity
 @Table(name = "users")
@@ -32,6 +33,7 @@ public class User {
     @Column(name = "user_email", nullable = false, unique = true, length = 255)
     private String userEmail;
 
+    @JsonIgnore
     @Column(name = "user_pwd", nullable = false, length = 255)
     private String userPwd;
 
@@ -47,18 +49,13 @@ public class User {
     @Column(name = "user_birthday")
     private LocalDate userBirthday;
 
-    @Column(name = "user_man")
-    private Boolean userMan;
+    @Convert(converter = RoleConverter.class)
+    @Column(name = "user_man", nullable = false)
+    private Role role;
 
     @Transient
     public String getManAuth() {
-        return Boolean.TRUE.equals(userMan) ? "SUPER_ADMIN" : "USER";
-    }
-
-    @Transient
-    @JsonProperty("man_auth")
-    public String getManAuthSnake() {
-        return getManAuth();
+        return role == null ? Role.USER.name() : role.name();
     }
 
     // 비어있는 데이터 값 기본 값 지정.
@@ -67,8 +64,8 @@ public class User {
         if (userCreatedAt == null) {
             userCreatedAt = LocalDateTime.now();
         }
-        if (userMan == null) {
-            userMan = false;
+        if (role == null) {
+            role = Role.USER;
         }
     }
 }

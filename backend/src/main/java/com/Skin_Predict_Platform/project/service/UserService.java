@@ -3,19 +3,23 @@ package com.Skin_Predict_Platform.project.service;
 import java.util.List;
 import java.util.Optional;
 
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.Skin_Predict_Platform.project.model.User;
+import com.Skin_Predict_Platform.project.model.Role;
 import com.Skin_Predict_Platform.project.repository.UserRepository;
 
 @Service
 public class UserService {
 
     private final UserRepository userRepository;
+    private final PasswordEncoder passwordEncoder;
 
-    public UserService(UserRepository userRepository) {
+    public UserService(UserRepository userRepository, PasswordEncoder passwordEncoder) {
         this.userRepository = userRepository;
+        this.passwordEncoder = passwordEncoder;
     }
 
     // Transactional = 실패시 Rollback 해줌, but, 조회시에는 readOnly붙여주는 것이 성능 개선에 도움.
@@ -35,17 +39,9 @@ public class UserService {
             return null;
         }
 
+        user.setUserPwd(passwordEncoder.encode(user.getUserPwd()));
+        user.setRole(Role.USER);
         return userRepository.save(user);
-    }
-
-    @Transactional(readOnly = true)
-    public User login(String userId, String userPwd) {
-        if (isBlank(userId) || isBlank(userPwd)) {
-            return null;
-        }
-
-        Optional<User> user = userRepository.findByUserIdAndUserPwd(userId, userPwd);
-        return user.orElse(null);
     }
 
     // ---------------- 내 정보 조회 ----------------
@@ -82,8 +78,6 @@ public class UserService {
     }
 
     // ---------------- 비밀번호 변경 ----------------
-    // 주의: 현재 로그인 로직(findByUserIdAndUserPwd)이 평문 비교라서 여기서도 평문으로 비교/저장함.
-    // 추후 BCrypt 같은 암호화를 도입하면 login()과 함께 이 메서드도 같이 바꿔야 함.
     @Transactional
     public String updatePassword(String userId, String currentPwd, String newPwd) {
         if (isBlank(userId) || isBlank(currentPwd) || isBlank(newPwd)) {
@@ -96,13 +90,34 @@ public class UserService {
         }
 
         User user = optionalUser.get();
-        if (!user.getUserPwd().equals(currentPwd)) {
+        if (!passwordEncoder.matches(currentPwd, user.getUserPwd())) {
             return "현재 비밀번호가 일치하지 않습니다.";
         }
 
-        user.setUserPwd(newPwd);
+        user.setUserPwd(passwordEncoder.encode(newPwd));
         userRepository.save(user);
         return "OK";
+    }
+
+    /**
+     * Spring Security 적용 이전에 평문으로 저장된 비밀번호를 일괄 해시한다.
+     * 이미 현재 BCrypt 형식으로 저장된 값은 건드리지 않는다.
+     */
+    @Transactional
+    public int migrateLegacyPasswords() {
+        int migratedCount = 0;
+
+        for (User user : userRepository.findAll()) {
+            String storedPassword = user.getUserPwd();
+            if (isBlank(storedPassword) || isEncodedPassword(storedPassword)) {
+                continue;
+            }
+
+            user.setUserPwd(passwordEncoder.encode(storedPassword));
+            migratedCount++;
+        }
+
+        return migratedCount;
     }
 
     @Transactional
@@ -122,5 +137,9 @@ public class UserService {
     // 값이 비어있는지 체크 메서드(공백제거)
     private boolean isBlank(String value) {
         return value == null || value.trim().isEmpty();
+    }
+
+    private boolean isEncodedPassword(String value) {
+        return value.startsWith("{bcrypt}");
     }
 }

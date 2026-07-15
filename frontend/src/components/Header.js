@@ -12,10 +12,6 @@ import {
 import { getProfileImageSrc } from "../utils/profileImage";
 import "./Header.css";
 
-function getLoginUserId() {
-  return localStorage.getItem("userId") || localStorage.getItem("loginUserId");
-}
-
 const NOTIFICATION_POLLING_INTERVAL = 15000;
 
 function normalizeNotification(notification) {
@@ -67,7 +63,7 @@ function Header() {
     adminMode,
     toggleAdminMode,
   } = useAuth();
-  const currentUserId = authUserId || getLoginUserId();
+  const currentUserId = authUserId;
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isNotifOpen, setIsNotifOpen] = useState(false);
   const [isProfileOpen, setIsProfileOpen] = useState(false);
@@ -141,9 +137,9 @@ function Header() {
     .slice(0, 1)
     .toUpperCase();
 
-  const handleLogout = () => {
+  const handleLogout = async () => {
     setIsProfileOpen(false);
-    logout();
+    await logout();
     navigate("/login");
   };
 

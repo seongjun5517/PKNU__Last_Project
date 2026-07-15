@@ -1,0 +1,20 @@
+# 1. path: 데이터셋 최상위 폴더의 '절대 경로'를 적어주는 것이 가장 안전합니다.
+path: ./custom_dataset
+
+
+# 2. train: path를 기준으로 학습용 이미지가 있는 폴더의 상대 경로입니다.
+train: images/train  
+
+
+# 3. val: path를 기준으로 검증(테스트)용 이미지가 있는 폴더의 상대 경로입니다.
+val: images/val      
+
+
+# 4. nc (Number of Classes): 내가 탐지하고 싶은 객체의 총 개수입니다. 
+# - (예: 고양이, 강아지 2개면 2)
+nc: 3
+
+
+# 5. names: 탐지할 객체의 이름들입니다. 리스트 순서대로 ID 0번, ID 1번이 됩니다.
+names: ['bi','ato', 'acne']
+
