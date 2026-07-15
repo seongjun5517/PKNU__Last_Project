@@ -132,7 +132,7 @@ services:
     expose:
       - "5001"
     volumes:
-      - ${CHATBOT_DATA_DIR:-./chatbot-flask/data}:/app/data:ro
+      - ${CHATBOT_DATA_DIR:-./chatbot-flask/data}:/app/data
     healthcheck:
       test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:5001/health', timeout=5)"]
       interval: 10s

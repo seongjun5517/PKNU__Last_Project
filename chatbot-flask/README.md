@@ -50,4 +50,4 @@ CPU 서버에서는 프로젝트 루트에서 다음 구성을 사용합니다.
 docker compose up -d --build
 ```
 
-Ollama는 외부 포트로 공개되지 않고 Docker 내부에서만 접근합니다. `ollama-init` 서비스가 `gemma3:4b`와 `nomic-embed-text` 모델을 준비하며, 다운로드된 모델은 `ollama_models` 볼륨에 보존됩니다.
+Ollama는 외부 포트로 공개되지 않고 Docker 내부에서만 접근합니다. `ollama-init` 서비스가 `gemma3:4b`와 `nomic-embed-text` 모델을 준비하며, 다운로드된 모델은 `ollama_models` 볼륨에 보존됩니다. Chroma는 실행 중 SQLite 잠금과 메타데이터를 기록하므로 `CHATBOT_DATA_DIR`에는 쓰기 권한이 필요합니다.
