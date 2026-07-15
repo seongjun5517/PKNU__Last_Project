@@ -67,7 +67,6 @@ services:
       TZ: Asia/Seoul
       ANALYSIS_IMAGE_DIR: /app/uploads/analysis
       MODEL_PATH: /app/models/last_model/best.pt
-      YOLO_DEVICE: ${YOLO_DEVICE:-cpu}
     expose:
       - "5000"
     volumes:

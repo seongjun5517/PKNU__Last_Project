@@ -6,7 +6,6 @@ from collections import Counter
 from ultralytics import YOLO
 import os
 import uuid
-import torch
 from flask import send_from_directory
 
 
@@ -32,10 +31,7 @@ def request_too_large(_error):
 MODEL_PATH = os.path.abspath(
     os.getenv("MODEL_PATH", os.path.join(BASE_DIR, "models", "last_model", "best.pt"))
 )
-YOLO_DEVICE = os.getenv(
-    "YOLO_DEVICE",
-    "0" if torch.cuda.is_available() else "cpu"
-)
+YOLO_DEVICE = "cpu"
 model = YOLO(MODEL_PATH)
 
 
@@ -65,7 +61,6 @@ def health():
     return jsonify({
         "status": "ok",
         "device": YOLO_DEVICE,
-        "cudaAvailable": torch.cuda.is_available(),
     })
 
 

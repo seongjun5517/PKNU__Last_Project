@@ -8,7 +8,7 @@ ENV PYTHONDONTWRITEBYTECODE=1 \
 
 ARG PYTORCH_VERSION=2.12.1
 ARG TORCHVISION_VERSION=0.27.1
-ARG PYTORCH_INDEX_URL=https://download.pytorch.org/whl/cu126
+ARG PYTORCH_INDEX_URL=https://download.pytorch.org/whl/cpu
 
 COPY requirements.txt ./
 RUN pip install --no-cache-dir \

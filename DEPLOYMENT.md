@@ -1,13 +1,12 @@
 # 배포 절차
 
-이 문서는 GPU가 연결된 Linux VM에서 전체 서비스를 Docker Compose로 실행하는 기준입니다.
+이 문서는 일반 CPU Linux VM에서 전체 서비스를 Docker Compose로 실행하는 기준입니다.
 
 ## 1. 서버 준비
 
 다음 항목이 준비돼 있어야 합니다.
 
 - Docker Engine과 Docker Compose 플러그인
-- NVIDIA 드라이버와 NVIDIA Container Toolkit
 - 프로젝트 전체 파일
 - `flask/models/last_model/best.pt`
 - `chatbot-flask/data/Chroma_DB_Skin_v6` 실제 폴더
@@ -37,10 +36,10 @@ sql/init.sql
 
 하나라도 빠지면 YOLO 또는 챗봇 상태 검사가 실패하고 프런트 서비스가 시작되지 않습니다.
 
-## 4. GPU 배포 시작
+## 4. CPU 배포 시작
 
 ```bash
-docker compose -f docker-compose.yml -f docker-compose.gpu.yml up -d --build
+docker compose up -d --build
 ```
 
 최초 실행에서는 Ollama 이미지와 두 모델을 내려받기 때문에 시간이 오래 걸릴 수 있습니다. 이후에는 `ollama_models` 볼륨을 재사용합니다.
@@ -48,12 +47,12 @@ docker compose -f docker-compose.yml -f docker-compose.gpu.yml up -d --build
 ## 5. 상태 확인
 
 ```bash
-docker compose -f docker-compose.yml -f docker-compose.gpu.yml ps
-docker compose -f docker-compose.yml -f docker-compose.gpu.yml logs --tail=100 spring
-docker compose -f docker-compose.yml -f docker-compose.gpu.yml logs --tail=100 yolo-flask
-docker compose -f docker-compose.yml -f docker-compose.gpu.yml logs --tail=100 ollama-init
-docker compose -f docker-compose.yml -f docker-compose.gpu.yml logs --tail=100 chatbot-flask
-docker compose -f docker-compose.yml -f docker-compose.gpu.yml logs --tail=100 frontend
+docker compose ps
+docker compose logs --tail=100 spring
+docker compose logs --tail=100 yolo-flask
+docker compose logs --tail=100 ollama-init
+docker compose logs --tail=100 chatbot-flask
+docker compose logs --tail=100 frontend
 ```
 
 `mysql`, `spring`, `yolo-flask`, `ollama`, `chatbot-flask`, `frontend`가 `healthy` 상태인지 확인합니다. `ollama-init`은 모델 준비가 끝나면 종료 코드 `0`으로 끝나는 것이 정상입니다.

@@ -322,26 +322,14 @@ function Analysis1() {
     const { FaceLandmarker, FilesetResolver, DrawingUtils } = mediaPipe;
     const filesetResolver = await FilesetResolver.forVisionTasks(MEDIAPIPE_WASM_URL);
 
-    try {
-      faceLandmarkerRef.current = await FaceLandmarker.createFromOptions(filesetResolver, {
-        baseOptions: {
-          modelAssetPath: MEDIAPIPE_MODEL_URL,
-          delegate: "GPU",
-        },
-        outputFaceBlendshapes: false,
-        runningMode: "VIDEO",
-        numFaces: 5,
-      });
-    } catch (err) {
-      faceLandmarkerRef.current = await FaceLandmarker.createFromOptions(filesetResolver, {
-        baseOptions: {
-          modelAssetPath: MEDIAPIPE_MODEL_URL,
-        },
-        outputFaceBlendshapes: false,
-        runningMode: "VIDEO",
-        numFaces: 5,
-      });
-    }
+    faceLandmarkerRef.current = await FaceLandmarker.createFromOptions(filesetResolver, {
+      baseOptions: {
+        modelAssetPath: MEDIAPIPE_MODEL_URL,
+      },
+      outputFaceBlendshapes: false,
+      runningMode: "VIDEO",
+      numFaces: 5,
+    });
 
     mediaPipeRef.current = { FaceLandmarker, DrawingUtils };
     return mediaPipeRef.current;

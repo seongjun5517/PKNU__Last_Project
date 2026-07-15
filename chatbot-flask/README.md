@@ -44,10 +44,10 @@ chatbot-flask/data/
 
 이 데이터는 용량 때문에 Git에 포함되지 않으므로 서버에 별도로 복사해야 합니다. 다른 위치에 저장했다면 루트 `.env`의 `CHATBOT_DATA_DIR`에 해당 경로를 지정합니다.
 
-GPU 서버에서는 프로젝트 루트에서 다음 구성을 사용합니다.
+CPU 서버에서는 프로젝트 루트에서 다음 구성을 사용합니다.
 
 ```bash
-docker compose -f docker-compose.yml -f docker-compose.gpu.yml up -d --build
+docker compose up -d --build
 ```
 
 Ollama는 외부 포트로 공개되지 않고 Docker 내부에서만 접근합니다. `ollama-init` 서비스가 `gemma3:4b`와 `nomic-embed-text` 모델을 준비하며, 다운로드된 모델은 `ollama_models` 볼륨에 보존됩니다.
