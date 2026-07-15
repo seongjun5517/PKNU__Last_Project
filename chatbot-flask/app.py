@@ -115,15 +115,17 @@ def format_documents(documents):
 
 @app.get("/health")
 def health():
-    return jsonify({
-        "status": "ok" if runtime["ready"] else "not_initialized",
+    chroma_exists = CHROMA_PATH.exists()
+    ingredient_exists = INGREDIENT_PATH.exists()
+    assets_ready = chroma_exists and ingredient_exists
+
+    response = jsonify({
+        "status": "ok" if assets_ready else "missing_assets",
         "ready": runtime["ready"],
-        "error": runtime["error"],
-        "chromaPath": str(CHROMA_PATH),
-        "chromaExists": CHROMA_PATH.exists(),
-        "chatModel": CHAT_MODEL,
-        "embeddingModel": EMBEDDING_MODEL,
+        "chromaExists": chroma_exists,
+        "ingredientExists": ingredient_exists,
     })
+    return response, 200 if assets_ready else 503
 
 
 @app.post("/chat")

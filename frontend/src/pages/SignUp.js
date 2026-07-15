@@ -5,6 +5,10 @@ import {
   uploadMemberProfileImage,
 } from "../springApi/memberSpringBootApi";
 import "./SignUp.css";
+import {
+  isImageFileTooLarge,
+  MAX_IMAGE_FILE_SIZE_LABEL,
+} from "../config/uploadLimits";
 
 function SignUp() {
   const navigate = useNavigate();
@@ -37,6 +41,14 @@ function SignUp() {
     const { name, value, files } = event.target;
     const nextValue = files ? files[0] || null : value;
 
+    if (files && isImageFileTooLarge(nextValue)) {
+      setForm((prevForm) => ({ ...prevForm, [name]: null }));
+      setMessage(`프로필 이미지는 ${MAX_IMAGE_FILE_SIZE_LABEL} 이하만 선택할 수 있습니다.`);
+      event.target.value = "";
+      return;
+    }
+
+    setMessage("");
     setForm((prevForm) => ({
       ...prevForm,
       [name]: nextValue,
@@ -83,7 +95,11 @@ function SignUp() {
       setMessage("회원가입이 완료되었습니다.");
       navigate("/login");
     } catch (error) {
-      setMessage(error.response?.data || "서버와 연결할 수 없습니다.");
+      setMessage(
+        error.response?.status === 413
+          ? `프로필 이미지는 ${MAX_IMAGE_FILE_SIZE_LABEL} 이하만 업로드할 수 있습니다.`
+          : error.response?.data || "서버와 연결할 수 없습니다."
+      );
     }
   };
 

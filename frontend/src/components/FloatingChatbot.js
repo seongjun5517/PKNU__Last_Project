@@ -1,5 +1,6 @@
 import { useMemo, useRef, useState } from "react";
 import { clearChatSession, sendChatMessage } from "../flaskapi/ChatbotApi";
+import { getApiErrorMessage } from "../utils/apiError";
 import "./FloatingChatbot.css";
 
 const createSessionId = () => window.crypto?.randomUUID?.() || `skin-chat-${Date.now()}`;
@@ -37,7 +38,12 @@ function FloatingChatbot() {
       const response = await sendChatMessage(sessionId, message);
       setMessages((current) => [...current, { role: "bot", text: response.data.answer }]);
     } catch (error) {
-      const errorMessage = error.response?.data?.error || "챗봇 서버에 연결할 수 없습니다. 잠시 후 다시 시도해 주세요.";
+      const errorMessage = getApiErrorMessage(error, {
+        timeout: "답변 생성 시간이 초과되었습니다. 질문을 줄여서 다시 시도해주세요.",
+        unavailable: "챗봇을 준비하고 있습니다. 잠시 후 다시 시도해주세요.",
+        network: "챗봇 서버에 연결할 수 없습니다. 네트워크 상태를 확인해주세요.",
+        fallback: "답변을 생성하지 못했습니다. 잠시 후 다시 시도해주세요.",
+      });
       setMessages((current) => [...current, { role: "error", text: errorMessage }]);
     } finally {
       setIsSending(false);
