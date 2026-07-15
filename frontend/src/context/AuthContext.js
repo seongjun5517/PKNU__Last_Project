@@ -1,68 +1,78 @@
 import { createContext, useContext, useEffect, useMemo, useState } from "react";
-import { springApi } from "../config/axiosInstance";
+import {
+  getCurrentMember,
+  loginMember,
+  logoutMember,
+} from "../springApi/memberSpringBootApi";
 
 const AuthContext = createContext();
 const ADMIN_MODE_STORAGE_KEY = "adminMode";
-
-function getStoredUser() {
-  try {
-    return JSON.parse(localStorage.getItem("loginUser") || "null");
-  } catch (error) {
-    return null;
-  }
-}
 
 function getUserAuthority(user) {
   if (!user) return "";
 
   return String(
-    user.manAuth ||
+    user.role ||
+      user.manAuth ||
       user.man_auth ||
-      user.userManAuth ||
-      user.user_man_auth ||
-      (user.userMan ? "SUPER_ADMIN" : "")
+      ""
   ).toUpperCase();
 }
 
+function saveLegacyUserCache(user) {
+  // 기존 userId 파라미터 기반 화면을 위한 임시 호환 값이다.
+  localStorage.setItem("userId", user.userId);
+  localStorage.setItem("loginUserId", user.userId);
+  localStorage.setItem("loginUser", JSON.stringify(user));
+}
+
+function clearLegacyUserCache() {
+  localStorage.removeItem("userId");
+  localStorage.removeItem("loginUserId");
+  localStorage.removeItem("loginUser");
+  localStorage.removeItem(ADMIN_MODE_STORAGE_KEY);
+}
+
 export const AuthProvider = ({ children }) => {
-  const [userId, setUserId] = useState(localStorage.getItem("userId"));
-  const [currentUser, setCurrentUser] = useState(getStoredUser);
+  const [currentUser, setCurrentUser] = useState(null);
+  const [authLoading, setAuthLoading] = useState(true);
   const [adminMode, setAdminMode] = useState(
     localStorage.getItem(ADMIN_MODE_STORAGE_KEY) === "true"
   );
 
+  const userId = currentUser?.userId || null;
   const isSuperAdmin = useMemo(
     () => getUserAuthority(currentUser) === "SUPER_ADMIN",
     [currentUser]
   );
 
   useEffect(() => {
-    if (!userId) {
-      setCurrentUser(null);
-      setAdminMode(false);
-      localStorage.removeItem("loginUser");
-      localStorage.removeItem(ADMIN_MODE_STORAGE_KEY);
-      return;
-    }
-
     let isMounted = true;
 
-    springApi
-      .get(`/user/${userId}`)
+    getCurrentMember()
       .then((response) => {
         if (!isMounted) return;
 
         setCurrentUser(response.data);
-        localStorage.setItem("loginUser", JSON.stringify(response.data));
+        saveLegacyUserCache(response.data);
       })
-      .catch((error) => {
-        console.error("로그인 사용자 정보 조회 실패:", error);
+      .catch(() => {
+        if (!isMounted) return;
+
+        setCurrentUser(null);
+        setAdminMode(false);
+        clearLegacyUserCache();
+      })
+      .finally(() => {
+        if (isMounted) {
+          setAuthLoading(false);
+        }
       });
 
     return () => {
       isMounted = false;
     };
-  }, [userId]);
+  }, []);
 
   useEffect(() => {
     if (!isSuperAdmin && adminMode) {
@@ -71,24 +81,24 @@ export const AuthProvider = ({ children }) => {
     }
   }, [adminMode, isSuperAdmin]);
 
-  const login = (id, user = null) => {
-    localStorage.setItem("userId", id);
-    localStorage.setItem("loginUserId", id);
-    if (user) {
-      localStorage.setItem("loginUser", JSON.stringify(user));
-      setCurrentUser(user);
-    }
-    setUserId(id);
+  const login = async (credentials) => {
+    await loginMember(credentials);
+    const response = await getCurrentMember();
+    const user = response.data;
+
+    setCurrentUser(user);
+    saveLegacyUserCache(user);
+    return user;
   };
 
-  const logout = () => {
-    localStorage.removeItem("userId");
-    localStorage.removeItem("loginUserId");
-    localStorage.removeItem("loginUser");
-    localStorage.removeItem(ADMIN_MODE_STORAGE_KEY);
-    setUserId(null);
-    setCurrentUser(null);
-    setAdminMode(false);
+  const logout = async () => {
+    try {
+      await logoutMember();
+    } finally {
+      clearLegacyUserCache();
+      setCurrentUser(null);
+      setAdminMode(false);
+    }
   };
 
   const toggleAdminMode = () => {
@@ -114,6 +124,7 @@ export const AuthProvider = ({ children }) => {
       value={{
         userId,
         currentUser,
+        authLoading,
         isSuperAdmin,
         adminMode: isSuperAdmin && adminMode,
         login,

@@ -1,6 +1,5 @@
 import { Link, useNavigate } from "react-router-dom";
 import { useState } from "react";
-import { loginMember } from "../springApi/memberSpringBootApi";
 import "./LoginPage.css";
 import { useAuth } from "../context/AuthContext";
 
@@ -37,16 +36,14 @@ function LoginPage() {
     };
 
     try {
-      const response = await loginMember(loginPayload);
-      
-      // 3. 여기서 전역 상태(Context)를 업데이트합니다.
-      // login() 내부에서 localStorage.setItem도 처리되도록 
-      // AuthContext.js를 작성했으므로 여기선 login(id)만 호출하면 됩니다.
-      login(loginPayload.user_id, response.data);
-      
+      await login(loginPayload);
       navigate("/main");
     } catch (error) {
-      setMessage(error.response?.data || "서버와 연결할 수 없습니다.");
+      setMessage(
+        error.response?.data?.message === "INVALID_CREDENTIALS"
+          ? "아이디 또는 비밀번호가 올바르지 않습니다."
+          : "서버와 연결할 수 없습니다."
+      );
     }
   };
 
