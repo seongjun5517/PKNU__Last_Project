@@ -8,6 +8,7 @@ import "./SkinTypeResultPage.css";
 import AnalysisFeedback from "../components/AnalysisFeedback";
 import { getOliveYoungSearchUrl } from "../utils/oliveYoung";
 import { useAuth } from "../context/AuthContext";
+import FloatingChatbot from "../components/FloatingChatbot";
 
 function getFaceResult(results, faceName) {
   return results.find((result) => result.stypeFace === faceName);
@@ -352,6 +353,7 @@ function SkinTypeResultPage() {
           </>
         )}
       </main>
+      <FloatingChatbot />
     </div>
   );
 }

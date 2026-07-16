@@ -15,7 +15,7 @@ function Layout({ children }) {
       {showHeader && <Header />}
       <div className="app_content">{children}</div>
       <Footer />
-      <FloatingChatbot />
+      {/* <FloatingChatbot /> */}
     </div>
   );
 }

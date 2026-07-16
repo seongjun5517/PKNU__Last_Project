@@ -7,6 +7,7 @@ import {
 } from "../springApi/skinTypeSpringBootApi";
 import { useAuth } from "../context/AuthContext";
 import "./SkinTypeSurvey.css";
+import FloatingChatbot from "../components/FloatingChatbot";
 
 const AREA_LABELS = {
   COMMON: "공통",
@@ -446,6 +447,7 @@ function SkinTypeSurvey() {
         </section>
       </main>
       )}
+      <FloatingChatbot />
     </div>
   );
 }

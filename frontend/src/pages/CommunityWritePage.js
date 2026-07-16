@@ -6,6 +6,7 @@ import {
 } from "../springApi/communitySpringBootApi";
 import { useAuth } from "../context/AuthContext";
 import "./CommunityWritePage.css";
+import FloatingChatbot from "../components/FloatingChatbot";
 
 function CommunityWritePage() {
   const navigate = useNavigate();
@@ -151,6 +152,7 @@ function CommunityWritePage() {
           </div>
         </form>
       </section>
+      <FloatingChatbot />
     </main>
   );
 }

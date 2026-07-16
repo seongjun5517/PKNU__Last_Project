@@ -9,6 +9,7 @@ import {
   scrapCommunityPost,
 } from "../springApi/communitySpringBootApi";
 import "./CommunityPage.css";
+import FloatingChatbot from "../components/FloatingChatbot";
 
 // "2026-07-07 15:30:00" 이 데이터를 >> 7.7 15:30 이렇게 보여주는 함수
 function formatPostDate(value) {
@@ -291,7 +292,10 @@ function CommunityPage() {
           </section>
         </div>
       </section>
+      
+      <FloatingChatbot />
     </main>
+    
   );
 }
 

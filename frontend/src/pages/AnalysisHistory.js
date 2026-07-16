@@ -15,6 +15,7 @@ import { getDeepHistory } from "../springApi/deepSpringBootApi";
 import { getSkinTypeHistory } from "../springApi/skinTypeSpringBootApi";
 import { useAuth } from "../context/AuthContext";
 import "./AnalysisHistory.css";
+import FloatingChatbot from "../components/FloatingChatbot";
 
 const CLASS_META = {
   ato: { label: "아토피", color: "#e07a8b" },
@@ -214,6 +215,8 @@ export default function AnalysisHistory() {
         </div>
         <SkinTypeBarChart skinTypeRecords={skinTypeHistory} />
       </div>
+      
+      <FloatingChatbot />
     </div>
   );
 }

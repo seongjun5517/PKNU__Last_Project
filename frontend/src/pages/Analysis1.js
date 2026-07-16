@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from "react";
+import FloatingChatbot from "../components/FloatingChatbot";
 import {
   deleteLatestPredict,
   getTodayPredict,
@@ -924,6 +925,8 @@ function Analysis1() {
           />
         </div>
       )}
+      
+      <FloatingChatbot />
     </div>
   );
 }

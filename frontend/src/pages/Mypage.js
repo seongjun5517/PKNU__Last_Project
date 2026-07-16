@@ -11,6 +11,7 @@ import {
   isImageFileTooLarge,
   MAX_IMAGE_FILE_SIZE_LABEL,
 } from "../config/uploadLimits";
+import FloatingChatbot from "../components/FloatingChatbot";
 
 
 const INFO_MENU = [
@@ -778,6 +779,7 @@ export default function Mypage() {
             )}
         </div>
       </div>
+      <FloatingChatbot />
     </div>
   );
 }

@@ -23,6 +23,7 @@ import TodoList from "../components/main/TodoList";
 import UpcomingList from "../components/main/UpcomingList";
 import AnalysisButtons from "../components/main/AnalysisButtons";
 import { getAnalysisImageUrl } from "../utils/analysisImage";
+import FloatingChatbot from "../components/FloatingChatbot";
 
 function MainPage() {
   const { userId, adminMode } = useAuth();
@@ -455,6 +456,7 @@ function MainPage() {
           )}
         </div>
       </div>
+      <FloatingChatbot />
     </div>
   );
 }
