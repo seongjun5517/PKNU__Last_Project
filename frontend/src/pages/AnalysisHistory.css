@@ -12,10 +12,36 @@
 }
 
 .analysis_history_grid .card h3 {
-  margin: 0 0 12px;
+  margin: 0;
   font-size: 15px;
   font-weight: 600;
   color: #333;
+}
+
+.analysis_chart_heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+
+.analysis_chart_unit {
+  flex: 0 0 auto;
+  border-radius: 999px;
+  padding: 4px 9px;
+  font-size: 11px;
+  font-weight: 700;
+}
+
+.analysis_chart_unit.count {
+  color: #765342;
+  background: #f8eee7;
+}
+
+.analysis_chart_unit.percent {
+  color: #526d58;
+  background: #edf4ee;
 }
 
 .analysis_empty {

@@ -30,31 +30,28 @@ const CLASS_META = {
 function DailyLineChart({ classKey, dailyRecords }) {
   const meta = CLASS_META[classKey];
 
-  // dailyRecords: [{ date, detections: [{ dtypeResult, dtypeCnt }, ...] }, ...]
-  // % = 그날 탐지된 전체 개수 중 해당 클래스가 차지하는 비율로 계산
-  //   (deep 테이블에 confidence 값이 따로 없다는 전제. 있다면 그 값을 바로 써주세요.)
-    const chartData = useMemo(() => {
+  // dailyRecords: [{ date, detections: [{ dtype_result, dtype_cnt }, ...] }, ...]
+  const chartData = useMemo(() => {
     return dailyRecords.map((day) => {
-        const total = day.detections.reduce((sum, d) => sum + (d.dtype_cnt || 0), 0);
-        const target = day.detections.find((d) => d.dtype_result === classKey);
-        const cnt = target?.dtype_cnt || 0;
-        const percent = total > 0 ? Math.round((cnt / total) * 1000) / 10 : 0;
-        return { label: day.date.slice(5, 10), percent, cnt };
+      const count = day.detections
+        .filter((d) => d.dtype_result === classKey)
+        .reduce((sum, d) => sum + Number(d.dtype_cnt || 0), 0);
+      return { label: day.date.slice(5, 10), count };
     });
-    }, [dailyRecords, classKey]);
+  }, [dailyRecords, classKey]);
 
   const CustomTooltip = ({ active, payload, label }) => {
     if (!active || !payload?.length) return null;
-    const { percent, cnt } = payload[0].payload;
+    const { count } = payload[0].payload;
     return (
       <div className="chart_tooltip_box">
         <div className="chart_tooltip_date">{label}</div>
-        <div>{percent}% · {cnt}개 탐지</div>
+        <div>{count}개 탐지</div>
       </div>
     );
   };
 
-  if (chartData.length === 0 || chartData.every((d) => d.cnt === 0)) {
+  if (chartData.length === 0 || chartData.every((d) => d.count === 0)) {
     return <p className="analysis_empty">아직 {meta.label} 관련 분석 기록이 없어요.</p>;
   }
 
@@ -63,11 +60,17 @@ function DailyLineChart({ classKey, dailyRecords }) {
       <LineChart data={chartData} margin={{ top: 10, right: 20, left: 0, bottom: 0 }}>
         <CartesianGrid strokeDasharray="3 3" vertical={false} />
         <XAxis dataKey="label" tick={{ fontSize: 12 }} />
-        <YAxis domain={[0, 100]} tick={{ fontSize: 12 }} unit="%" />
+        <YAxis
+          domain={[0, (dataMax) => Math.max(1, Math.ceil(dataMax))]}
+          allowDecimals={false}
+          tick={{ fontSize: 12 }}
+          tickFormatter={(value) => `${value}개`}
+        />
         <Tooltip content={<CustomTooltip />} />
         <Line
           type="monotone"
-          dataKey="percent"
+          dataKey="count"
+          name={`${meta.label} 탐지 개수`}
           stroke={meta.color}
           strokeWidth={2}
           dot={{ r: 4 }}
@@ -186,10 +189,34 @@ export default function AnalysisHistory() {
 
   return (
     <div className="analysis_history_grid">
-      <div className="card"><h3>아토피 추이</h3><DailyLineChart classKey="ato" dailyRecords={deepHistory} /></div>
-      <div className="card"><h3>비립종 추이</h3><DailyLineChart classKey="bi" dailyRecords={deepHistory} /></div>
-      <div className="card"><h3>여드름 추이</h3><DailyLineChart classKey="acne" dailyRecords={deepHistory} /></div>
-      <div className="card"><h3>피부 타입 분포</h3><SkinTypeBarChart skinTypeRecords={skinTypeHistory} /></div>
+      <div className="card">
+        <div className="analysis_chart_heading">
+          <h3>아토피 추이</h3>
+          <span className="analysis_chart_unit count">단위: 개</span>
+        </div>
+        <DailyLineChart classKey="ato" dailyRecords={deepHistory} />
+      </div>
+      <div className="card">
+        <div className="analysis_chart_heading">
+          <h3>비립종 추이</h3>
+          <span className="analysis_chart_unit count">단위: 개</span>
+        </div>
+        <DailyLineChart classKey="bi" dailyRecords={deepHistory} />
+      </div>
+      <div className="card">
+        <div className="analysis_chart_heading">
+          <h3>여드름 추이</h3>
+          <span className="analysis_chart_unit count">단위: 개</span>
+        </div>
+        <DailyLineChart classKey="acne" dailyRecords={deepHistory} />
+      </div>
+      <div className="card">
+        <div className="analysis_chart_heading">
+          <h3>피부 타입 분포</h3>
+          <span className="analysis_chart_unit percent">단위: %</span>
+        </div>
+        <SkinTypeBarChart skinTypeRecords={skinTypeHistory} />
+      </div>
     </div>
   );
 }

@@ -100,15 +100,19 @@ def predict():
     ]
 
     # ---------- 결과 이미지 그리기 (박스만) ----------
-    img_result = img.copy()
+    # img_result = img.copy()
 
-    for box in result.boxes:
-        x1, y1, x2, y2 = map(int, box.xyxy[0])
-        cls_id = int(box.cls[0])
-        cls_name = names[cls_id]
-        color = get_color(cls_name)
+    # for box in result.boxes:
+    #     x1, y1, x2, y2 = map(int, box.xyxy[0])
+    #     cls_id = int(box.cls[0])
+    #     cls_name = names[cls_id]
+    #     color = get_color(cls_name)
 
-        draw_box(img_result, x1, y1, x2, y2, color)
+    #     draw_box(img_result, x1, y1, x2, y2, color)
+
+    # ---------- 다각형 박스로 그리기
+    img_result = results[0].plot(labels=False, conf=False, boxes=False)
+
 
     _, buffer = cv2.imencode(".jpg", img_result)
     img_base64 = base64.b64encode(buffer).decode("utf-8")
