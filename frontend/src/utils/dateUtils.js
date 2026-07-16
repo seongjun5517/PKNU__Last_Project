@@ -16,7 +16,3 @@ export function formatDateLabel(dateKey) {
 export function sortByTime(list) {
   return [...list].sort((a, b) => (a.time || "").localeCompare(b.time || ""));
 }
-
-export function getLoginUserId() {
-  return localStorage.getItem("loginUserId");
-}

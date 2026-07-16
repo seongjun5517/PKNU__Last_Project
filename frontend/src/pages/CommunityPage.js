@@ -24,8 +24,7 @@ function formatPostDate(value) {
 function CommunityPage() {
   const navigate = useNavigate();
   const { userId, adminMode } = useAuth();
-  const loginUserId =
-    userId || localStorage.getItem("userId") || localStorage.getItem("loginUserId");
+  const loginUserId = userId;
 
   // 현재 선택된 게시판 카테고리. "all"이면 전체 카테고리
   const [selectedCategoryCode, setSelectedCategoryCode] = useState("all");
@@ -60,7 +59,7 @@ function CommunityPage() {
         if (loginUserId) {
           const scrapStatuses = await Promise.all(
             postList.map((post) =>
-              getCommunityPostScrapStatus(post.postCode, loginUserId)
+              getCommunityPostScrapStatus(post.postCode)
                 .then((response) => [post.postCode, Boolean(response.data)])
                 .catch(() => [post.postCode, false])
             )
@@ -120,7 +119,7 @@ function CommunityPage() {
     setScrappingPostCodes((current) => ({ ...current, [postCode]: true }));
 
     try {
-      const response = await scrapCommunityPost(postCode, loginUserId);
+      const response = await scrapCommunityPost(postCode);
 
       setPosts((currentPosts) =>
         currentPosts.map((post) =>
@@ -153,7 +152,7 @@ function CommunityPage() {
     setDeletingPostCodes((current) => ({ ...current, [postCode]: true }));
 
     try {
-      await deleteCommunityPost(postCode, loginUserId);
+      await deleteCommunityPost(postCode);
       setPosts((currentPosts) =>
         currentPosts.filter((post) => post.postCode !== postCode)
       );

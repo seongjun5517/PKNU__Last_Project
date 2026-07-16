@@ -4,6 +4,7 @@ import java.util.Map;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -24,26 +25,33 @@ public class FeedbackController {
     private final FeedbackService feedbackService;
 
     @PostMapping
-    public ResponseEntity<?> create(@RequestBody FeedbackCreateRequest request) {
+    public ResponseEntity<?> create(
+            Authentication authentication,
+            @RequestBody FeedbackCreateRequest request) {
         try {
-            return ResponseEntity.status(HttpStatus.CREATED).body(feedbackService.create(request));
+            return ResponseEntity.status(HttpStatus.CREATED)
+                    .body(feedbackService.create(authentication.getName(), request));
         } catch (IllegalStateException exception) {
-            return ResponseEntity.status(HttpStatus.CONFLICT).body(Map.of("message", exception.getMessage()));
+            return ResponseEntity.status(HttpStatus.CONFLICT)
+                    .body(Map.of("message", exception.getMessage()));
         } catch (IllegalArgumentException exception) {
-            return ResponseEntity.badRequest().body(Map.of("message", exception.getMessage()));
+            return ResponseEntity.badRequest()
+                    .body(Map.of("message", exception.getMessage()));
         }
     }
 
     @GetMapping("/status")
     public ResponseEntity<?> getSubmissionStatus(
-            @RequestParam String userId,
+            Authentication authentication,
             @RequestParam String feedbackType) {
         try {
             return ResponseEntity.ok(Map.of(
                     "submitted",
-                    feedbackService.hasSubmittedForLatestAnalysis(userId, feedbackType)));
+                    feedbackService.hasSubmittedForLatestAnalysis(
+                            authentication.getName(), feedbackType)));
         } catch (IllegalArgumentException exception) {
-            return ResponseEntity.badRequest().body(Map.of("message", exception.getMessage()));
+            return ResponseEntity.badRequest()
+                    .body(Map.of("message", exception.getMessage()));
         }
     }
 }

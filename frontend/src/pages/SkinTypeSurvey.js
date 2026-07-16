@@ -5,6 +5,7 @@ import {
   getLatestSkinTypeResult,
   saveSkinTypeResult,
 } from "../springApi/skinTypeSpringBootApi";
+import { useAuth } from "../context/AuthContext";
 import "./SkinTypeSurvey.css";
 
 const AREA_LABELS = {
@@ -28,11 +29,6 @@ const ZONE_LABELS = {
 // createEmptyScores: 각 피부 타입 점수를 0으로 초기화한 객체 생성
 function createEmptyScores() {
   return SCORE_KEYS.reduce((scores, key) => ({ ...scores, [key]: 0 }), {});
-}
-
-// getLoginUserId: localStorage에 저장된 로그인 사용자 아이디 조회
-function getLoginUserId() {
-  return localStorage.getItem("loginUserId");
 }
 
 // addScores: 선택한 답변의 점수를 T존/U존 누적 점수에 더함
@@ -182,6 +178,7 @@ function groupQuestionsBySection(questions) {
 
 function SkinTypeSurvey() {
   const navigate = useNavigate();
+  const { userId, authLoading } = useAuth();
 
   // answers: 사용자가 선택한 답변 저장 객체 예) { Q001: "A2", Q002: "A4" }
   const [answers, setAnswers] = useState({});
@@ -198,13 +195,12 @@ function SkinTypeSurvey() {
 
   useEffect(() => {
     const checkSavedResult = async () => {
+      if (authLoading) return;
       if (sessionStorage.getItem("skipSkinTypeSavedResultCheck") === "true") {
         sessionStorage.removeItem("skipSkinTypeSavedResultCheck");
         setCheckingSavedResult(false);
         return;
       }
-
-      const userId = getLoginUserId();
 
       if (!userId) {
         setCheckingSavedResult(false);
@@ -212,7 +208,7 @@ function SkinTypeSurvey() {
       }
 
       try {
-        const response = await getLatestSkinTypeResult(userId);
+        const response = await getLatestSkinTypeResult();
         if ((response.data || []).length > 0) {
           navigate("/analysis/result");
           return;
@@ -225,7 +221,7 @@ function SkinTypeSurvey() {
     };
 
     checkSavedResult();
-  }, [navigate]);
+  }, [authLoading, navigate, userId]);
 
   // currentGroup: 현재 페이지에서 보여줄 섹션 그룹
   const currentGroup = groupedQuestions[currentSectionIndex];
@@ -273,7 +269,6 @@ function SkinTypeSurvey() {
       return;
     }
 
-    const userId = getLoginUserId();
     if (!userId) {
       alert("로그인 후 피부 타입 진단 결과를 저장할 수 있습니다.");
       navigate("/login");
@@ -283,7 +278,7 @@ function SkinTypeSurvey() {
     const results = calculateSkinTypeResults(answers);
 
     try {
-      await saveSkinTypeResult({ userId, results });
+      await saveSkinTypeResult(results);
       navigate("/analysis/result");
     } catch (error) {
       console.error("피부 타입 진단 결과 저장 실패:", error);

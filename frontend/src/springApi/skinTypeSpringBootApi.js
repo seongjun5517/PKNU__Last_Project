@@ -1,19 +1,19 @@
 import { springApi } from "../config/axiosInstance";
 
-export const saveSkinTypeResult = (data) => springApi.post("/skin-type/results", data);
+export const saveSkinTypeResult = (results) =>
+  springApi.post("/skin-type/results", { results });
 
-export const getLatestSkinTypeResult = (userId) =>
-  springApi.get(`/skin-type/results/latest/${userId}`);
+export const getLatestSkinTypeResult = () =>
+  springApi.get(`/skin-type/results/latest`);
 
-export const getTodaySkinTypeResult = (userId) =>
-  springApi.get(`/skin-type/results/today/${userId}`);
+export const getTodaySkinTypeResult = () =>
+  springApi.get(`/skin-type/results/today`);
 
-export const deleteTodaySkinTypeResult = (userId) =>
-  springApi.delete(`/skin-type/results/today/${userId}`);
+export const deleteTodaySkinTypeResult = () =>
+  springApi.delete(`/skin-type/results/today`);
 
-export const deleteLatestSkinTypeResult = (userId) =>
-  springApi.delete(`/skin-type/results/latest/${userId}`);
+export const deleteLatestSkinTypeResult = () =>
+  springApi.delete(`/skin-type/results/latest`);
 
-// GET /skin-type/results/history/{userId}  ← 백엔드에 아직 없음, 추가 필요
-export const getSkinTypeHistory = (userId) =>
-  springApi.get(`/skin-type/results/history/${userId}`);
+export const getSkinTypeHistory = () =>
+  springApi.get(`/skin-type/results/history`);

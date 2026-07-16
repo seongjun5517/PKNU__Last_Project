@@ -28,7 +28,7 @@ function AnalysisFeedback({ feedbackType, analysisName }) {
       }
 
       try {
-        const response = await getFeedbackSubmissionStatus(userId, feedbackType);
+        const response = await getFeedbackSubmissionStatus(feedbackType);
         if (isMounted) {
           setHasSubmitted(response.data?.submitted === true);
         }
@@ -77,7 +77,6 @@ function AnalysisFeedback({ feedbackType, analysisName }) {
     try {
       setIsSubmitting(true);
       await submitFeedback({
-        userId,
         feedbackType,
         evaluation,
         comment: comment.trim() || null,

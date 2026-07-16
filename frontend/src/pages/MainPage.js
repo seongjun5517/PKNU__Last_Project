@@ -63,7 +63,7 @@ function MainPage() {
       }
 
       try {
-        const response = await getCalList(userId);
+        const response = await getCalList();
         const calendarList = Array.isArray(response.data) ? response.data : [];
 
         const fetchedData = calendarList.reduce((acc, item) => {
@@ -103,7 +103,7 @@ function MainPage() {
       }
 
       try {
-        const response = await getDeepHistory(userId);
+        const response = await getDeepHistory();
         setDeepRecords(Array.isArray(response.data) ? response.data : []);
       } catch (error) {
         console.error("피부 상태 진단 기록 로딩 실패:", error);
@@ -174,7 +174,6 @@ function MainPage() {
       normalizedTime,
       categoryId,
       payload: {
-        calUserId: userId,
         calTaskDate: `${targetDateKey}T${normalizedTime}`,
         calTitle: title,
         calIsCompleted: entryData.done ? 1 : 0,
@@ -362,7 +361,7 @@ function MainPage() {
 
     try {
       setIsDeletingDiagnosis(true);
-      await deleteDeepHistoryByDate(userId, selectedKey);
+      await deleteDeepHistoryByDate(selectedKey);
       setDeepRecords((prev) => prev.filter((record) => record.date !== selectedKey));
       alert("피부 상태 진단 기록이 삭제되었습니다.");
       return true;

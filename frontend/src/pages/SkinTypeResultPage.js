@@ -7,10 +7,7 @@ import {
 import "./SkinTypeResultPage.css";
 import AnalysisFeedback from "../components/AnalysisFeedback";
 import { getOliveYoungSearchUrl } from "../utils/oliveYoung";
-
-function getLoginUserId() {
-  return localStorage.getItem("loginUserId");
-}
+import { useAuth } from "../context/AuthContext";
 
 function getFaceResult(results, faceName) {
   return results.find((result) => result.stypeFace === faceName);
@@ -75,6 +72,7 @@ function getSkinTypeIngredientRecommendations(finalTypeName) {
 
 function SkinTypeResultPage() {
   const navigate = useNavigate();
+  const { userId, authLoading } = useAuth();
   const [results, setResults] = useState([]);
   const [loading, setLoading] = useState(true);
   const [message, setMessage] = useState("");
@@ -93,8 +91,7 @@ function SkinTypeResultPage() {
 
   useEffect(() => {
     const fetchLatestResult = async () => {
-      const userId = getLoginUserId();
-
+      if (authLoading) return;
       if (!userId) {
         setMessage("로그인 후 피부 타입 진단 결과를 확인할 수 있습니다.");
         setLoading(false);
@@ -102,7 +99,7 @@ function SkinTypeResultPage() {
       }
 
       try {
-        const response = await getLatestSkinTypeResult(userId);
+        const response = await getLatestSkinTypeResult();
         setResults(response.data || []);
       } catch (error) {
         console.error("피부 타입 진단 결과 조회 실패:", error);
@@ -113,11 +110,9 @@ function SkinTypeResultPage() {
     };
 
     fetchLatestResult();
-  }, []);
+  }, [authLoading, userId]);
 
   const handleRetest = async () => {
-    const userId = getLoginUserId();
-
     if (!userId) {
       navigate("/login");
       return;
@@ -129,7 +124,7 @@ function SkinTypeResultPage() {
 
     try {
       setDeleting(true);
-      await deleteLatestSkinTypeResult(userId);
+      await deleteLatestSkinTypeResult();
       sessionStorage.setItem("skipSkinTypeSavedResultCheck", "true");
       navigate("/analysis");
     } catch (error) {

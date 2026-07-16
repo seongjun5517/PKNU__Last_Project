@@ -8,6 +8,7 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
 
 import com.Skin_Predict_Platform.project.dto.CommunityCommentCreateRequest;
+import com.Skin_Predict_Platform.project.dto.CommunityCommentUpdateRequest;
 import com.Skin_Predict_Platform.project.dto.CommunityMyCommentResponse;
 import com.Skin_Predict_Platform.project.dto.CommunityPostCreateRequest;
 import com.Skin_Predict_Platform.project.dto.CommunityPostLikeResponse;
@@ -148,8 +149,8 @@ public class CommunityService {
         return communityPostScrapRepository.existsByScrapPostCodeAndScrapUserId(postCode, userId);
     }
 
-    public PostDetail createPost(CommunityPostCreateRequest request) {
-        if (!StringUtils.hasText(request.getPostUserId())) {
+    public PostDetail createPost(String userId, CommunityPostCreateRequest request) {
+        if (!StringUtils.hasText(userId) || request == null) {
             throw new IllegalArgumentException("사용자 아이디가 필요합니다.");
         }
         if (request.getCategoryCode() == null) {
@@ -163,7 +164,7 @@ public class CommunityService {
         }
 
         PostDetail post = PostDetail.builder()
-                .postUserId(request.getPostUserId())
+                .postUserId(userId)
                 .categoryCode(request.getCategoryCode())
                 .postTitle(request.getPostTitle().trim())
                 .postContent(request.getPostContent())
@@ -173,14 +174,13 @@ public class CommunityService {
     }
 
     @Transactional
-    public PostDetail updatePost(Long postCode, CommunityPostCreateRequest request) {
+    public PostDetail updatePost(Long postCode, String userId, CommunityPostCreateRequest request) {
         PostDetail post = postDetailRepository.findById(postCode).orElse(null);
 
         if (post == null) {
             return null;
         }
-        if (request == null || !StringUtils.hasText(request.getPostUserId())
-                || !post.getPostUserId().equals(request.getPostUserId())) {
+        if (request == null || !post.getPostUserId().equals(userId)) {
             throw new SecurityException("게시글 작성자만 수정할 수 있습니다.");
         }
         if (request.getCategoryCode() == null) {
@@ -220,8 +220,11 @@ public class CommunityService {
     }
 
     @Transactional
-    public CommunityComment createComment(Long postCode, CommunityCommentCreateRequest request) {
-        if (request == null || !StringUtils.hasText(request.getUserId())
+    public CommunityComment createComment(
+            Long postCode,
+            String userId,
+            CommunityCommentCreateRequest request) {
+        if (!StringUtils.hasText(userId) || request == null
                 || !StringUtils.hasText(request.getContents())) {
             throw new IllegalArgumentException("댓글 작성 정보가 필요합니다.");
         }
@@ -233,7 +236,7 @@ public class CommunityService {
 
         CommunityComment comment = CommunityComment.builder()
                 .cmtPostCode(postCode)
-                .cmtUserId(request.getUserId())
+                .cmtUserId(userId)
                 .cmtContents(request.getContents().trim())
                 .build();
 
@@ -244,8 +247,11 @@ public class CommunityService {
     }
 
     @Transactional
-    public CommunityReport createReport(Long postCode, CommunityReportCreateRequest request) {
-        if (request == null || !StringUtils.hasText(request.getUserId())
+    public CommunityReport createReport(
+            Long postCode,
+            String userId,
+            CommunityReportCreateRequest request) {
+        if (!StringUtils.hasText(userId) || request == null
                 || !StringUtils.hasText(request.getReportReason())) {
             throw new IllegalArgumentException("Report information is required.");
         }
@@ -254,22 +260,22 @@ public class CommunityService {
         if (post == null) {
             return null;
         }
-        if (!userRepository.existsById(request.getUserId())) {
+        if (!userRepository.existsById(userId)) {
             throw new IllegalArgumentException("Reporter does not exist.");
         }
-        if (post.getPostUserId().equals(request.getUserId())) {
+        if (post.getPostUserId().equals(userId)) {
             throw new SecurityException("You cannot report your own post.");
         }
         if (!REPORT_REASONS.contains(request.getReportReason())) {
             throw new IllegalArgumentException("Invalid report reason.");
         }
-        if (communityReportRepository.existsByReportPostCodeAndReportUserId(postCode, request.getUserId())) {
+        if (communityReportRepository.existsByReportPostCodeAndReportUserId(postCode, userId)) {
             throw new IllegalStateException("This post has already been reported.");
         }
 
         CommunityReport savedReport = communityReportRepository.save(CommunityReport.builder()
                 .reportPostCode(postCode)
-                .reportUserId(request.getUserId())
+                .reportUserId(userId)
                 .reportReason(request.getReportReason())
                 .build());
         noticeService.createReportNotifications(post, savedReport);
@@ -294,8 +300,11 @@ public class CommunityService {
     }
 
     @Transactional
-    public Boolean resolveReports(Long postCode, CommunityReportResolveRequest request) {
-        if (request == null || !StringUtils.hasText(request.getUserId())
+    public Boolean resolveReports(
+            Long postCode,
+            String userId,
+            CommunityReportResolveRequest request) {
+        if (!StringUtils.hasText(userId) || request == null
                 || !StringUtils.hasText(request.getDecision())) {
             throw new IllegalArgumentException("Resolution information is required.");
         }
@@ -304,7 +313,7 @@ public class CommunityService {
         if (post == null) {
             return null;
         }
-        requireSuperAdmin(request.getUserId());
+        requireSuperAdmin(userId);
 
         if (REPORT_DECISION_KEEP.equals(request.getDecision())) {
             communityReportRepository.deleteByReportPostCode(postCode);
@@ -312,7 +321,7 @@ public class CommunityService {
         }
         if (REPORT_DECISION_DELETE.equals(request.getDecision())) {
             deletePostResources(post);
-            noticeService.createReportDeletionNotification(post, request.getUserId());
+            noticeService.createReportDeletionNotification(post, userId);
             return true;
         }
 
@@ -332,6 +341,25 @@ public class CommunityService {
                         comment.getCmtCreatedAt()
                 ))
                 .toList();
+    }
+
+    @Transactional
+    public CommunityComment updateComment(
+            Long commentCode,
+            String userId,
+            CommunityCommentUpdateRequest request) {
+        CommunityComment comment = communityCommentRepository.findById(commentCode).orElse(null);
+        if (comment == null) {
+            return null;
+        }
+        if (!comment.getCmtUserId().equals(userId)) {
+            throw new SecurityException("Only the comment owner can update it.");
+        }
+        if (request == null || !StringUtils.hasText(request.getContents())) {
+            throw new IllegalArgumentException("Comment contents are required.");
+        }
+        comment.setCmtContents(request.getContents().trim());
+        return communityCommentRepository.save(comment);
     }
 
     @Transactional

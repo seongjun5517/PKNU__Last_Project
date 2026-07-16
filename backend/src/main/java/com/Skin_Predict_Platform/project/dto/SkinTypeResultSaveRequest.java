@@ -10,7 +10,5 @@ import lombok.Setter;
 @Setter
 @NoArgsConstructor
 public class SkinTypeResultSaveRequest {
-    private String userId;
-
     private List<SkinTypeResultItem> results;
 }

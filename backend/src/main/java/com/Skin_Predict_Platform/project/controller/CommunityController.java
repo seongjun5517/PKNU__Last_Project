@@ -1,9 +1,12 @@
 package com.Skin_Predict_Platform.project.controller;
 
 import java.util.List;
+import java.util.Map;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.Authentication;
 import org.springframework.util.StringUtils;
 import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -13,13 +16,12 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.Skin_Predict_Platform.project.dto.CommunityCommentCreateRequest;
+import com.Skin_Predict_Platform.project.dto.CommunityCommentUpdateRequest;
 import com.Skin_Predict_Platform.project.dto.CommunityMyCommentResponse;
 import com.Skin_Predict_Platform.project.dto.CommunityPostCreateRequest;
-import com.Skin_Predict_Platform.project.dto.CommunityPostLikeRequest;
 import com.Skin_Predict_Platform.project.dto.CommunityPostLikeResponse;
 import com.Skin_Predict_Platform.project.dto.CommunityPostScrapResponse;
 import com.Skin_Predict_Platform.project.dto.CommunityReportCreateRequest;
@@ -53,129 +55,84 @@ public class CommunityController {
     @GetMapping("/posts/{postCode}")
     public ResponseEntity<PostDetail> getPost(@PathVariable Long postCode) {
         PostDetail post = communityService.getPost(postCode);
-
-        if (post == null) {
-            return ResponseEntity.notFound().build();
-        }
-
-        return ResponseEntity.ok(post);
+        return post == null ? ResponseEntity.notFound().build() : ResponseEntity.ok(post);
     }
 
     @PostMapping("/posts/{postCode}/view")
     public ResponseEntity<PostDetail> increasePostView(
-            @PathVariable Long postCode,
-            @RequestBody CommunityPostLikeRequest request) {
-        if (request == null || !StringUtils.hasText(request.getUserId())) {
-            return ResponseEntity.badRequest().build();
-        }
-
-        PostDetail post = communityService.increasePostView(postCode, request.getUserId());
-
-        if (post == null) {
-            return ResponseEntity.notFound().build();
-        }
-
-        return ResponseEntity.ok(post);
+            Authentication authentication,
+            @PathVariable Long postCode) {
+        PostDetail post = communityService.increasePostView(postCode, authentication.getName());
+        return post == null ? ResponseEntity.notFound().build() : ResponseEntity.ok(post);
     }
 
     @PostMapping("/posts/{postCode}/like")
     public ResponseEntity<CommunityPostLikeResponse> togglePostLike(
-            @PathVariable Long postCode,
-            @RequestBody CommunityPostLikeRequest request) {
-        if (request == null || !StringUtils.hasText(request.getUserId())) {
-            return ResponseEntity.badRequest().build();
-        }
-
-        CommunityPostLikeResponse response = communityService.togglePostLike(postCode, request.getUserId());
-
-        if (response == null) {
-            return ResponseEntity.notFound().build();
-        }
-
-        return ResponseEntity.ok(response);
+            Authentication authentication,
+            @PathVariable Long postCode) {
+        CommunityPostLikeResponse response =
+                communityService.togglePostLike(postCode, authentication.getName());
+        return response == null ? ResponseEntity.notFound().build() : ResponseEntity.ok(response);
     }
 
     @GetMapping("/posts/{postCode}/like")
-    public ResponseEntity<Boolean> hasLikedPost(
-            @PathVariable Long postCode,
-            @RequestParam String userId) {
-        if (!StringUtils.hasText(userId)) {
-            return ResponseEntity.badRequest().build();
-        }
-
-        return ResponseEntity.ok(communityService.hasLikedPost(postCode, userId));
+    public boolean hasLikedPost(Authentication authentication, @PathVariable Long postCode) {
+        return communityService.hasLikedPost(postCode, authentication.getName());
     }
 
     @PostMapping("/posts/{postCode}/scrap")
     public ResponseEntity<CommunityPostScrapResponse> togglePostScrap(
-            @PathVariable Long postCode,
-            @RequestBody CommunityPostLikeRequest request) {
-        if (request == null || !StringUtils.hasText(request.getUserId())) {
-            return ResponseEntity.badRequest().build();
-        }
-
-        CommunityPostScrapResponse response = communityService.togglePostScrap(postCode, request.getUserId());
-
-        if (response == null) {
-            return ResponseEntity.notFound().build();
-        }
-
-        return ResponseEntity.ok(response);
+            Authentication authentication,
+            @PathVariable Long postCode) {
+        CommunityPostScrapResponse response =
+                communityService.togglePostScrap(postCode, authentication.getName());
+        return response == null ? ResponseEntity.notFound().build() : ResponseEntity.ok(response);
     }
 
     @GetMapping("/posts/{postCode}/scrap")
-    public ResponseEntity<Boolean> hasScrappedPost(
-            @PathVariable Long postCode,
-            @RequestParam String userId) {
-        if (!StringUtils.hasText(userId)) {
-            return ResponseEntity.badRequest().build();
-        }
-
-        return ResponseEntity.ok(communityService.hasScrappedPost(postCode, userId));
+    public boolean hasScrappedPost(Authentication authentication, @PathVariable Long postCode) {
+        return communityService.hasScrappedPost(postCode, authentication.getName());
     }
 
     @PostMapping("/posts")
-    public PostDetail createPost(@RequestBody CommunityPostCreateRequest request) {
-        return communityService.createPost(request);
+    public ResponseEntity<?> createPost(
+            Authentication authentication,
+            @RequestBody CommunityPostCreateRequest request) {
+        try {
+            return ResponseEntity.status(HttpStatus.CREATED)
+                    .body(communityService.createPost(authentication.getName(), request));
+        } catch (IllegalArgumentException exception) {
+            return ResponseEntity.badRequest().body(Map.of("message", exception.getMessage()));
+        }
     }
 
     @PutMapping("/posts/{postCode}")
     public ResponseEntity<PostDetail> updatePost(
+            Authentication authentication,
             @PathVariable Long postCode,
             @RequestBody CommunityPostCreateRequest request) {
         try {
-            PostDetail updated = communityService.updatePost(postCode, request);
-
-            if (updated == null) {
-                return ResponseEntity.notFound().build();
-            }
-
-            return ResponseEntity.ok(updated);
-        } catch (SecurityException error) {
+            PostDetail updated = communityService.updatePost(
+                    postCode, authentication.getName(), request);
+            return updated == null ? ResponseEntity.notFound().build() : ResponseEntity.ok(updated);
+        } catch (SecurityException exception) {
             return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
-        } catch (IllegalArgumentException error) {
+        } catch (IllegalArgumentException exception) {
             return ResponseEntity.badRequest().build();
         }
     }
 
     @DeleteMapping("/posts/{postCode}")
     public ResponseEntity<Void> deletePost(
-            @PathVariable Long postCode,
-            @RequestParam String userId) {
-        if (!StringUtils.hasText(userId)) {
-            return ResponseEntity.badRequest().build();
-        }
-
-        Boolean deleted = communityService.deletePost(postCode, userId);
-
+            Authentication authentication,
+            @PathVariable Long postCode) {
+        Boolean deleted = communityService.deletePost(postCode, authentication.getName());
         if (deleted == null) {
             return ResponseEntity.notFound().build();
         }
-        if (!deleted) {
-            return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
-        }
-
-        return ResponseEntity.noContent().build();
+        return deleted
+                ? ResponseEntity.noContent().build()
+                : ResponseEntity.status(HttpStatus.FORBIDDEN).build();
     }
 
     @GetMapping("/posts/{postCode}/comments")
@@ -184,131 +141,121 @@ public class CommunityController {
     }
 
     @PostMapping("/posts/{postCode}/comments")
-    public ResponseEntity<CommunityComment> createComment(
+    public ResponseEntity<?> createComment(
+            Authentication authentication,
             @PathVariable Long postCode,
             @RequestBody CommunityCommentCreateRequest request) {
-        if (request == null || !StringUtils.hasText(request.getUserId())
-                || !StringUtils.hasText(request.getContents())) {
+        if (request == null || !StringUtils.hasText(request.getContents())) {
             return ResponseEntity.badRequest().build();
         }
+        CommunityComment comment = communityService.createComment(
+                postCode, authentication.getName(), request);
+        return comment == null ? ResponseEntity.notFound().build() : ResponseEntity.ok(comment);
+    }
 
-        CommunityComment comment = communityService.createComment(postCode, request);
+    @PutMapping("/comments/{commentCode}")
+    public ResponseEntity<CommunityComment> updateComment(
+            Authentication authentication,
+            @PathVariable Long commentCode,
+            @RequestBody CommunityCommentUpdateRequest request) {
+        try {
+            CommunityComment comment = communityService.updateComment(
+                    commentCode, authentication.getName(), request);
+            return comment == null ? ResponseEntity.notFound().build() : ResponseEntity.ok(comment);
+        } catch (SecurityException exception) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+        } catch (IllegalArgumentException exception) {
+            return ResponseEntity.badRequest().build();
+        }
+    }
 
-        if (comment == null) {
+    @DeleteMapping("/comments/{commentCode}")
+    public ResponseEntity<Void> deleteComment(
+            Authentication authentication,
+            @PathVariable Long commentCode) {
+        Boolean deleted = communityService.deleteComment(commentCode, authentication.getName());
+        if (deleted == null) {
             return ResponseEntity.notFound().build();
         }
-
-        return ResponseEntity.ok(comment);
+        return deleted
+                ? ResponseEntity.noContent().build()
+                : ResponseEntity.status(HttpStatus.FORBIDDEN).build();
     }
 
     @PostMapping("/posts/{postCode}/reports")
     public ResponseEntity<CommunityReport> createReport(
+            Authentication authentication,
             @PathVariable Long postCode,
             @RequestBody CommunityReportCreateRequest request) {
         try {
-            CommunityReport report = communityService.createReport(postCode, request);
-
-            if (report == null) {
-                return ResponseEntity.notFound().build();
-            }
-
-            return ResponseEntity.status(HttpStatus.CREATED).body(report);
-        } catch (SecurityException error) {
+            CommunityReport report = communityService.createReport(
+                    postCode, authentication.getName(), request);
+            return report == null
+                    ? ResponseEntity.notFound().build()
+                    : ResponseEntity.status(HttpStatus.CREATED).body(report);
+        } catch (SecurityException exception) {
             return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
-        } catch (IllegalStateException error) {
+        } catch (IllegalStateException exception) {
             return ResponseEntity.status(HttpStatus.CONFLICT).build();
-        } catch (IllegalArgumentException error) {
+        } catch (IllegalArgumentException exception) {
             return ResponseEntity.badRequest().build();
         }
     }
 
     @GetMapping("/posts/{postCode}/reports/count")
-    public ResponseEntity<java.util.Map<String, Long>> getReportCount(
-            @PathVariable Long postCode,
-            @RequestParam String userId) {
-        try {
-            Long count = communityService.getReportCount(postCode, userId);
-            if (count == null) {
-                return ResponseEntity.notFound().build();
-            }
-
-            return ResponseEntity.ok(java.util.Map.of("count", count));
-        } catch (SecurityException error) {
-            return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
-        }
+    @PreAuthorize("hasRole('SUPER_ADMIN')")
+    public ResponseEntity<Map<String, Long>> getReportCount(
+            Authentication authentication,
+            @PathVariable Long postCode) {
+        Long count = communityService.getReportCount(postCode, authentication.getName());
+        return count == null
+                ? ResponseEntity.notFound().build()
+                : ResponseEntity.ok(Map.of("count", count));
     }
 
     @GetMapping("/posts/{postCode}/reports")
+    @PreAuthorize("hasRole('SUPER_ADMIN')")
     public ResponseEntity<List<CommunityReport>> getReports(
-            @PathVariable Long postCode,
-            @RequestParam String userId) {
-        try {
-            List<CommunityReport> reports = communityService.getReports(postCode, userId);
-            if (reports == null) {
-                return ResponseEntity.notFound().build();
-            }
-
-            return ResponseEntity.ok(reports);
-        } catch (SecurityException error) {
-            return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
-        }
+            Authentication authentication,
+            @PathVariable Long postCode) {
+        List<CommunityReport> reports = communityService.getReports(postCode, authentication.getName());
+        return reports == null ? ResponseEntity.notFound().build() : ResponseEntity.ok(reports);
     }
 
     @PostMapping("/posts/{postCode}/reports/resolve")
+    @PreAuthorize("hasRole('SUPER_ADMIN')")
     public ResponseEntity<Void> resolveReports(
+            Authentication authentication,
             @PathVariable Long postCode,
             @RequestBody CommunityReportResolveRequest request) {
         try {
-            Boolean resolved = communityService.resolveReports(postCode, request);
-            if (resolved == null) {
-                return ResponseEntity.notFound().build();
-            }
-
-            return ResponseEntity.noContent().build();
-        } catch (SecurityException error) {
-            return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
-        } catch (IllegalArgumentException error) {
+            Boolean resolved = communityService.resolveReports(
+                    postCode, authentication.getName(), request);
+            return resolved == null
+                    ? ResponseEntity.notFound().build()
+                    : ResponseEntity.noContent().build();
+        } catch (IllegalArgumentException exception) {
             return ResponseEntity.badRequest().build();
         }
     }
 
-    @GetMapping("/posts/mine/{userId}")
-    public List<PostDetail> getMyPosts(@PathVariable String userId) {
-        return communityService.getMyPosts(userId);
+    @GetMapping("/posts/mine")
+    public List<PostDetail> getMyPosts(Authentication authentication) {
+        return communityService.getMyPosts(authentication.getName());
     }
 
-    @GetMapping("/posts/liked/{userId}")
-    public List<PostDetail> getLikedPosts(@PathVariable String userId) {
-        return communityService.getLikedPosts(userId);
+    @GetMapping("/posts/liked")
+    public List<PostDetail> getLikedPosts(Authentication authentication) {
+        return communityService.getLikedPosts(authentication.getName());
     }
 
-    @GetMapping("/posts/scrapped/{userId}")
-    public List<PostDetail> getScrappedPosts(@PathVariable String userId) {
-        return communityService.getScrappedPosts(userId);
+    @GetMapping("/posts/scrapped")
+    public List<PostDetail> getScrappedPosts(Authentication authentication) {
+        return communityService.getScrappedPosts(authentication.getName());
     }
 
-    @GetMapping("/comments/mine/{userId}")
-    public List<CommunityMyCommentResponse> getMyComments(@PathVariable String userId) {
-        return communityService.getMyComments(userId);
-    }
-
-    @DeleteMapping("/comments/{commentCode}")
-    public ResponseEntity<Void> deleteComment(
-            @PathVariable Long commentCode,
-            @RequestParam String userId) {
-        if (!StringUtils.hasText(userId)) {
-            return ResponseEntity.badRequest().build();
-        }
-
-        Boolean deleted = communityService.deleteComment(commentCode, userId);
-
-        if (deleted == null) {
-            return ResponseEntity.notFound().build();
-        }
-        if (!deleted) {
-            return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
-        }
-
-        return ResponseEntity.noContent().build();
+    @GetMapping("/comments/mine")
+    public List<CommunityMyCommentResponse> getMyComments(Authentication authentication) {
+        return communityService.getMyComments(authentication.getName());
     }
 }

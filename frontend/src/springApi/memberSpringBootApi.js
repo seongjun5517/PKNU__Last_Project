@@ -24,12 +24,11 @@ export const getCurrentMember = () => springApi.get("/api/auth/me");
 export const logoutMember = () => springApi.post("/api/auth/logout");
 
 // 회원가입/정보수정 프로필 이미지 업로드
-export const uploadMemberProfileImage = (userId, imageFile) => {
+export const uploadMemberProfileImage = (imageFile) => {
   const formData = new FormData();
-  formData.append("user_id", userId);
   formData.append("image", imageFile);
 
-  return springApi.post("/user/profile-image", formData, {
+  return springApi.post("/user/me/profile-image", formData, {
     headers: { "Content-Type": "multipart/form-data" },
   });
 };

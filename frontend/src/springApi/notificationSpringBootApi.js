@@ -1,21 +1,18 @@
 import { springApi } from "../config/axiosInstance";
 
-export const getNotifications = (userId) =>
-  springApi.get("/notifications", { params: { userId } });
+export const getNotifications = () => springApi.get("/notifications");
 
-export const getUnreadNotificationCount = (userId) =>
-  springApi.get("/notifications/unread-count", { params: { userId } });
+export const getUnreadNotificationCount = () =>
+  springApi.get("/notifications/unread-count");
 
-export const markNotificationRead = (notiCode, userId) =>
-  springApi.patch(`/notifications/${notiCode}/read`, null, {
-    params: { userId },
-  });
+export const markNotificationRead = (notiCode) =>
+  springApi.patch(`/notifications/${notiCode}/read`);
 
-export const markAllNotificationsRead = (userId) =>
-  springApi.patch("/notifications/read-all", null, { params: { userId } });
+export const markAllNotificationsRead = () =>
+  springApi.patch("/notifications/read-all");
 
-export const deleteNotification = (notiCode, userId) =>
-  springApi.delete(`/notifications/${notiCode}`, { params: { userId } });
+export const deleteNotification = (notiCode) =>
+  springApi.delete(`/notifications/${notiCode}`);
 
-export const deleteReadNotifications = (userId) =>
-  springApi.delete("/notifications/read", { params: { userId } });
+export const deleteReadNotifications = () =>
+  springApi.delete("/notifications/read");
