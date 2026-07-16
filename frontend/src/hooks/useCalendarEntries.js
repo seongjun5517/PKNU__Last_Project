@@ -1,19 +1,21 @@
 import { useEffect, useState } from "react";
 import { setCalInsert, getCalList } from "../springApi/CalendarSpringBootApi";
-import { getLoginUserId } from "../utils/dateUtils";
+import { useAuth } from "../context/AuthContext";
 
 export function useCalendarEntries() {
+  const { userId, authLoading } = useAuth();
   const [entries, setEntries] = useState({});
 
   useEffect(() => {
     const fetchEntries = async () => {
-      const loginUserId = getLoginUserId();
-      if (!loginUserId) {
+      if (authLoading) return;
+      if (!userId) {
         console.warn("로그인 정보가 없습니다. 캘린더를 불러올 수 없습니다.");
+        setEntries({});
         return;
       }
       try {
-        const response = await getCalList(loginUserId);
+        const response = await getCalList();
         const fetchedData = response.data.reduce((acc, item) => {
           const raw = String(item.calTaskDate);
           const dateKey = raw.substring(0, 10);
@@ -34,11 +36,10 @@ export function useCalendarEntries() {
       }
     };
     fetchEntries();
-  }, []);
+  }, [authLoading, userId]);
 
   const addEntry = async ({ selectedKey, titleInput, timeInput, selectedCategoryId }) => {
-    const loginUserId = getLoginUserId();
-    if (!loginUserId) {
+    if (!userId) {
       alert("로그인이 필요합니다.");
       return false;
     }
@@ -47,7 +48,6 @@ export function useCalendarEntries() {
       : `${selectedKey}T09:00:00`;
 
     const newEntry = {
-      calUserId: loginUserId,
       calTaskDate: combinedDateTime,
       calTitle: titleInput.trim(),
       calDescription: "",

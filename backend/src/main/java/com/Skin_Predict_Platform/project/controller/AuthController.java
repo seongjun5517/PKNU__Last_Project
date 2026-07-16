@@ -3,6 +3,7 @@ package com.Skin_Predict_Platform.project.controller;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
+import org.springframework.security.web.csrf.CsrfToken;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
@@ -19,6 +20,11 @@ import lombok.RequiredArgsConstructor;
 public class AuthController {
 
     private final UserService userService;
+
+    @GetMapping("/csrf")
+    public CsrfToken csrf(CsrfToken csrfToken) {
+        return csrfToken;
+    }
 
     @GetMapping("/me")
     public ResponseEntity<?> me(Authentication authentication) {

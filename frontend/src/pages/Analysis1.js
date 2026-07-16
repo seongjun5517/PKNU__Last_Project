@@ -507,7 +507,7 @@ function Analysis1() {
 
     (async () => {
       try {
-        const res = await getTodayPredict(userId);
+        const res = await getTodayPredict();
         if (res?.data) {
           setResult({
             detections: normalizeDetections(res.data.detections),
@@ -583,7 +583,7 @@ function Analysis1() {
       const [flaskResponse] = await Promise.all([setPredictFlask(formData), minDelay]);
       const { detections, image, imgPath } = flaskResponse.data;
 
-      await setPredictSave(userId, detections, imgPath);
+      await setPredictSave(detections, imgPath);
 
       // 분석 직후에는 base64 image를 바로 사용 (추가 요청 없이 즉시 렌더링)
       setResult({ detections: normalizeDetections(detections), image });
@@ -621,7 +621,7 @@ function Analysis1() {
     try {
       setDeletingLatest(true);
       setError("");
-      await deleteLatestPredict(userId);
+      await deleteLatestPredict();
       clearSelectedImage();
       stopCamera();
       setResult(null);

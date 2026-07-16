@@ -14,6 +14,8 @@ import com.Skin_Predict_Platform.project.model.Deepmodel; // Optional을 위해 
 @Repository
 public interface DeepRepository extends JpaRepository<Deepmodel, Long> {
 
+    Optional<Deepmodel> findByDtypeCodeAndDtypeUserId(Long dtypeCode, String dtypeUserId);
+
     // 오늘 데이터 개수
     @Query(value = "SELECT COUNT(*) FROM deep WHERE dtype_user_id = :userId AND DATE(dtype_date) = CURDATE()", nativeQuery = true)
     int countTodayByUserId(@Param("userId") String userId);

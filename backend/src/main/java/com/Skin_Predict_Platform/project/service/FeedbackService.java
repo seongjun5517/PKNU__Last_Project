@@ -28,14 +28,14 @@ public class FeedbackService {
     private final DeepService deepService;
 
     @Transactional
-    public FeedbackResponse create(FeedbackCreateRequest request) {
-        if (request == null || isBlank(request.getUserId()) ||
+    public FeedbackResponse create(String userId, FeedbackCreateRequest request) {
+        if (isBlank(userId) || request == null ||
                 !FEEDBACK_TYPES.contains(request.getFeedbackType()) ||
                 !EVALUATIONS.contains(request.getEvaluation())) {
             throw new IllegalArgumentException("피드백 입력값이 올바르지 않습니다.");
         }
 
-        User user = userRepository.findById(request.getUserId())
+        User user = userRepository.findById(userId)
                 .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 사용자입니다."));
         LocalDateTime latestAnalysisAt = getLatestAnalysisAt(user.getUserId(), request.getFeedbackType());
         if (latestAnalysisAt == null) {

@@ -38,8 +38,7 @@ function CommunityPostDetailPage() {
   const navigate = useNavigate();
   const { postCode } = useParams();
   const { userId, adminMode } = useAuth();
-  const loginUserId =
-    userId || localStorage.getItem("userId") || localStorage.getItem("loginUserId");
+  const loginUserId = userId;
 
   // 상세 화면에 보여줄 게시물 정보
   const [post, setPost] = useState(null);
@@ -106,8 +105,8 @@ function CommunityPostDetailPage() {
         ];
 
         if (loginUserId) {
-          requests.push(getCommunityPostLikeStatus(postCode, loginUserId));
-          requests.push(getCommunityPostScrapStatus(postCode, loginUserId));
+          requests.push(getCommunityPostLikeStatus(postCode));
+          requests.push(getCommunityPostScrapStatus(postCode));
         }
 
         const [
@@ -125,7 +124,7 @@ function CommunityPostDetailPage() {
         setIsLiked(Boolean(likeStatusResponse?.data));
         setIsScrapped(Boolean(scrapStatusResponse?.data));
 
-        const viewSessionKey = `community:viewed:${postCode}:${loginUserId}`;
+        const viewSessionKey = `community:viewed:${postCode}`;
         const shouldIncreaseView =
           loginUserId &&
           postData?.postUserId !== loginUserId &&
@@ -135,7 +134,7 @@ function CommunityPostDetailPage() {
           sessionStorage.setItem(viewSessionKey, "true");
 
           try {
-            const viewResponse = await increaseCommunityPostView(postCode, loginUserId);
+            const viewResponse = await increaseCommunityPostView(postCode);
             setPost(viewResponse.data);
           } catch (viewError) {
             sessionStorage.removeItem(viewSessionKey);
@@ -175,7 +174,7 @@ function CommunityPostDetailPage() {
       return;
     }
 
-    getCommunityPostReportCount(postCode, loginUserId)
+    getCommunityPostReportCount(postCode)
       .then((response) => setReportCount(response.data?.count || 0))
       .catch((error) => {
         console.error("신고 수 조회 실패:", error);
@@ -194,7 +193,7 @@ function CommunityPostDetailPage() {
       setAuthorImageError(false);
 
       springApi
-        .get(`/user/${post.postUserId}`)
+        .get(`/user/public/${post.postUserId}`)
         .then((response) => {
           if (isMounted) {
             setAuthorProfile(response.data);
@@ -250,7 +249,7 @@ function CommunityPostDetailPage() {
     setLikeMessage("");
 
     try {
-      const response = await likeCommunityPost(post.postCode, loginUserId);
+      const response = await likeCommunityPost(post.postCode);
       setPost(response.data.post);
       setIsLiked(response.data.liked);
     } catch (error) {
@@ -273,7 +272,7 @@ function CommunityPostDetailPage() {
     setScrapMessage("");
 
     try {
-      const response = await scrapCommunityPost(post.postCode, loginUserId);
+      const response = await scrapCommunityPost(post.postCode);
       setPost(response.data.post);
       setIsScrapped(response.data.scrapped);
     } catch (error) {
@@ -301,7 +300,6 @@ function CommunityPostDetailPage() {
     try {
       const response = await createCommunityPostComment(
         post.postCode,
-        loginUserId,
         trimmedContent
       );
       setComments((currentComments) => [...currentComments, response.data]);
@@ -321,7 +319,7 @@ function CommunityPostDetailPage() {
     setCommentMessage("");
 
     try {
-      await deleteCommunityComment(commentCode, loginUserId);
+      await deleteCommunityComment(commentCode);
       setComments((currentComments) =>
         currentComments.filter((comment) => comment.cmtCode !== commentCode)
       );
@@ -379,7 +377,6 @@ function CommunityPostDetailPage() {
 
     try {
       const response = await updateCommunityPost(post.postCode, {
-        postUserId: loginUserId,
         categoryCode: Number(editCategoryCode),
         postTitle: editTitle.trim(),
         postContent: editContent.trim(),
@@ -410,7 +407,7 @@ function CommunityPostDetailPage() {
     setPostActionMessage("");
 
     try {
-      await deleteCommunityPost(post.postCode, loginUserId);
+      await deleteCommunityPost(post.postCode);
       navigate("/community");
     } catch (error) {
       console.error("커뮤니티 게시글 삭제 실패:", error.response?.data || error);
@@ -439,7 +436,7 @@ function CommunityPostDetailPage() {
     setReportMessage("");
 
     try {
-      await createCommunityPostReport(post.postCode, loginUserId, reportReason);
+      await createCommunityPostReport(post.postCode, reportReason);
       setIsReportOpen(false);
       setPostActionMessage("신고가 접수되었습니다.");
     } catch (error) {
@@ -466,7 +463,7 @@ function CommunityPostDetailPage() {
     setReportListMessage("");
 
     try {
-      const response = await getCommunityPostReports(post.postCode, loginUserId);
+      const response = await getCommunityPostReports(post.postCode);
       setReports(response.data || []);
     } catch (error) {
       console.error("신고 목록 조회 실패:", error);
@@ -490,7 +487,7 @@ function CommunityPostDetailPage() {
     setReportListMessage("");
 
     try {
-      await resolveCommunityPostReports(post.postCode, loginUserId, decision);
+      await resolveCommunityPostReports(post.postCode, decision);
 
       if (decision === "DELETE") {
         navigate("/community");

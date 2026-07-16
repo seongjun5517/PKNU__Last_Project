@@ -6,6 +6,7 @@ import "./Mypage.css";
 import { springApi } from "../config/axiosInstance";
 import AnalysisHistory from "./AnalysisHistory";
 import { getProfileImageSrc } from "../utils/profileImage";
+import { useAuth } from "../context/AuthContext";
 import {
   isImageFileTooLarge,
   MAX_IMAGE_FILE_SIZE_LABEL,
@@ -153,7 +154,7 @@ function AnalysisChart({ data }) {
 /* ---------------- 마이페이지 ---------------- */
 export default function Mypage() {
   const navigate = useNavigate();
-  const userId = localStorage.getItem("userId");
+  const { userId, authLoading, logout } = useAuth();
 
   const [activeSection, setActiveSection] = useState("info");
 
@@ -195,53 +196,34 @@ export default function Mypage() {
   const [deleting, setDeleting] = useState(false);
 
   // ---------------- 내 정보 조회 ----------------
-  // GET /user/{user_id}
-  // 응답은 User 엔티티가 그대로 내려옴 (camelCase: userId, userNickname, userProfileImage, userCreatedAt, ...)
+  // GET /user/me
   useEffect(() => {
-    if (!userId) return;
+    if (authLoading) return;
+    if (!userId) {
+      setProfileLoading(false);
+      return;
+    }
     springApi
-      .get(`/user/${userId}`)
+      .get(`/user/me`)
       .then((res) => {
         setProfile(res.data);
         setEditNickname(res.data?.userNickname || "");
       })
       .catch((err) => console.error("내 정보 조회 실패:", err))
       .finally(() => setProfileLoading(false));
-  }, [userId]);
-
-  // ---------------- 분석 기록 조회 ----------------
-  // 백엔드 엔드포인트가 아직 없어서 보류. 나중에 연결할 때 아래 주석을 해제하세요.
-  // useEffect(() => {
-  //   if (!userId) return;
-  //   springApi
-  //     .get(`/deep/history/${userId}`)
-  //     .then((res) => {
-  //       const mapped = (res.data || []).map((item) => ({
-  //         label: (item.createdAt || item.date || "").slice(5, 10), // MM-DD
-  //         score: item.score ?? item.confidence ?? 0,
-  //         dominant: item.dominantClass ?? item.result ?? "",
-  //       }));
-  //       setAnalysisHistory(mapped);
-  //     })
-  //     .catch((err) => {
-  //       console.error("분석 기록 조회 실패:", err);
-  //       setAnalysisHistory([]);
-  //     });
-  // }, [userId]);
+  }, [authLoading, userId]);
 
   // ---------------- 선택된 게시물 탭 하나만 지연 로딩 (아직 안 불러왔을 때만) ----------------
-  // GET /community/posts/mine/{userId}
-  // GET /community/posts/liked/{userId}
-  // GET /community/posts/scrapped/{userId}
+  // 현재 세션 사용자의 게시물 활동 조회
   useEffect(() => {
     if (!userId || !activePostTab) return;
     if (activePostTab === "comments") return;
     if (postsByTab[activePostTab] !== null) return;
 
     const endpointByTab = {
-      mine: `/community/posts/mine/${userId}`,
-      liked: `/community/posts/liked/${userId}`,
-      scrapped: `/community/posts/scrapped/${userId}`,
+      mine: `/community/posts/mine`,
+      liked: `/community/posts/liked`,
+      scrapped: `/community/posts/scrapped`,
     };
 
     setPostsLoadingTab((prev) => ({ ...prev, [activePostTab]: true }));
@@ -266,7 +248,7 @@ export default function Mypage() {
 
     setCommentsLoading(true);
     springApi
-      .get(`/community/comments/mine/${userId}`)
+      .get(`/community/comments/mine`)
       .then((res) => setMyComments(res.data || []))
       .catch((err) => {
         console.error("내 댓글 조회 실패:", err);
@@ -295,9 +277,7 @@ export default function Mypage() {
     setDeletingCommentCodes((prev) => ({ ...prev, [commentCode]: true }));
 
     try {
-      await springApi.delete(`/community/comments/${commentCode}`, {
-        params: { userId },
-      });
+      await springApi.delete(`/community/comments/${commentCode}`);
       setMyComments((prev) =>
         (prev || []).filter((comment) => comment.cmtCode !== commentCode)
       );
@@ -320,9 +300,7 @@ export default function Mypage() {
     setDeletingPostCodes((prev) => ({ ...prev, [postCode]: true }));
 
     try {
-      await springApi.delete(`/community/posts/${postCode}`, {
-        params: { userId },
-      });
+      await springApi.delete(`/community/posts/${postCode}`);
       setPostsByTab((prev) => ({
         mine: prev.mine ? prev.mine.filter((post) => post.postCode !== postCode) : prev.mine,
         liked: prev.liked ? prev.liked.filter((post) => post.postCode !== postCode) : prev.liked,
@@ -362,8 +340,7 @@ export default function Mypage() {
   };
 
   // ---------------- 정보 수정 ----------------
-  // 이미지가 선택되어 있으면: POST /user/profile-image (multipart) 먼저 호출 -> 그 다음 닉네임 반영
-  // 이미지가 없으면: PUT /user/update 로 닉네임만 반영
+  // 이미지가 있으면 /user/me/profile-image를 먼저 호출한 뒤 /user/me에 반영한다.
   const handleEditSubmit = async (e) => {
     e.preventDefault();
     setEditSaving(true);
@@ -374,18 +351,16 @@ export default function Mypage() {
 
       if (editImageFile) {
         const formData = new FormData();
-        formData.append("user_id", userId);
         formData.append("image", editImageFile);
 
-        const imgRes = await springApi.post("/user/profile-image", formData, {
+        const imgRes = await springApi.post("/user/me/profile-image", formData, {
           headers: { "Content-Type": "multipart/form-data" },
         });
         // 응답: { user_profile_image: "/images/profile/xxx.jpg" }
         uploadedImagePath = imgRes.data?.user_profile_image ?? null;
       }
 
-      const res = await springApi.put(`/user/update`, {
-        user_id: userId,
+      const res = await springApi.put(`/user/me`, {
         user_nickname: editNickname,
         ...(uploadedImagePath ? { user_profile_image: uploadedImagePath } : {}),
       });
@@ -418,7 +393,7 @@ export default function Mypage() {
   };
 
   // ---------------- 비밀번호 변경 ----------------
-  // PUT /user/password  body: { user_id, current_pwd, new_pwd }
+  // PUT /user/me/password  body: { current_pwd, new_pwd }
   const handlePasswordSubmit = (e) => {
     e.preventDefault();
     if (pwNext !== pwConfirm) {
@@ -428,8 +403,7 @@ export default function Mypage() {
     setPwSaving(true);
     setPwMessage(null);
     springApi
-      .put(`/user/password`, {
-        user_id: userId,
+      .put(`/user/me/password`, {
         current_pwd: pwCurrent,
         new_pwd: pwNext,
       })
@@ -451,20 +425,22 @@ export default function Mypage() {
   };
 
   // ---------------- 회원 탈퇴 ----------------
-  // DELETE /user/delete/{user_id}
-  const handleDeleteAccount = () => {
+  // DELETE /user/me
+  const handleDeleteAccount = async () => {
     if (!deleteChecked) return;
     setDeleting(true);
-    springApi
-      .delete(`/user/delete/${userId}`)
-      .then(() => {
-        localStorage.removeItem("userId");
-        window.location.href = "/";
-      })
-      .catch((err) => {
-        console.error("회원 탈퇴 실패:", err);
-        setDeleting(false);
-      });
+    try {
+      await springApi.delete(`/user/me`);
+      try {
+        await logout();
+      } catch (logoutError) {
+        console.warn("회원 탈퇴 후 세션 정리 요청 실패:", logoutError);
+      }
+      navigate("/");
+    } catch (err) {
+      console.error("회원 탈퇴 실패:", err);
+      setDeleting(false);
+    }
   };
 
   return (

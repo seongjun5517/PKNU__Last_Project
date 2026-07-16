@@ -23,15 +23,15 @@ public class SkinTypeResultService {
     private final SkinTypeResultRepository skinTypeResultRepository;
 
     @Transactional
-    public List<SkinTypeResult> saveResults(SkinTypeResultSaveRequest request) {
-        if (request == null || isBlank(request.getUserId()) || request.getResults() == null
+    public List<SkinTypeResult> saveResults(String userId, SkinTypeResultSaveRequest request) {
+        if (isBlank(userId) || request == null || request.getResults() == null
                 || request.getResults().isEmpty()) {
             return Collections.emptyList();
         }
 
         LocalDateTime diagnosedAt = LocalDateTime.now();
         List<SkinTypeResult> results = request.getResults().stream()
-                .map((item) -> toEntity(request.getUserId(), diagnosedAt, item))
+                .map((item) -> toEntity(userId, diagnosedAt, item))
                 .collect(Collectors.toList());
 
         return skinTypeResultRepository.saveAll(results);

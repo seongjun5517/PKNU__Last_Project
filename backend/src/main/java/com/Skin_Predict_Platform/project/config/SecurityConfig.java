@@ -1,5 +1,7 @@
 package com.Skin_Predict_Platform.project.config;
 
+import java.io.IOException;
+
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
@@ -11,6 +13,10 @@ import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.crypto.factory.PasswordEncoderFactories;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.web.servlet.util.matcher.PathPatternRequestMatcher;
+
+import jakarta.servlet.DispatcherType;
+import jakarta.servlet.http.HttpServletResponse;
 
 @Configuration
 @EnableMethodSecurity
@@ -29,49 +35,57 @@ public class SecurityConfig {
                         .sessionFixation(fixation -> fixation.changeSessionId()))
 
                 .authorizeHttpRequests(authorize -> authorize
+                        .dispatcherTypeMatchers(DispatcherType.ERROR, DispatcherType.FORWARD).permitAll()
+                        .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
                         .requestMatchers(HttpMethod.POST, "/api/auth/login", "/user/insert").permitAll()
-                        .requestMatchers(HttpMethod.GET, "/api/auth/me").authenticated()
+                        .requestMatchers(HttpMethod.GET,
+                                "/api/auth/csrf",
+                                "/actuator/health", "/actuator/health/**",
+                                "/images/profile/**",
+                                "/user/check", "/user/public/*",
+                                "/community/categories",
+                                "/community/posts",
+                                "/community/posts/*",
+                                "/community/posts/*/comments").permitAll()
+                        .requestMatchers("/error").permitAll()
                         .requestMatchers("/api/admin/**").hasRole("SUPER_ADMIN")
-                        // IDOR 정리 전까지 기존 API의 접근 정책은 다음 단계에서 강화한다.
-                        .anyRequest().permitAll())
+                        .anyRequest().authenticated())
 
                 .formLogin(form -> form
                         .loginProcessingUrl("/api/auth/login")
                         .usernameParameter("user_id")
                         .passwordParameter("user_pwd")
-                        .successHandler((request, response, authentication) -> {
-                            response.setStatus(HttpStatus.OK.value());
-                            response.setContentType(MediaType.APPLICATION_JSON_VALUE);
-                            response.setCharacterEncoding("UTF-8");
-                            response.getWriter().write("{\"message\":\"LOGIN_SUCCESS\"}");
-                        })
-                        .failureHandler((request, response, exception) -> {
-                            response.setStatus(HttpStatus.UNAUTHORIZED.value());
-                            response.setContentType(MediaType.APPLICATION_JSON_VALUE);
-                            response.setCharacterEncoding("UTF-8");
-                            response.getWriter().write("{\"message\":\"INVALID_CREDENTIALS\"}");
-                        })
+                        .successHandler((request, response, authentication) ->
+                                writeJson(response, HttpStatus.OK, "LOGIN_SUCCESS"))
+                        .failureHandler((request, response, exception) ->
+                                writeJson(response, HttpStatus.UNAUTHORIZED, "INVALID_CREDENTIALS"))
                         .permitAll())
 
                 .logout(logout -> logout
-                        .logoutUrl("/api/auth/logout")
+                        .logoutRequestMatcher(PathPatternRequestMatcher.pathPattern(
+                                HttpMethod.POST, "/api/auth/logout"))
                         .invalidateHttpSession(true)
                         .clearAuthentication(true)
                         .deleteCookies("JSESSIONID")
-                        .logoutSuccessHandler((request, response, authentication) -> {
-                            response.setStatus(HttpStatus.OK.value());
-                            response.setContentType(MediaType.APPLICATION_JSON_VALUE);
-                            response.setCharacterEncoding("UTF-8");
-                            response.getWriter().write("{\"message\":\"LOGOUT_SUCCESS\"}");
-                        }))
+                        .logoutSuccessHandler((request, response, authentication) ->
+                                writeJson(response, HttpStatus.OK, "LOGOUT_SUCCESS")))
 
                 .exceptionHandling(exception -> exception
                         .authenticationEntryPoint((request, response, authException) ->
-                                response.sendError(HttpStatus.UNAUTHORIZED.value())))
+                                writeJson(response, HttpStatus.UNAUTHORIZED, "AUTHENTICATION_REQUIRED"))
+                        .accessDeniedHandler((request, response, accessDeniedException) ->
+                                writeJson(response, HttpStatus.FORBIDDEN, "ACCESS_DENIED")))
 
-                // 현재 React 요청에는 CSRF 토큰이 없으므로 다음 CSRF 연동 단계까지 임시 비활성화한다.
-                .csrf(csrf -> csrf.disable());
+                .csrf(csrf -> csrf.spa());
 
         return http.build();
+    }
+
+    private void writeJson(HttpServletResponse response, HttpStatus status, String message)
+            throws IOException {
+        response.setStatus(status.value());
+        response.setContentType(MediaType.APPLICATION_JSON_VALUE);
+        response.setCharacterEncoding("UTF-8");
+        response.getWriter().write("{\"message\":\"" + message + "\"}");
     }
 }

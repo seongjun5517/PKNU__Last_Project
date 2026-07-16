@@ -4,6 +4,10 @@ import {
   loginMember,
   logoutMember,
 } from "../springApi/memberSpringBootApi";
+import {
+  ensureCsrfToken,
+  refreshCsrfToken,
+} from "../config/axiosInstance";
 
 const AuthContext = createContext();
 const ADMIN_MODE_STORAGE_KEY = "adminMode";
@@ -19,17 +23,13 @@ function getUserAuthority(user) {
   ).toUpperCase();
 }
 
-function saveLegacyUserCache(user) {
-  // 기존 userId 파라미터 기반 화면을 위한 임시 호환 값이다.
-  localStorage.setItem("userId", user.userId);
-  localStorage.setItem("loginUserId", user.userId);
-  localStorage.setItem("loginUser", JSON.stringify(user));
-}
-
-function clearLegacyUserCache() {
+function clearLegacyIdentityCache() {
   localStorage.removeItem("userId");
   localStorage.removeItem("loginUserId");
   localStorage.removeItem("loginUser");
+}
+
+function clearAdminModeCache() {
   localStorage.removeItem(ADMIN_MODE_STORAGE_KEY);
 }
 
@@ -48,20 +48,31 @@ export const AuthProvider = ({ children }) => {
 
   useEffect(() => {
     let isMounted = true;
+    clearLegacyIdentityCache();
 
-    getCurrentMember()
+    // XSRF-TOKEN 쿠키가 있음
+    //   → 기존 토큰 사용
+
+    // XSRF-TOKEN 쿠키가 없음
+    //   → GET /api/auth/csrf 호출
+    //   → 서버가 토큰 발급
+    //   → 쿠키에서 발급된 토큰 확인
+    ensureCsrfToken()
+      .catch((error) => {
+        console.warn("CSRF 토큰 초기화 실패:", error);
+      })
+      .then(() => getCurrentMember())
       .then((response) => {
         if (!isMounted) return;
 
         setCurrentUser(response.data);
-        saveLegacyUserCache(response.data);
       })
       .catch(() => {
         if (!isMounted) return;
 
         setCurrentUser(null);
         setAdminMode(false);
-        clearLegacyUserCache();
+        clearAdminModeCache();
       })
       .finally(() => {
         if (isMounted) {
@@ -82,20 +93,29 @@ export const AuthProvider = ({ children }) => {
   }, [adminMode, isSuperAdmin]);
 
   const login = async (credentials) => {
+    // 로그인 성공하면 다시 토큰 발급 API 호출
     await loginMember(credentials);
+    try {
+      await refreshCsrfToken();
+    } catch (error) {
+      console.warn("로그인 후 CSRF 토큰 갱신 실패:", error);
+    }
     const response = await getCurrentMember();
     const user = response.data;
 
     setCurrentUser(user);
-    saveLegacyUserCache(user);
     return user;
   };
 
   const logout = async () => {
+    await logoutMember();
     try {
-      await logoutMember();
+      await refreshCsrfToken();
+    } catch (error) {
+      console.warn("로그아웃 후 CSRF 토큰 갱신 실패:", error);
     } finally {
-      clearLegacyUserCache();
+      clearLegacyIdentityCache();
+      clearAdminModeCache();
       setCurrentUser(null);
       setAdminMode(false);
     }

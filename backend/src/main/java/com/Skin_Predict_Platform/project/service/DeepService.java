@@ -28,8 +28,27 @@ public class DeepService {
 
     private final DeepRepository deeprepository;
 
-    public List<Deepmodel> getDeepmodelDataByDtypecode(Long dtypeCode) {
-        Optional<Deepmodel> deep = this.deeprepository.findById(dtypeCode);
+    @Transactional(readOnly = true)
+    public Deepmodel getDeepmodel(Long dtypeCode, String userId) {
+        return this.deeprepository
+                .findByDtypeCodeAndDtypeUserId(dtypeCode, userId)
+                .orElse(null);
+    }
+
+    @Transactional
+    public boolean deleteDeepmodel(Long dtypeCode, String userId) {
+        Optional<Deepmodel> deep = this.deeprepository
+                .findByDtypeCodeAndDtypeUserId(dtypeCode, userId);
+        if (deep.isEmpty()) {
+            return false;
+        }
+        this.deeprepository.delete(deep.get());
+        return true;
+    }
+
+    private List<Deepmodel> getDeepmodelDataByDtypecode(Long dtypeCode, String userId) {
+        Optional<Deepmodel> deep = this.deeprepository
+                .findByDtypeCodeAndDtypeUserId(dtypeCode, userId);
         if (deep.isPresent()) {
             log.info("정상적으로 조회함");
             return Collections.singletonList(deep.get());
@@ -152,10 +171,11 @@ public class DeepService {
     }
 
     @Transactional
-    public boolean deleteDeepmodelByDtypecode(Long dtypeCode) {
-        Optional<Deepmodel> deep = this.deeprepository.findById(dtypeCode);
+    private boolean deleteDeepmodelByDtypecode(Long dtypeCode, String userId) {
+        Optional<Deepmodel> deep = this.deeprepository
+                .findByDtypeCodeAndDtypeUserId(dtypeCode, userId);
         if (deep.isPresent()) {
-            this.deeprepository.deleteById(dtypeCode);
+            this.deeprepository.delete(deep.get());
             log.info("정상적으로 삭제함. dtypeCode={}", dtypeCode);
             return true;
         }

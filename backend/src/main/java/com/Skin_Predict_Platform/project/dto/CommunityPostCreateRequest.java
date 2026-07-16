@@ -6,7 +6,6 @@ import lombok.Setter;
 @Getter
 @Setter
 public class CommunityPostCreateRequest {
-    private String postUserId;
     private Long categoryCode;
     private String postTitle;
     private String postContent;

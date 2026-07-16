@@ -13,12 +13,8 @@ import {
 } from "recharts";
 import { getDeepHistory } from "../springApi/deepSpringBootApi";
 import { getSkinTypeHistory } from "../springApi/skinTypeSpringBootApi";
+import { useAuth } from "../context/AuthContext";
 import "./AnalysisHistory.css";
-
-
-function getLoginUserId() {
-  return localStorage.getItem("userId");
-}
 
 const CLASS_META = {
   ato: { label: "아토피", color: "#e07a8b" },
@@ -139,23 +135,24 @@ function SkinTypeBarChart({ skinTypeRecords }) {
 
 /* ---------------- 분석기록 전체 ---------------- */
 export default function AnalysisHistory() {
-  const userId = getLoginUserId();
+  const { userId, authLoading } = useAuth();
   const [deepHistory, setDeepHistory] = useState([]);
   const [skinTypeHistory, setSkinTypeHistory] = useState([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    if (authLoading) return;
     if (!userId) {
       setLoading(false);
       return;
     }
 
     Promise.all([
-      getDeepHistory(userId).catch((err) => {
+      getDeepHistory().catch((err) => {
         console.error("아토피/비립종/여드름 기록 조회 실패:", err);
         return { data: [] };
       }),
-      getSkinTypeHistory(userId).catch((err) => {
+      getSkinTypeHistory().catch((err) => {
         console.error("피부타입 기록 조회 실패:", err);
         return { data: [] };
       }),
@@ -175,7 +172,7 @@ export default function AnalysisHistory() {
         setSkinTypeHistory(recentSkin);
       })
       .finally(() => setLoading(false));
-  }, [userId]);
+  }, [authLoading, userId]);
 
   if (!userId) {
     return <p className="analysis_empty">로그인 후 분석 기록을 확인할 수 있어요.</p>;

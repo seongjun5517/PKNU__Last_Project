@@ -4,6 +4,7 @@ import {
   insertMember,
   uploadMemberProfileImage,
 } from "../springApi/memberSpringBootApi";
+import { useAuth } from "../context/AuthContext";
 import "./SignUp.css";
 import {
   isImageFileTooLarge,
@@ -12,6 +13,7 @@ import {
 
 function SignUp() {
   const navigate = useNavigate();
+  const { login, logout } = useAuth();
 
   const [form, setForm] = useState({
     user_id: "",
@@ -84,23 +86,46 @@ function SignUp() {
 
     try {
       await insertMember(signupPayload);
-
-      if (form.user_profile_image) {
-        await uploadMemberProfileImage(
-          signupPayload.user_id,
-          form.user_profile_image
-        );
-      }
-
-      setMessage("회원가입이 완료되었습니다.");
-      navigate("/login");
     } catch (error) {
       setMessage(
         error.response?.status === 413
           ? `프로필 이미지는 ${MAX_IMAGE_FILE_SIZE_LABEL} 이하만 업로드할 수 있습니다.`
           : error.response?.data || "서버와 연결할 수 없습니다."
       );
+      return;
     }
+
+    let profileUploadFailed = false;
+    let temporarySessionCreated = false;
+
+    if (form.user_profile_image) {
+      try {
+        await login({
+          user_id: signupPayload.user_id,
+          user_pwd: signupPayload.user_pwd,
+        });
+        temporarySessionCreated = true;
+        await uploadMemberProfileImage(form.user_profile_image);
+      } catch (error) {
+        profileUploadFailed = true;
+        console.error("회원가입 후 프로필 이미지 업로드 실패:", error);
+      } finally {
+        if (temporarySessionCreated) {
+          await logout().catch((error) =>
+            console.warn("회원가입 임시 세션 정리 실패:", error)
+          );
+        }
+      }
+    }
+
+    if (profileUploadFailed) {
+      window.alert(
+        "회원가입은 완료됐지만 프로필 이미지는 저장하지 못했습니다. 로그인 후 마이페이지에서 다시 등록해주세요."
+      );
+    }
+
+    setMessage("회원가입이 완료되었습니다.");
+    navigate("/login");
   };
 
   const renderProfilePreview = () => {

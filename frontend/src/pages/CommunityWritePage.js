@@ -51,9 +51,7 @@ function CommunityWritePage() {
   const handleSubmit = async (event) => {
     event.preventDefault();
 
-    const postUserId =
-      userId || localStorage.getItem("userId") || localStorage.getItem("loginUserId");
-    if (!postUserId) {
+    if (!userId) {
       setMessage("로그인 정보가 없습니다. 로그인 후 다시 작성해주세요.");
       return;
     }
@@ -78,7 +76,6 @@ function CommunityWritePage() {
 
     try {
       await insertCommunityPost({
-        postUserId,
         categoryCode: Number(categoryCode),
         postTitle: postTitle.trim(),
         postContent: postContent.trim(),

@@ -3,34 +3,34 @@ import { springApi } from "../config/axiosInstance";
 export const getCommunityCategoryList = () => springApi.get("/community/categories");
 export const getCommunityPostList = () => springApi.get("/community/posts");
 export const getCommunityPost = (postCode) => springApi.get(`/community/posts/${postCode}`);
-export const increaseCommunityPostView = (postCode, userId) =>
-  springApi.post(`/community/posts/${postCode}/view`, { userId });
+export const increaseCommunityPostView = (postCode) =>
+  springApi.post(`/community/posts/${postCode}/view`);
 export const insertCommunityPost = (post) => springApi.post("/community/posts", post);
 export const updateCommunityPost = (postCode, post) =>
   springApi.put(`/community/posts/${postCode}`, post);
-export const deleteCommunityPost = (postCode, userId) =>
-  springApi.delete(`/community/posts/${postCode}`, { params: { userId } });
-export const likeCommunityPost = (postCode, userId) =>
-  springApi.post(`/community/posts/${postCode}/like`, { userId });
-export const getCommunityPostLikeStatus = (postCode, userId) =>
-  springApi.get(`/community/posts/${postCode}/like`, { params: { userId } });
-export const scrapCommunityPost = (postCode, userId) =>
-  springApi.post(`/community/posts/${postCode}/scrap`, { userId });
-export const getCommunityPostScrapStatus = (postCode, userId) =>
-  springApi.get(`/community/posts/${postCode}/scrap`, { params: { userId } });
+export const deleteCommunityPost = (postCode) =>
+  springApi.delete(`/community/posts/${postCode}`);
+export const likeCommunityPost = (postCode) =>
+  springApi.post(`/community/posts/${postCode}/like`);
+export const getCommunityPostLikeStatus = (postCode) =>
+  springApi.get(`/community/posts/${postCode}/like`);
+export const scrapCommunityPost = (postCode) =>
+  springApi.post(`/community/posts/${postCode}/scrap`);
+export const getCommunityPostScrapStatus = (postCode) =>
+  springApi.get(`/community/posts/${postCode}/scrap`);
 export const getCommunityPostComments = (postCode) =>
   springApi.get(`/community/posts/${postCode}/comments`);
-export const createCommunityPostComment = (postCode, userId, contents) =>
-  springApi.post(`/community/posts/${postCode}/comments`, { userId, contents });
-export const createCommunityPostReport = (postCode, userId, reportReason) =>
-  springApi.post(`/community/posts/${postCode}/reports`, { userId, reportReason });
-export const getCommunityPostReportCount = (postCode, userId) =>
-  springApi.get(`/community/posts/${postCode}/reports/count`, { params: { userId } });
-export const getCommunityPostReports = (postCode, userId) =>
-  springApi.get(`/community/posts/${postCode}/reports`, { params: { userId } });
-export const resolveCommunityPostReports = (postCode, userId, decision) =>
-  springApi.post(`/community/posts/${postCode}/reports/resolve`, { userId, decision });
-export const getMyCommunityComments = (userId) =>
-  springApi.get(`/community/comments/mine/${userId}`);
-export const deleteCommunityComment = (commentCode, userId) =>
-  springApi.delete(`/community/comments/${commentCode}`, { params: { userId } });
+export const createCommunityPostComment = (postCode, contents) =>
+  springApi.post(`/community/posts/${postCode}/comments`, { contents });
+export const createCommunityPostReport = (postCode, reportReason) =>
+  springApi.post(`/community/posts/${postCode}/reports`, { reportReason });
+export const getCommunityPostReportCount = (postCode) =>
+  springApi.get(`/community/posts/${postCode}/reports/count`);
+export const getCommunityPostReports = (postCode) =>
+  springApi.get(`/community/posts/${postCode}/reports`);
+export const resolveCommunityPostReports = (postCode, decision) =>
+  springApi.post(`/community/posts/${postCode}/reports/resolve`, { decision });
+export const getMyCommunityComments = () =>
+  springApi.get(`/community/comments/mine`);
+export const deleteCommunityComment = (commentCode) =>
+  springApi.delete(`/community/comments/${commentCode}`);

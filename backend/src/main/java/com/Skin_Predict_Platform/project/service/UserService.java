@@ -121,7 +121,7 @@ public class UserService {
     }
 
     @Transactional
-    public String setMemberDelete(String userId) {
+    private String setMemberDelete(String userId) {
         if (isBlank(userId)) {
             return "사용자 아이디는 필수입니다.";
         }
@@ -135,6 +135,15 @@ public class UserService {
     }
 
     // 값이 비어있는지 체크 메서드(공백제거)
+    @Transactional
+    public boolean deleteUser(String userId) {
+        if (isBlank(userId) || !userRepository.existsById(userId)) {
+            return false;
+        }
+        userRepository.deleteById(userId);
+        return true;
+    }
+
     private boolean isBlank(String value) {
         return value == null || value.trim().isEmpty();
     }

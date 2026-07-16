@@ -78,7 +78,7 @@ function Header() {
     }
 
     try {
-      const res = await getNotifications(currentUserId);
+      const res = await getNotifications();
       setNotifications((res.data || []).map(normalizeNotification));
     } catch (err) {
       console.error("알림 조회 실패:", err);
@@ -111,7 +111,7 @@ function Header() {
       setProfileImageError(false);
 
       springApi
-        .get(`/user/${currentUserId}`)
+        .get(`/user/me`)
         .then((res) => {
           if (isMounted) {
             setProfile(res.data);
@@ -175,7 +175,7 @@ function Header() {
 
     if (!notification.isRead) {
       try {
-        await markNotificationRead(notification.id, currentUserId);
+        await markNotificationRead(notification.id);
         setNotifications((prev) =>
           prev.map((item) =>
             item.id === notification.id ? { ...item, isRead: true } : item
@@ -199,7 +199,7 @@ function Header() {
     }
 
     try {
-      await deleteNotification(notiCode, currentUserId);
+      await deleteNotification(notiCode);
       setNotifications((prev) => prev.filter((item) => item.id !== notiCode));
     } catch (err) {
       console.error("알림 삭제 실패:", err);
@@ -212,7 +212,7 @@ function Header() {
     }
 
     try {
-      await markAllNotificationsRead(currentUserId);
+      await markAllNotificationsRead();
       setNotifications((prev) =>
         prev.map((item) => ({ ...item, isRead: true }))
       );
@@ -227,7 +227,7 @@ function Header() {
     }
 
     try {
-      await deleteReadNotifications(currentUserId);
+      await deleteReadNotifications();
       setNotifications((prev) => prev.filter((item) => !item.isRead));
     } catch (err) {
       console.error("읽은 알림 삭제 실패:", err);

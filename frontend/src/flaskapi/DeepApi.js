@@ -7,24 +7,20 @@ export const setPredictFlask = (formData) =>
   });
 
 // [Spring] 예측 결과 저장
-export const setPredictSave = (userId, detections, imgPath) =>
-  springApi.post(`/deep/save`, { userId, detections, imgPath });
+export const setPredictSave = (detections, imgPath) =>
+  springApi.post(`/deep/save`, { detections, imgPath });
 
 // [Spring] 최신 예측 결과 조회
-export const getLatestPredict = (userId) =>
-  springApi.get(`/deep/latest`, { params: { userId } });
+export const getLatestPredict = () => springApi.get(`/deep/latest`);
 
 // [Spring] 오늘 예측 결과 조회
-export const getTodayPredict = (userId) =>
-  springApi.get(`/deep/today`, { params: { userId } });
+export const getTodayPredict = () => springApi.get(`/deep/today`);
 
 // [Spring] 최신 예측 결과 전체 삭제
-export const deleteLatestPredict = (userId) =>
-  springApi.delete(`/deep/latest`, { params: { userId } });
+export const deleteLatestPredict = () => springApi.delete(`/deep/latest`);
 
 // [Spring] 오늘 예측 결과 전체 삭제
-export const deleteTodayPredict = (userId) =>
-  springApi.delete(`/deep/today`, { params: { userId } });
+export const deleteTodayPredict = () => springApi.delete(`/deep/today`);
 
 // [Spring] 특정 dtypeCode 결과 조회
 export const getDeepView = (dtypeCode) =>
