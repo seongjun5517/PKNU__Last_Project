@@ -79,7 +79,7 @@ function DailyLineChart({ classKey, dailyRecords }) {
 }
 
 /* ---------------- 피부타입(건성/지성/민감성) 막대그래프 ---------------- */
-const TYPE_COLOR = { 건성: "#7aa0e0", 지성: "#e0b57a", 민감도: "#e07a8b" };
+const TYPE_COLOR = { 건성: "#7aa0e0", 지성: "#e0b57a",  중성: "#8ddd6e", 민감도: "#e07a8b" };
 
 function SkinTypeBarChart({ skinTypeRecords }) {
   // skinTypeRecords: 최근 10일치 전체 행 [{ stypeDate, stypeFace, stypeName, stypeFig }, ...]
@@ -87,7 +87,8 @@ function SkinTypeBarChart({ skinTypeRecords }) {
     const bucket = {
       건성: { sum: 0, count: 0 },
       지성: { sum: 0, count: 0 },
-      민감성: { sum: 0, count: 0 },
+      중성: { sum: 0, count: 0 },
+      민감도: { sum: 0, count: 0 },
     };
 
     skinTypeRecords.forEach((row) => {
@@ -95,6 +96,10 @@ function SkinTypeBarChart({ skinTypeRecords }) {
       if (bucket[row.stypeName]) {
         bucket[row.stypeName].sum += row.stypeFig;
         bucket[row.stypeName].count += 1;
+      }
+      if (row.stypeFace === "민감도") {
+        bucket[row.stypeFace].sum += row.stypeFig;
+        bucket[row.stypeFace].count += 1;
       }
     });
 
