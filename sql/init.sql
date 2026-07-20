@@ -130,7 +130,7 @@ CREATE TABLE IF NOT EXISTS manager (
 CREATE TABLE IF NOT EXISTS deep (
     dtype_code BIGINT AUTO_INCREMENT PRIMARY KEY,
     dtype_user_id VARCHAR(255) NOT NULL,
-    dtype_date DATE NOT NULL,
+    dtype_date DATETIME(6) NOT NULL,
     dtype_result VARCHAR(255),
     dtype_cnt INT DEFAULT 0,
     dtype_img VARCHAR(255),

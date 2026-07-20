@@ -33,6 +33,22 @@ services:
       timeout: 5s
       retries: 10
 
+  mysql-migrate:
+    image: mysql:8.0
+    restart: "no"
+    depends_on:
+      mysql:
+        condition: service_healthy
+    environment:
+      MYSQL_PWD: ${MYSQL_PASSWORD:?MYSQL_PASSWORD must be set}
+      MYSQL_DATABASE: ${MYSQL_DATABASE:-skin_db}
+      MYSQL_USER: ${MYSQL_USER:-skin}
+    volumes:
+      - ./sql/migrations/20260720_deep_dtype_date_datetime.sql:/migration.sql:ro
+    entrypoint: ["/bin/sh", "-c"]
+    command:
+      - mysql --host=mysql --user="$${MYSQL_USER}" "$${MYSQL_DATABASE}" < /migration.sql
+
   spring:
     build:
       context: ./backend
@@ -40,6 +56,8 @@ services:
     depends_on:
       mysql:
         condition: service_healthy
+      mysql-migrate:
+        condition: service_completed_successfully
     environment:
       TZ: Asia/Seoul
       SPRING_PROFILES_ACTIVE: prod
