@@ -1,6 +1,6 @@
 package com.Skin_Predict_Platform.project.repository;
 
-import java.util.Date;
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 
@@ -24,7 +24,10 @@ public interface DeepRepository extends JpaRepository<Deepmodel, Long> {
     @Query(value = "SELECT dtype_result FROM deep WHERE dtype_user_id = :userId AND DATE(dtype_date) = CURDATE() ORDER BY dtype_date DESC LIMIT 1", nativeQuery = true)
     Optional<String> findTodayPredictByUserId(@Param("userId") String userId);
 
-    List<Deepmodel> findByDtypeUserIdAndDtypeDateBetween(String userId, Date start, Date end);
+    List<Deepmodel> findByDtypeUserIdAndDtypeDateGreaterThanEqualAndDtypeDateLessThan(
+            String userId,
+            LocalDateTime start,
+            LocalDateTime end);
 
     List<Deepmodel> findByDtypeUserIdOrderByDtypeDateDescDtypeCodeAsc(String userId);
 

@@ -1,6 +1,6 @@
 package com.Skin_Predict_Platform.project.model;
 
-import java.util.Date;
+import java.time.LocalDateTime;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -8,8 +8,6 @@ import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
-import jakarta.persistence.Temporal;
-import jakarta.persistence.TemporalType;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -34,8 +32,7 @@ public class Deepmodel {
     private String dtypeUserId;
 
     @Column(name = "dtype_date", nullable = false)
-    @Temporal(TemporalType.DATE)
-    private Date dtypeDate;
+    private LocalDateTime dtypeDate;
 
     @Column(name = "dtype_result")
     private String dtypeResult;

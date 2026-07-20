@@ -1,11 +1,8 @@
 package com.Skin_Predict_Platform.project.service;
 
-import java.text.SimpleDateFormat;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
-import java.time.ZoneId;
-import java.util.Calendar;
 import java.util.Collections;
-import java.util.Date;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -75,9 +72,10 @@ public class DeepService {
      * 오늘 기록이 없으면 null 반환.
      */
     public TodayPredictResult getTodayPredictDetail(String userId) {
-        Date[] range = getTodayRange();
+        LocalDateTime[] range = getTodayRange();
         List<Deepmodel> rows = this.deeprepository
-                .findByDtypeUserIdAndDtypeDateBetween(userId, range[0], range[1]);
+                .findByDtypeUserIdAndDtypeDateGreaterThanEqualAndDtypeDateLessThan(
+                        userId, range[0], range[1]);
 
         if (rows.isEmpty()) {
             log.warn("오늘 예측 결과가 존재하지 않음. userId={}", userId);
@@ -119,9 +117,7 @@ public class DeepService {
             return null;
         }
 
-        return LocalDateTime.ofInstant(
-                rows.get(0).getDtypeDate().toInstant(),
-                ZoneId.systemDefault());
+        return rows.get(0).getDtypeDate();
     }
 
     public boolean hasPredictedToday(String userId) {
@@ -135,7 +131,7 @@ public class DeepService {
     @Transactional
     public boolean savePrediction(String userId, List<String> dtypeResults,
                                    List<Integer> dtypeCnts, String imgPath) {
-        Date now = new Date();
+        LocalDateTime now = LocalDateTime.now();
 
         try {
             // A detection-free response means the skin is normal.  It still needs a
@@ -185,7 +181,7 @@ public class DeepService {
 
     @Transactional
     public int deleteTodayDeepmodels(String userId) {
-        Date[] range = getTodayRange();
+        LocalDateTime[] range = getTodayRange();
         return deleteDeepmodelsByRange(userId, range[0], range[1]);
     }
 
@@ -205,16 +201,20 @@ public class DeepService {
 
     @Transactional
     public int deleteDeepmodelsByDate(String userId, String dateKey) {
-        Date[] range = getDateRange(dateKey);
+        LocalDateTime[] range = getDateRange(dateKey);
         if (range == null) {
             return -1;
         }
         return deleteDeepmodelsByRange(userId, range[0], range[1]);
     }
 
-    private int deleteDeepmodelsByRange(String userId, Date start, Date end) {
+    private int deleteDeepmodelsByRange(
+            String userId,
+            LocalDateTime start,
+            LocalDateTime end) {
         List<Deepmodel> rows = this.deeprepository
-                .findByDtypeUserIdAndDtypeDateBetween(userId, start, end);
+                .findByDtypeUserIdAndDtypeDateGreaterThanEqualAndDtypeDateLessThan(
+                        userId, start, end);
 
         if (rows.isEmpty()) {
             log.warn("삭제할 예측 결과가 존재하지 않음. userId={}", userId);
@@ -226,18 +226,12 @@ public class DeepService {
         return rows.size();
     }
 
-    private Date[] getTodayRange() {
-        Calendar cal = Calendar.getInstance();
-        cal.set(Calendar.HOUR_OF_DAY, 0);
-        cal.set(Calendar.MINUTE, 0);
-        cal.set(Calendar.SECOND, 0);
-        cal.set(Calendar.MILLISECOND, 0);
-        Date start = cal.getTime();
-
-        cal.add(Calendar.DAY_OF_MONTH, 1);
-        Date end = cal.getTime();
-
-        return new Date[] { start, end };
+    private LocalDateTime[] getTodayRange() {
+        LocalDate today = LocalDate.now();
+        return new LocalDateTime[] {
+                today.atStartOfDay(),
+                today.plusDays(1).atStartOfDay()
+        };
     }
 
     private List<Deepmodel> getLatestDeepmodelGroup(String userId) {
@@ -248,24 +242,19 @@ public class DeepService {
             return Collections.emptyList();
         }
 
-        Date latestDate = allRows.get(0).getDtypeDate();
+        LocalDateTime latestDate = allRows.get(0).getDtypeDate();
         return allRows.stream()
                 .filter(row -> latestDate.equals(row.getDtypeDate()))
                 .collect(Collectors.toList());
     }
 
-    private Date[] getDateRange(String dateKey) {
+    private LocalDateTime[] getDateRange(String dateKey) {
         try {
-            SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
-            sdf.setLenient(false);
-            Date start = sdf.parse(dateKey);
-
-            Calendar cal = Calendar.getInstance();
-            cal.setTime(start);
-            cal.add(Calendar.DAY_OF_MONTH, 1);
-            Date end = cal.getTime();
-
-            return new Date[] { start, end };
+            LocalDate date = LocalDate.parse(dateKey);
+            return new LocalDateTime[] {
+                    date.atStartOfDay(),
+                    date.plusDays(1).atStartOfDay()
+            };
         } catch (Exception e) {
             log.warn("잘못된 날짜 형식입니다. dateKey={}", dateKey);
             return null;
@@ -304,12 +293,11 @@ public class DeepService {
     public List<DayHistoryDto> getDeepHistory(String userId) {
         List<Deepmodel> rows = this.deeprepository.findByDtypeUserIdOrderByDtypeDateAsc(userId);
 
-        SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
         Map<String, List<DetectionDto>> grouped = new LinkedHashMap<>();
         Map<String, String> imageByDate = new LinkedHashMap<>();
 
         for (Deepmodel r : rows) {
-            String dateKey = sdf.format(r.getDtypeDate());
+            String dateKey = r.getDtypeDate().toLocalDate().toString();
             grouped.computeIfAbsent(dateKey, k -> new java.util.ArrayList<>())
                 .add(new DetectionDto(r.getDtypeResult(), r.getDtypeCnt()));
             imageByDate.putIfAbsent(dateKey, r.getDtypeImg());
