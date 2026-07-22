@@ -105,7 +105,9 @@ services:
     environment:
       TZ: Asia/Seoul
       OLLAMA_HOST: 0.0.0.0:11434
-      OLLAMA_KEEP_ALIVE: ${OLLAMA_KEEP_ALIVE:-10m}
+      OLLAMA_KEEP_ALIVE: ${OLLAMA_KEEP_ALIVE:-1h}
+      OLLAMA_CONTEXT_LENGTH: ${OLLAMA_CONTEXT_LENGTH:-8192}
+      OLLAMA_NUM_PARALLEL: ${OLLAMA_NUM_PARALLEL:-2}
     expose:
       - "11434"
     volumes:
@@ -116,6 +118,13 @@ services:
       timeout: 5s
       retries: 30
       start_period: 20s
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: 1
+              capabilities: [gpu]
 
   ollama-init:
     image: ${OLLAMA_IMAGE:-ollama/ollama:latest}
@@ -127,11 +136,14 @@ services:
       OLLAMA_HOST: http://ollama:11434
       CHATBOT_MODEL: ${CHATBOT_MODEL:-gemma3:4b}
       CHATBOT_EMBEDDING_MODEL: ${CHATBOT_EMBEDDING_MODEL:-nomic-embed-text}
+      OLLAMA_KEEP_ALIVE: ${OLLAMA_KEEP_ALIVE:-1h}
     entrypoint: ["/bin/sh", "-c"]
     command:
       - >-
         ollama pull "$${CHATBOT_MODEL}" &&
-        ollama pull "$${CHATBOT_EMBEDDING_MODEL}"
+        ollama pull "$${CHATBOT_EMBEDDING_MODEL}" &&
+        ollama run "$${CHATBOT_EMBEDDING_MODEL}" "warmup" --keepalive "$${OLLAMA_KEEP_ALIVE}" >/dev/null 2>&1 &&
+        ollama run "$${CHATBOT_MODEL}" "Reply with OK only." --keepalive "$${OLLAMA_KEEP_ALIVE}" >/dev/null 2>&1
     volumes:
       - ollama_models:/root/.ollama
 
@@ -148,6 +160,10 @@ services:
       OLLAMA_BASE_URL: http://ollama:11434
       CHATBOT_MODEL: ${CHATBOT_MODEL:-gemma3:4b}
       CHATBOT_EMBEDDING_MODEL: ${CHATBOT_EMBEDDING_MODEL:-nomic-embed-text}
+      CHATBOT_KEEP_ALIVE: ${OLLAMA_KEEP_ALIVE:-1h}
+      CHATBOT_NUM_PREDICT: ${CHATBOT_NUM_PREDICT:-800}
+      CHATBOT_WARMUP_ENABLED: ${CHATBOT_WARMUP_ENABLED:-true}
+      CHATBOT_WARMUP_PARALLELISM: ${OLLAMA_NUM_PARALLEL:-2}
       CHATBOT_CHROMA_PATH: /app/data/Chroma_DB_Skin_v6
       CHATBOT_INGREDIENT_PATH: /app/data/ingredient_dictionary_100.xlsx
     expose:
