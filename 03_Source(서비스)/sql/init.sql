@@ -161,3 +161,40 @@ CREATE TABLE IF NOT EXISTS feedback (
     INDEX idx_feedback_created_at (fb_created_at),
     INDEX idx_feedback_type (fb_type)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+
+
+-- 최고 관리자 삽입
+INSERT INTO skin_db.users (
+    user_id,
+    user_email,
+    user_pwd,
+    user_nickname,
+    user_profile_image,
+    user_created_at,
+    user_birthday,
+    user_man
+)
+VALUES (
+    'admin',
+    'admin@skin.com',
+    'admin1234',
+    '최고관리자',
+    NULL,
+    NOW(),
+    '2026-07-06',
+    1
+);
+
+INSERT INTO skin_db.manager (
+    user_id,
+    man_auth,
+    man_community,
+    man_site
+)
+VALUES (
+    'admin',
+    'SUPER_ADMIN',
+    1,
+    1
+);
