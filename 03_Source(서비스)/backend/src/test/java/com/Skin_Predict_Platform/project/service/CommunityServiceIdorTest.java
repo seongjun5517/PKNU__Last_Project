@@ -3,6 +3,7 @@ package com.Skin_Predict_Platform.project.service;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
@@ -18,6 +19,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 
 import com.Skin_Predict_Platform.project.dto.CommunityCommentUpdateRequest;
 import com.Skin_Predict_Platform.project.dto.CommunityPostCreateRequest;
+import com.Skin_Predict_Platform.project.dto.CommunityReportResolveRequest;
 import com.Skin_Predict_Platform.project.model.CommunityComment;
 import com.Skin_Predict_Platform.project.model.PostDetail;
 import com.Skin_Predict_Platform.project.model.Role;
@@ -90,6 +92,26 @@ class CommunityServiceIdorTest {
     }
 
     @Test
+    void superAdminReportDeleteReliesOnParentCascadeAndCreatesAuthorNotification() {
+        PostDetail reportedPost = postOwnedBy(USER_B, 402L, "Reported title");
+        CommunityReportResolveRequest request = new CommunityReportResolveRequest();
+        request.setDecision("DELETE");
+
+        when(postDetailRepository.findById(402L)).thenReturn(Optional.of(reportedPost));
+        when(userRepository.findById(USER_A)).thenReturn(Optional.of(superAdmin(USER_A)));
+
+        assertTrue(communityService.resolveReports(402L, USER_A, request));
+
+        verify(postDetailRepository).delete(reportedPost);
+        verify(communityReportRepository, never()).deleteByReportPostCode(402L);
+        verify(communityCommentRepository, never()).deleteByCmtPostCode(402L);
+        verify(communityPostLikeRepository, never()).deleteByLikePostCode(402L);
+        verify(communityPostScrapRepository, never()).deleteByScrapPostCode(402L);
+        verify(noticeService, never()).deleteByPostCode(402L);
+        verify(noticeService).createReportDeletionNotification(reportedPost, USER_A);
+    }
+
+    @Test
     void userACannotUpdateUserBComment() {
         CommunityComment userBComment = commentOwnedBy(USER_B, 500L, "B's comment");
         CommunityCommentUpdateRequest update = new CommunityCommentUpdateRequest();
@@ -141,6 +163,13 @@ class CommunityServiceIdorTest {
         return User.builder()
                 .userId(userId)
                 .role(Role.USER)
+                .build();
+    }
+
+    private User superAdmin(String userId) {
+        return User.builder()
+                .userId(userId)
+                .role(Role.SUPER_ADMIN)
                 .build();
     }
 }

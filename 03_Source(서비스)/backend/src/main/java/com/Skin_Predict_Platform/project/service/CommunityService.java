@@ -414,12 +414,10 @@ public class CommunityService {
     }
 
     private void deletePostResources(PostDetail post) {
-        Long postCode = post.getPostCode();
-        communityReportRepository.deleteByReportPostCode(postCode);
-        communityCommentRepository.deleteByCmtPostCode(postCode);
-        communityPostLikeRepository.deleteByLikePostCode(postCode);
-        communityPostScrapRepository.deleteByScrapPostCode(postCode);
-        noticeService.deleteByPostCode(postCode);
+        // posts_detail is the aggregate root for reports, comments, likes, scraps,
+        // and post-related notices. MySQL removes those rows through ON DELETE
+        // CASCADE. Explicit JPA deletes here would schedule the same notice twice
+        // when a comment notice references both the comment and the post.
         postDetailRepository.delete(post);
     }
 }
