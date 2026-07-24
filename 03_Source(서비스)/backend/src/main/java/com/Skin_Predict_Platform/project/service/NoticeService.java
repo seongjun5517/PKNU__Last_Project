@@ -9,11 +9,11 @@ import org.springframework.util.StringUtils;
 import com.Skin_Predict_Platform.project.dto.NoticeResponse;
 import com.Skin_Predict_Platform.project.model.CommunityComment;
 import com.Skin_Predict_Platform.project.model.CommunityReport;
-import com.Skin_Predict_Platform.project.model.Manager;
 import com.Skin_Predict_Platform.project.model.Notice;
 import com.Skin_Predict_Platform.project.model.PostDetail;
-import com.Skin_Predict_Platform.project.repository.ManagerRepository;
+import com.Skin_Predict_Platform.project.model.Role;
 import com.Skin_Predict_Platform.project.repository.NoticeRepository;
+import com.Skin_Predict_Platform.project.repository.UserRepository;
 
 import lombok.RequiredArgsConstructor;
 
@@ -25,10 +25,8 @@ public class NoticeService {
     private static final String TYPE_COMMENT = "COMMENT";
     private static final String TYPE_REPORT = "REPORT";
     private static final String TYPE_REPORT_DELETED = "REPORT_DELETED";
-    private static final String SUPER_ADMIN = "SUPER_ADMIN";
-
     private final NoticeRepository noticeRepository;
-    private final ManagerRepository managerRepository;
+    private final UserRepository userRepository;
 
     public List<NoticeResponse> getNotifications(String userId) {
         return noticeRepository.findByNotiReceiverUserIdOrderByNotiCreatedAtDesc(userId)
@@ -76,8 +74,8 @@ public class NoticeService {
             return;
         }
 
-        managerRepository.findByManAuth(SUPER_ADMIN).stream()
-                .map(Manager::getUserId)
+        userRepository.findByRole(Role.SUPER_ADMIN).stream()
+                .map((user) -> user.getUserId())
                 .filter(StringUtils::hasText)
                 .filter((receiverUserId) -> !receiverUserId.equals(report.getReportUserId()))
                 .forEach((receiverUserId) -> noticeRepository.save(Notice.builder()
